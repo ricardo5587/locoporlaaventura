@@ -1,20 +1,36 @@
 import { useState, useRef } from 'react';
-import { WEB, useBreakpoint, EVENTS } from '../lib/tokens';
+import { WEB, useBreakpoint, CAT_ICONS } from '../lib/tokens';
 import { MAX_W } from '../components/shared';
-import { WebHero, EventCard, CategoryFilter, NewsletterSection } from '../components/ui';
-import { DatePickerFilter } from '../components/DatePickerFilter';
+import { WebHero, EventCard, NewsletterSection } from '../components/ui';
+import { FilterTriggerBtn, ActiveFilterChip, FilterPanel } from '../components/FilterPanel';
 
-export function HomePage({ lang, onBook, onVolunteer }) {
+export function HomePage({ lang, events, onBook, onVolunteer }) {
   const [cat, setCat]               = useState('all');
-  const [selectedDate, setSelectedDate] = useState(null);
+  const [dateStart, setDateStart]   = useState('');
+  const [dateEnd, setDateEnd]       = useState('');
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const eventsRef = useRef(null);
   const { isMobile, isTablet } = useBreakpoint();
   const L = (es, en) => lang === 'es' ? es : en;
 
-  const filtered = EVENTS
+  const filtered = events
     .filter(e => cat === 'all' || e.category === cat)
-    .filter(e => !selectedDate || e.date === selectedDate);
+    .filter(e => {
+      if (!dateStart && !dateEnd) return true;
+      const d = new Date(e.date + 'T12:00:00');
+      if (dateStart && dateEnd) return d >= new Date(dateStart + 'T00:00:00') && d <= new Date(dateEnd + 'T23:59:59');
+      if (dateStart) return d >= new Date(dateStart + 'T00:00:00');
+      return d <= new Date(dateEnd + 'T23:59:59');
+    });
   const cols = isMobile ? 1 : isTablet ? 2 : 3;
+
+  const activeCount = (cat !== 'all' ? 1 : 0) + ((dateStart || dateEnd) ? 1 : 0);
+
+  const catIcon  = CAT_ICONS[cat] || '';
+  const catLabel = cat !== 'all' ? `${catIcon} ${cat}`.trim() : null;
+  const dateLabel = (dateStart && dateEnd) ? `📅 ${dateStart} → ${dateEnd}` :
+                    dateStart  ? `📅 ${L('Desde','From')} ${dateStart}` :
+                    dateEnd    ? `📅 ${L('Hasta','To')} ${dateEnd}` : null;
 
   function scrollToEvents() {
     if (eventsRef.current) { const top = eventsRef.current.getBoundingClientRect().top + window.scrollY - 20; window.scrollTo({ top, behavior: 'smooth' }); }
@@ -41,9 +57,30 @@ export function HomePage({ lang, onBook, onVolunteer }) {
           </div>
 
           {/* Filters */}
-          <div style={{ marginBottom:28, display:'flex', flexDirection:'column', gap:12 }}>
-            <CategoryFilter active={cat} setActive={setCat} lang={lang} />
-            <DatePickerFilter selectedDate={selectedDate} setSelectedDate={setSelectedDate} lang={lang} />
+          <div style={{ marginBottom:28, position:'relative' }}>
+            <div style={{ display:'flex', gap:8, alignItems:'center', flexWrap:'wrap' }}>
+              <FilterTriggerBtn
+                activeCount={activeCount}
+                open={filtersOpen}
+                onClick={() => setFiltersOpen(o => !o)}
+                lang={lang}
+              />
+              {catLabel && (
+                <ActiveFilterChip label={catLabel} onRemove={() => setCat('all')} />
+              )}
+              {dateLabel && (
+                <ActiveFilterChip label={dateLabel} onRemove={() => { setDateStart(''); setDateEnd(''); }} />
+              )}
+            </div>
+
+            <FilterPanel
+              open={filtersOpen}
+              onClose={() => setFiltersOpen(false)}
+              cat={cat} setCat={setCat}
+              dateStart={dateStart} setDateStart={setDateStart}
+              dateEnd={dateEnd} setDateEnd={setDateEnd}
+              lang={lang}
+            />
           </div>
 
           {/* Events grid */}

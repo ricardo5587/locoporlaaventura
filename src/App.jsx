@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { WEB } from './lib/tokens';
+import { WEB, EVENTS } from './lib/tokens';
+import { lplaDB } from './lib/lplaDB';
 import { LangToggleWeb } from './components/ui';
 import { HomePage } from './pages/HomePage';
 import { EventDetailPage } from './pages/EventDetailPage';
@@ -11,9 +12,24 @@ export default function App() {
   const [page,    setPage]    = useState('home');   // 'home' | 'event' | 'confirm' | 'volunteer'
   const [selEvent,setSelEvent]= useState(null);
   const [booking, setBooking] = useState(null);
+  const [events,  setEvents]  = useState(() => {
+    lplaDB.initIfEmpty(EVENTS);
+    return lplaDB.getAllEvents();
+  });
 
   // Scroll to top on page change
   useEffect(() => { window.scrollTo({ top: 0, behavior: 'smooth' }); }, [page]);
+
+  // Keep events in sync with lplaDB (same-tab updates + cross-tab storage events)
+  useEffect(() => {
+    const refresh = () => setEvents(lplaDB.getAllEvents());
+    window.addEventListener('lpla:db:update', refresh);
+    window.addEventListener('storage', refresh);
+    return () => {
+      window.removeEventListener('lpla:db:update', refresh);
+      window.removeEventListener('storage', refresh);
+    };
+  }, []);
 
   function handleBook(event) {
     setSelEvent(event);
@@ -38,6 +54,7 @@ export default function App() {
       {page === 'home' && (
         <HomePage
           lang={lang}
+          events={events}
           onBook={handleBook}
           onVolunteer={() => setPage('volunteer')}
         />
