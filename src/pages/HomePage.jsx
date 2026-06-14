@@ -28,9 +28,9 @@ export function HomePage({ lang, events, onBook, onVolunteer }) {
 
   const catIcon  = CAT_ICONS[cat] || '';
   const catLabel = cat !== 'all' ? `${catIcon} ${cat}`.trim() : null;
-  const dateLabel = (dateStart && dateEnd) ? `📅 ${dateStart} → ${dateEnd}` :
-                    dateStart  ? `📅 ${L('Desde','From')} ${dateStart}` :
-                    dateEnd    ? `📅 ${L('Hasta','To')} ${dateEnd}` : null;
+  const dateLabel = (dateStart && dateEnd) ? `\u{1F4C5} ${dateStart} \u2192 ${dateEnd}` :
+                    dateStart  ? `\u{1F4C5} ${L('Desde','From')} ${dateStart}` :
+                    dateEnd    ? `\u{1F4C5} ${L('Hasta','To')} ${dateEnd}` : null;
 
   function scrollToEvents() {
     if (eventsRef.current) { const top = eventsRef.current.getBoundingClientRect().top + window.scrollY - 20; window.scrollTo({ top, behavior: 'smooth' }); }
@@ -47,7 +47,7 @@ export function HomePage({ lang, events, onBook, onVolunteer }) {
           <div style={{ display:'flex', alignItems:'flex-end', justifyContent:'space-between', marginBottom:24, flexWrap:'wrap', gap:12 }}>
             <div>
               <div style={{ fontFamily:'Barlow Condensed,system-ui', fontSize:14, fontWeight:700, letterSpacing:2.5, textTransform:'uppercase', color:WEB.green, marginBottom:4 }}>
-                {L('PRÓXIMOS EVENTOS', 'UPCOMING EVENTS')}
+                {L('PR\u00d3XIMOS EVENTOS', 'UPCOMING EVENTS')}
               </div>
               <h2 style={{ fontFamily:'Barlow Condensed,system-ui', fontSize: isMobile ? 32 : 42, fontWeight:800, textTransform:'uppercase', color:WEB.text, letterSpacing:.4, margin:0, lineHeight:1.05 }}>
                 {L('Elige Tu Aventura', 'Choose Your Adventure')}
@@ -92,9 +92,9 @@ export function HomePage({ lang, events, onBook, onVolunteer }) {
 
           {filtered.length === 0 && (
             <div style={{ textAlign:'center', padding:'60px 20px', color:WEB.textMuted }}>
-              <div style={{ fontSize:48, marginBottom:12 }}>🏔️</div>
+              <div style={{ fontSize:48, marginBottom:12 }}>{'\u{1F3D4}\u{FE0F}'}</div>
               <div style={{ fontFamily:'Barlow Condensed,system-ui', fontSize:22, fontWeight:700 }}>
-                {L('No hay eventos en esta categoría', 'No events in this category')}
+                {L('No hay eventos en esta categor\u00eda', 'No events in this category')}
               </div>
             </div>
           )}

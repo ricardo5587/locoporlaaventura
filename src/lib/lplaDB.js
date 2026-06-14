@@ -1,4 +1,4 @@
-// lplaDB — lightweight localStorage-backed event store.
+// lplaDB -- lightweight localStorage-backed event store.
 // Provides a seed-once-then-persist data layer so future admin editing
 // features can update events without touching the static EVENTS source.
 

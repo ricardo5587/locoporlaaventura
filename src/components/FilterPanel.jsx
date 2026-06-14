@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import { WEB, CAT_ICONS } from '../lib/tokens';
 
-// ── Helpers ────────────────────────────────────────────────────────────────
+// -- Helpers ----------------------------------------------------------------
 export function toDateString(d) {
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 }
 
-// ── Filter trigger button ─────────────────────────────────────────────────────
+// -- Filter trigger button -----------------------------------------------------
 export function FilterTriggerBtn({ activeCount, onClick, lang, open }) {
   const L = (es, en) => lang === 'es' ? es : en;
   const [hov, setHov] = useState(false);
@@ -46,7 +46,7 @@ export function FilterTriggerBtn({ activeCount, onClick, lang, open }) {
   );
 }
 
-// ── Active filter chip (dismissible tag) ──────────────────────────────────────
+// -- Active filter chip (dismissible tag) --------------------------------------
 export function ActiveFilterChip({ label, onRemove }) {
   const [hov, setHov] = useState(false);
   return (
@@ -65,13 +65,13 @@ export function ActiveFilterChip({ label, onRemove }) {
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           fontSize: 13, fontWeight: 700, flexShrink: 0,
           transition: 'background .15s', lineHeight: 1, padding: 0 }}>
-        ×
+        {'\u00d7'}
       </button>
     </span>
   );
 }
 
-// ── Main filter panel (anchored overlay) ──────────────────────────────────────
+// -- Main filter panel (anchored overlay) --------------------------------------
 export function FilterPanel({ open, onClose, cat, setCat, dateStart, setDateStart, dateEnd, setDateEnd, lang }) {
   const L = (es, en) => lang === 'es' ? es : en;
 
@@ -82,7 +82,7 @@ export function FilterPanel({ open, onClose, cat, setCat, dateStart, setDateStar
     { id:'Taller',     es:'Taller',      en:'Workshop',   icon:CAT_ICONS.Taller },
     { id:'Keynote',    es:'Keynote',     en:'Keynote',    icon:CAT_ICONS.Keynote },
     { id:'Social',     es:'Social',      en:'Social',     icon:CAT_ICONS.Social },
-    { id:'Expedición', es:'Expedición',  en:'Expedition', icon:CAT_ICONS.Expedición },
+    { id:'Expedici\u00f3n', es:'Expedici\u00f3n',  en:'Expedition', icon:CAT_ICONS.Expedici\u00f3n },
     { id:'Voluntario', es:'Voluntario',  en:'Volunteer',  icon:CAT_ICONS.Voluntario },
   ];
 
@@ -121,14 +121,14 @@ export function FilterPanel({ open, onClose, cat, setCat, dateStart, setDateStar
             style={{ width:30, height:30, borderRadius:8, border:`1px solid ${WEB.border}`, background:'transparent', cursor:'pointer', fontSize:18, color:WEB.textMuted, display:'flex', alignItems:'center', justifyContent:'center', transition:'all .15s' }}
             onMouseOver={e => { e.currentTarget.style.background=WEB.bgAlt; e.currentTarget.style.color=WEB.text; }}
             onMouseOut={e => { e.currentTarget.style.background='transparent'; e.currentTarget.style.color=WEB.textMuted; }}>
-            ×
+            {'\u00d7'}
           </button>
         </div>
 
         {/* Category */}
         <div style={{ marginBottom:22 }}>
           <div style={{ fontFamily:'Barlow Condensed,system-ui', fontSize:11, fontWeight:800, letterSpacing:2, textTransform:'uppercase', color:WEB.textLight, marginBottom:12 }}>
-            {L('Categoría', 'Category')}
+            {L('Categor\u00eda', 'Category')}
           </div>
           <div style={{ display:'flex', gap:8, flexWrap:'wrap' }}>
             {cats.map(c => {
@@ -156,7 +156,7 @@ export function FilterPanel({ open, onClose, cat, setCat, dateStart, setDateStar
             {[
               { id:'week',  es:'Esta semana', en:'This Week'  },
               { id:'month', es:'Este mes',    en:'This Month' },
-              { id:'next',  es:'Próximo mes', en:'Next Month' },
+              { id:'next',  es:'Pr\u00f3ximo mes', en:'Next Month' },
             ].map(p => (
               <button key={p.id} onClick={() => applyPreset(p.id)}
                 style={{ padding:'6px 14px', borderRadius:16, border:`1.5px solid ${WEB.border}`, background:'#fff', color:WEB.textMuted, fontFamily:'Barlow Condensed,system-ui', fontSize:12, fontWeight:700, letterSpacing:.4, cursor:'pointer', transition:'all .2s', textTransform:'uppercase' }}
@@ -170,7 +170,7 @@ export function FilterPanel({ open, onClose, cat, setCat, dateStart, setDateStar
                 style={{ padding:'6px 12px', borderRadius:16, border:'1.5px solid rgba(231,76,60,.25)', background:'rgba(231,76,60,.05)', color:'#E74C3C', fontFamily:'Barlow Condensed,system-ui', fontSize:12, fontWeight:700, letterSpacing:.4, cursor:'pointer', transition:'all .2s', textTransform:'uppercase' }}
                 onMouseOver={e => { e.currentTarget.style.background='rgba(231,76,60,.1)'; e.currentTarget.style.borderColor='rgba(231,76,60,.5)'; }}
                 onMouseOut={e => { e.currentTarget.style.background='rgba(231,76,60,.05)'; e.currentTarget.style.borderColor='rgba(231,76,60,.25)'; }}>
-                {L('Limpiar fecha ×', 'Clear Date ×')}
+                {L('Limpiar fecha \u00d7', 'Clear Date \u00d7')}
               </button>
             )}
           </div>
