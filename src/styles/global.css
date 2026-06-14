@@ -1,0 +1,9 @@
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body { font-family: 'Nunito', system-ui, sans-serif; background: #FAFAF8; color: #0F2030; -webkit-font-smoothing: antialiased; }
+input, button, textarea { font-family: inherit; }
+@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+/* Custom scrollbar */
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-track { background: #F3EDE3; }
+::-webkit-scrollbar-thumb { background: #1B5E7F; border-radius: 4px; }
