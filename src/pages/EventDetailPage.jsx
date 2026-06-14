@@ -81,7 +81,7 @@ export function EventDetailPage({ event, lang, onConfirm, onBack }) {
         <div style={{ position:'absolute', bottom:16, left:20, display:'flex', gap:8 }}>
           <WebBadge bg={WEB.teal}>{CAT_ICONS[event.category]} {event.category}</WebBadge>
           {isFull && <WebBadge bg="#E74C3C">{L('AGOTADO', 'SOLD OUT')}</WebBadge>}
-          {isLow && <WebBadge bg="#E67E22">\u26a1 {L(`Solo ${event.spotsLeft} plazas`, `${event.spotsLeft} spots left`)}</WebBadge>}
+          {isLow && <WebBadge bg="#E67E22">{'\u26a1'} {L(`Solo ${event.spotsLeft} plazas`, `${event.spotsLeft} spots left`)}</WebBadge>}
         </div>
       </div>
 
@@ -141,7 +141,7 @@ export function EventDetailPage({ event, lang, onConfirm, onBack }) {
                   L('Pol\u00edtica de cancelaci\u00f3n', 'Cancellation policy'),
                 ].map(item => (
                   <div key={item} style={{ display:'flex', alignItems:'center', gap:8, fontFamily:'Nunito,system-ui', fontSize:14, color:WEB.text }}>
-                    <span style={{ color:WEB.green, fontWeight:700 }}>\u2713</span> {item}
+                    <span style={{ color:WEB.green, fontWeight:700 }}>{'\u2713'}</span> {item}
                   </div>
                 ))}
               </div>
@@ -199,7 +199,7 @@ export function EventDetailPage({ event, lang, onConfirm, onBack }) {
                       {L('Personas', 'People')}
                     </label>
                     <div style={{ display:'flex', alignItems:'center', gap:0, background:WEB.bgAlt, borderRadius:12, width:'fit-content', border:`1.5px solid ${WEB.border}` }}>
-                      <button onClick={() => setF('quantity', Math.max(1, form.quantity-1))} style={{ width:44, height:44, border:'none', background:'transparent', cursor:'pointer', fontSize:20, color:WEB.teal, fontWeight:700 }}>\u2212</button>
+                      <button onClick={() => setF('quantity', Math.max(1, form.quantity-1))} style={{ width:44, height:44, border:'none', background:'transparent', cursor:'pointer', fontSize:20, color:WEB.teal, fontWeight:700 }}>{'\u2212'}</button>
                       <span style={{ minWidth:36, textAlign:'center', fontFamily:'Barlow Condensed,system-ui', fontSize:20, fontWeight:800, color:WEB.text }}>{form.quantity}</span>
                       <button onClick={() => setF('quantity', Math.min(event.spotsLeft || 10, form.quantity+1))} style={{ width:44, height:44, border:'none', background:'transparent', cursor:'pointer', fontSize:20, color:WEB.green, fontWeight:700 }}>+</button>
                     </div>
@@ -221,7 +221,7 @@ export function EventDetailPage({ event, lang, onConfirm, onBack }) {
                   </div>
                   <div>
                     <label style={{ fontFamily:'Nunito,system-ui', fontSize:12, fontWeight:700, color:WEB.textMuted, textTransform:'uppercase', letterSpacing:.8, display:'block', marginBottom:6 }}>{L('Apellidos *', 'Last Name *')}</label>
-                    <input value={form.lastName} onChange={e => setF('lastName', e.target.value)} style={inputStyle(errors.lastName)} placeholder="Garc\u00eda" />
+                    <input value={form.lastName} onChange={e => setF('lastName', e.target.value)} style={inputStyle(errors.lastName)} placeholder={'Garc\u00eda'} />
                     {errors.lastName && <div style={{ fontFamily:'Nunito,system-ui', fontSize:11, color:'#E74C3C', marginTop:3 }}>{errors.lastName}</div>}
                   </div>
                 </div>
