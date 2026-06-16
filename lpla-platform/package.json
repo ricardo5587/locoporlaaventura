@@ -1,0 +1,17 @@
+{
+  "name": "lpla-platform",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev -p 3001",
+    "build": "next build",
+    "start": "next start -p 3001"
+  },
+  "dependencies": {
+    "next": "14.2.3",
+    "@supabase/supabase-js": "^2.43.4",
+    "jsonwebtoken": "^9.0.2",
+    "bcryptjs": "^2.4.3",
+    "twilio": "^5.0.4"
+  }
+}
