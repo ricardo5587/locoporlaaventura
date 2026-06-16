@@ -1,34 +1,30 @@
 import { useState, useEffect } from 'react';
-import { WEB, EVENTS } from './lib/tokens';
-import { lplaDB } from './lib/lplaDB';
+import { WEB } from './lib/tokens';
 import { LangToggleWeb } from './components/ui';
 import { HomePage } from './pages/HomePage';
 import { EventDetailPage } from './pages/EventDetailPage';
 import { ConfirmationPage } from './pages/ConfirmationPage';
 import { VolunteerPage } from './pages/VolunteerPage';
 
+const API = 'https://locoporlaaventura.vercel.app';
+
 export default function App() {
   const [lang,    setLang]    = useState('en');
-  const [page,    setPage]    = useState('home');   // 'home' | 'event' | 'confirm' | 'volunteer'
+  const [page,    setPage]    = useState('home');
   const [selEvent,setSelEvent]= useState(null);
   const [booking, setBooking] = useState(null);
-  const [events,  setEvents]  = useState(() => {
-    lplaDB.initIfEmpty(EVENTS);
-    return lplaDB.getAllEvents();
-  });
+  const [events,  setEvents]  = useState([]);
+  const [loading, setLoading] = useState(true);
 
   // Scroll to top on page change
   useEffect(() => { window.scrollTo({ top: 0, behavior: 'smooth' }); }, [page]);
 
-  // Keep events in sync with lplaDB (same-tab updates + cross-tab storage events)
+  // Load events from API
   useEffect(() => {
-    const refresh = () => setEvents(lplaDB.getAllEvents());
-    window.addEventListener('lpla:db:update', refresh);
-    window.addEventListener('storage', refresh);
-    return () => {
-      window.removeEventListener('lpla:db:update', refresh);
-      window.removeEventListener('storage', refresh);
-    };
+    fetch(`${API}/api/events?draft=false`)
+      .then(r => r.json())
+      .then(data => { setEvents(Array.isArray(data) ? data : []); setLoading(false); })
+      .catch(() => setLoading(false));
   }, []);
 
   function handleBook(event) {
