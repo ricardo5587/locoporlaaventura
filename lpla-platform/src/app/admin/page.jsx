@@ -323,11 +323,11 @@ function Sidebar({ activePage, onNav, onLogout, eventCount }) {
         })}
 
         {/* Launch */}
-        <button style={{
+        <a href="https://locoporlaaventura.vercel.app" target="_blank" rel="noreferrer" style={{
           width: '100%', display: 'flex', alignItems: 'center', gap: 10, marginTop: 6,
           padding: '9px 14px', borderRadius: 8, cursor: 'pointer', border: '1px solid rgba(168,184,74,.25)',
           background: 'transparent', color: 'rgba(168,184,74,.6)',
-          fontFamily: 'Nunito,system-ui', fontSize: 14, fontWeight: 600, textAlign: 'left',
+          fontFamily: 'Nunito,system-ui', fontSize: 14, fontWeight: 600, textDecoration: 'none',
           transition: 'all .15s',
         }}
           onMouseOver={e => { e.currentTarget.style.borderColor = 'rgba(168,184,74,.6)'; e.currentTarget.style.color = '#A8B84A' }}
@@ -335,7 +335,7 @@ function Sidebar({ activePage, onNav, onLogout, eventCount }) {
           <AdmIcon name="launch" size={16} />
           Launch
           <AdmIcon name="chevronRight" size={14} style={{ marginLeft: 'auto' }} />
-        </button>
+        </a>
       </nav>
 
       {/* Bottom */}
@@ -440,6 +440,23 @@ export default function AdminPage() {
 
           {/* Content */}
           <div style={{ flex: 1, overflow: 'auto', padding: '28px 32px', background: ADM.bg }}>
+            {activePage !== 'events' && (
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '60vh', gap: 16 }}>
+                <div style={{ width: 56, height: 56, borderRadius: 16, background: `${ADM.primary}14`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <AdmIcon name={activePage === 'overview' ? 'chart' : activePage === 'attendees' ? 'people' : activePage === 'contacts' ? 'user' : 'apps'} size={28} color={ADM.primary} />
+                </div>
+                <div style={{ textAlign: 'center' }}>
+                  <div style={{ fontFamily: 'Barlow Condensed,system-ui', fontSize: 22, fontWeight: 800, color: ADM.text, textTransform: 'uppercase', letterSpacing: .5 }}>
+                    {activePage.charAt(0).toUpperCase() + activePage.slice(1)}
+                  </div>
+                  <div style={{ fontFamily: 'Nunito,system-ui', fontSize: 14, color: ADM.muted, marginTop: 6 }}>This section is coming soon.</div>
+                </div>
+                <button onClick={() => setActivePage('events')} style={{ padding: '10px 22px', borderRadius: ADM.radius, border: `1px solid ${ADM.border}`, background: '#fff', cursor: 'pointer', fontFamily: 'Nunito,system-ui', fontSize: 14, fontWeight: 600, color: ADM.primary }}>
+                  ← Back to Events
+                </button>
+              </div>
+            )}
+            {activePage === 'events' && <>
             {/* Page header */}
             <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 24, flexWrap: 'wrap', gap: 12 }}>
               <div>
@@ -549,6 +566,7 @@ export default function AdminPage() {
                 </div>
               </div>
             )}
+            </>}
           </div>
         </div>
 
