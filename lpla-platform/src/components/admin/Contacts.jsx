@@ -417,9 +417,19 @@ function CrmImportModal({ onClose, onImport, ADM }) {
   }, [parsed, mapping])
 
   function doImport() {
-    const count = parsed ? parsed.rows.length : 0
-    setImportedCount(count)
-    onImport && onImport(count)
+    if (!parsed) return
+    const contacts = parsed.rows.map(row => {
+      const obj = {}
+      mapping.forEach((field, i) => {
+        if (field !== '--skip--' && row[i] !== undefined) obj[field] = row[i]
+      })
+      if (!obj.name && (obj.firstName || obj.lastName)) obj.name = [obj.firstName, obj.lastName].filter(Boolean).join(' ')
+      if (!obj.firstName && obj.name) obj.firstName = obj.name.split(' ')[0]
+      if (!obj.lastName && obj.name) obj.lastName = obj.name.split(' ').slice(1).join(' ')
+      return obj
+    }).filter(c => c.email || c.name)
+    setImportedCount(contacts.length)
+    onImport && onImport(contacts)
     setStep('done')
   }
 
@@ -584,9 +594,42 @@ function CrmImportModal({ onClose, onImport, ADM }) {
   )
 }
 
+function importedToContact(raw) {
+  const name = raw.name || [raw.firstName, raw.lastName].filter(Boolean).join(' ') || 'Unknown'
+  const firstName = raw.firstName || name.split(' ')[0]
+  const lastName = raw.lastName || name.split(' ').slice(1).join(' ')
+  const email = raw.email || ''
+  const tags = raw.tags ? raw.tags.split(/[,;]/).map(t => t.trim()).filter(Boolean) : []
+  const now = Date.now()
+  return {
+    id: email || name + now,
+    name, firstName, lastName,
+    initials: ((firstName[0] || '') + (lastName[0] || '')).toUpperCase() || '?',
+    email, phone: raw.phone || '',
+    orders: [], totalSpend: 0, bookingCount: 0, checkedIn: 0,
+    firstActivity: now, lastActivity: now,
+    categories: [], events: [],
+    engagementScore: 0, segment: tags.includes('VIP') ? 'VIP' : tags.includes('New') ? 'New' : 'Occasional',
+    tags,
+  }
+}
+
 export default function AdminCRM({ events, ADM, OvKpi }) {
   const orders = admBuildOrders(events)
-  const allContacts = crmBuildContacts(orders)
+  const orderContacts = crmBuildContacts(orders)
+
+  const [imported, setImported] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('lpla_crm_imported') || '[]') } catch { return [] }
+  })
+
+  const allContacts = useMemo(() => {
+    const map = {}
+    orderContacts.forEach(c => { map[c.id] = c })
+    imported.forEach(c => {
+      if (!map[c.id]) map[c.id] = c
+    })
+    return Object.values(map).sort((a, b) => b.lastActivity - a.lastActivity)
+  }, [orderContacts, imported])
 
   const [segment, setSegment] = useState('all')
   const [showImport, setShowImport] = useState(false)
@@ -810,7 +853,14 @@ export default function AdminCRM({ events, ADM, OvKpi }) {
       </div>
 
       {selected && <CrmDrawer contact={selected} allTags={ALL_TAGS} onClose={()=>setSelected(null)} ADM={ADM} />}
-      {showImport && <CrmImportModal onClose={()=>setShowImport(false)} onImport={n=>{setImportBanner(n); setShowImport(false)}} ADM={ADM} />}
+      {showImport && <CrmImportModal onClose={()=>setShowImport(false)} onImport={contacts=>{
+        const newContacts = contacts.map(importedToContact)
+        const next = [...imported, ...newContacts]
+        setImported(next)
+        try { localStorage.setItem('lpla_crm_imported', JSON.stringify(next)) } catch {}
+        setImportBanner(contacts.length)
+        setShowImport(false)
+      }} ADM={ADM} />}
     </div>
   )
 }
