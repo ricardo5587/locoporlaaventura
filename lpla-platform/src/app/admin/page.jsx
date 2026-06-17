@@ -115,8 +115,25 @@ function EventModal({ event, token, onClose, onSaved }) {
   } : { ...EMPTY })
   const [errors, setErrors] = useState({})
   const [saving, setSaving] = useState(false)
+  const [uploading, setUploading] = useState(false)
+  const [uploadError, setUploadError] = useState('')
 
   const setF = (k, v) => setForm(f => ({ ...f, [k]: v }))
+
+  async function uploadImage(file) {
+    if (file.size > 50 * 1024 * 1024) { setUploadError('File exceeds 50 MB limit'); return }
+    setUploading(true); setUploadError('')
+    try {
+      const fd = new FormData(); fd.append('file', file)
+      const res = await fetch(`${API}/api/upload`, {
+        method: 'POST', headers: { Authorization: `Bearer ${token}` }, body: fd,
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Upload failed')
+      setF('image', data.url)
+    } catch (err) { setUploadError(err.message) }
+    setUploading(false)
+  }
 
   function addTicket() { setForm(f => ({ ...f, tickets: [...f.tickets, { id: `t${Date.now()}`, en: '', es: '', price: 0 }] })) }
   function removeTicket(i) { setForm(f => ({ ...f, tickets: f.tickets.filter((_, j) => j !== i) })) }
@@ -187,13 +204,38 @@ function EventModal({ event, token, onClose, onSaved }) {
             {/* Event Image */}
             <div style={{ gridColumn: 'span 2' }}>
               <label style={labelStyle}>Event Image</label>
-              <input value={form.image} onChange={e => setF('image', e.target.value)} placeholder="https://example.com/image.jpg" style={inputStyle} />
-              {form.image && (
-                <div style={{ marginTop: 10, borderRadius: ADM.radius, overflow: 'hidden', border: `1px solid ${ADM.border}`, maxHeight: 180 }}>
-                  <img src={form.image} alt="Preview" onError={e => e.target.style.display = 'none'} style={{ width: '100%', height: 180, objectFit: 'cover', display: 'block' }} />
+              {form.image ? (
+                <div style={{ position: 'relative', borderRadius: ADM.radius, overflow: 'hidden', border: `1px solid ${ADM.border}`, maxHeight: 200 }}>
+                  <img src={form.image} alt="Preview" style={{ width: '100%', height: 200, objectFit: 'cover', display: 'block' }} />
+                  <button onClick={() => setF('image', '')} style={{ position: 'absolute', top: 8, right: 8, width: 28, height: 28, borderRadius: '50%', border: 'none', background: 'rgba(0,0,0,.6)', color: '#fff', cursor: 'pointer', fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>&#xd7;</button>
+                </div>
+              ) : (
+                <div
+                  onClick={() => document.getElementById('event-img-input').click()}
+                  onDragOver={e => { e.preventDefault(); e.currentTarget.style.borderColor = ADM.primary; e.currentTarget.style.background = `${ADM.primary}08` }}
+                  onDragLeave={e => { e.currentTarget.style.borderColor = ADM.border; e.currentTarget.style.background = 'transparent' }}
+                  onDrop={async e => {
+                    e.preventDefault(); e.currentTarget.style.borderColor = ADM.border; e.currentTarget.style.background = 'transparent'
+                    const file = e.dataTransfer.files[0]; if (file) await uploadImage(file)
+                  }}
+                  style={{ border: `2px dashed ${ADM.border}`, borderRadius: ADM.radius, padding: '28px 20px', textAlign: 'center', cursor: 'pointer', transition: 'all .2s' }}>
+                  {uploading ? (
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
+                      <span style={{ width: 18, height: 18, border: `2.5px solid ${ADM.border}`, borderTopColor: ADM.primary, borderRadius: '50%', display: 'inline-block', animation: 'spin 1s linear infinite' }} />
+                      <span style={{ fontFamily: 'Nunito,system-ui', fontSize: 14, color: ADM.muted }}>Uploading...</span>
+                    </div>
+                  ) : (
+                    <>
+                      <div style={{ fontSize: 28, marginBottom: 6, opacity: .4 }}>&#x1f4f7;</div>
+                      <div style={{ fontFamily: 'Nunito,system-ui', fontSize: 14, fontWeight: 600, color: ADM.text }}>Drop an image here or click to browse</div>
+                      <div style={{ fontFamily: 'Nunito,system-ui', fontSize: 12, color: ADM.light, marginTop: 4 }}>JPEG, PNG, WebP, GIF — max 50 MB</div>
+                    </>
+                  )}
                 </div>
               )}
-              <div style={{ fontSize: 11, color: ADM.light, marginTop: 5, fontFamily: 'Nunito,system-ui' }}>Paste an image URL. Tip: upload to imgur.com or postimages.org for free hosting.</div>
+              <input id="event-img-input" type="file" accept="image/jpeg,image/png,image/webp,image/gif" style={{ display: 'none' }}
+                onChange={async e => { const file = e.target.files[0]; if (file) await uploadImage(file); e.target.value = '' }} />
+              {uploadError && <div style={{ fontSize: 12, color: ADM.danger, marginTop: 6 }}>{uploadError}</div>}
             </div>
 
             {/* Date / Time / Location / Category / Spots */}
