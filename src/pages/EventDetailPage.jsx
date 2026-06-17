@@ -73,7 +73,7 @@ export function EventDetailPage({ event, lang, onConfirm, onBack }) {
     <div style={{ background:WEB.bg, minHeight:'100vh' }}>
       {/* Event hero */}
       <div style={{ position:'relative' }}>
-        <WebImgPlaceholder height={isMobile ? 240 : 360} label={`${L(event.titleEs, event.titleEn)} \u00b7 event photo`} index={event.index} />
+        <WebImgPlaceholder height={isMobile ? 240 : 360} label={`${L(event.titleEs, event.titleEn)} \u00b7 event photo`} index={event.index} image={event.image} />
         <div style={{ position:'absolute', inset:0, background:'linear-gradient(180deg,rgba(11,30,43,.5) 0%,transparent 60%)' }} />
         <button onClick={onBack} style={{ position:'absolute', top:20, left:20, width:40, height:40, borderRadius:'50%', background:'rgba(0,0,0,.4)', border:'none', cursor:'pointer', backdropFilter:'blur(8px)', display:'flex', alignItems:'center', justifyContent:'center' }}>
           <svg width="10" height="16" viewBox="0 0 10 16" fill="none"><path d="M8 2L2 8l6 6" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>

@@ -17,7 +17,7 @@ export function WebMountains({ height = 140, style = {} }) {
   );
 }
 
-export function WebImgPlaceholder({ height = 220, label = '', index = 0, style = {} }) {
+export function WebImgPlaceholder({ height = 220, label = '', index = 0, style = {}, image }) {
   const grads = [
     'linear-gradient(135deg,#1B5E7F 0%,#4A6E1A 100%)',
     'linear-gradient(135deg,#2D4D0E 0%,#1B5E7F 100%)',
@@ -26,6 +26,13 @@ export function WebImgPlaceholder({ height = 220, label = '', index = 0, style =
     'linear-gradient(135deg,#0B1E2B 0%,#2B7A9F 100%)',
     'linear-gradient(135deg,#1B5E7F 0%,#5C3B1E 100%)',
   ];
+  if (image) {
+    return (
+      <div style={{ height, position:'relative', overflow:'hidden', ...style }}>
+        <img src={image} alt={label} style={{ width:'100%', height:'100%', objectFit:'cover', display:'block' }} />
+      </div>
+    );
+  }
   return (
     <div style={{ height, position:'relative', overflow:'hidden', ...style }}>
       <div style={{ position:'absolute', inset:0, background:grads[index % 6] }} />

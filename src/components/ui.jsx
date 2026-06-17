@@ -153,7 +153,7 @@ export function EventCard({ event, lang, onBook }) {
 
       {/* Image */}
       <div style={{ position:'relative' }}>
-        <WebImgPlaceholder height={190} label={`${L(event.titleEs, event.titleEn)} · event photo`} index={event.index} />
+        <WebImgPlaceholder height={190} label={`${L(event.titleEs, event.titleEn)} · event photo`} index={event.index} image={event.image} />
         <div style={{ position:'absolute', top:12, left:12 }}>
           <WebBadge bg={WEB.teal}>{CAT_ICONS[event.category]} {event.category}</WebBadge>
         </div>

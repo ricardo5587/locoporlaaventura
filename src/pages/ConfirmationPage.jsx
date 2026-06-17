@@ -23,7 +23,7 @@ export function ConfirmationPage({ booking, lang, onHome }) {
 
         {/* Booking summary card */}
         <div style={{ background:WEB.card, borderRadius:WEB.radiusLg, boxShadow:WEB.shadowMd, overflow:'hidden', marginBottom:20 }}>
-          <WebImgPlaceholder height={160} label="" index={event.index} />
+          <WebImgPlaceholder height={160} label="" index={event.index} image={event.image} />
           <div style={{ padding:'20px 24px' }}>
             <WebBadge bg={WEB.teal} style={{ marginBottom:10 }}>{event.category}</WebBadge>
             <div style={{ fontFamily:'Barlow Condensed,system-ui', fontSize:26, fontWeight:800, color:WEB.text, textTransform:'uppercase', letterSpacing:.3, marginBottom:14 }}>
