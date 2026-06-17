@@ -323,7 +323,7 @@ function Sidebar({ activePage, onNav, onLogout, eventCount }) {
         })}
 
         {/* Launch */}
-        <a href="https://locoporlaaventura.vercel.app" target="_blank" rel="noreferrer" style={{
+        <a href="https://locoporlaaventura-k1oz3.vercel.app" target="_blank" rel="noreferrer" style={{
           width: '100%', display: 'flex', alignItems: 'center', gap: 10, marginTop: 6,
           padding: '9px 14px', borderRadius: 8, cursor: 'pointer', border: '1px solid rgba(168,184,74,.25)',
           background: 'transparent', color: 'rgba(168,184,74,.6)',
