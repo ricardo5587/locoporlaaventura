@@ -98,7 +98,7 @@ function TicketRow({ ticket, onChange, onRemove, canRemove }) {
 const EMPTY = {
   titleEn: '', titleEs: '', descEn: '', descEs: '',
   date: '', time: '7:00 AM', location: '', category: 'Escalada',
-  isFree: false, price: 0, totalSpots: 20, draft: false,
+  image: '', isFree: false, price: 0, totalSpots: 20, draft: false,
   tickets: [{ id: 'general', en: 'General Admission', es: 'Entrada General', price: 0 }],
 }
 
@@ -109,7 +109,7 @@ function EventModal({ event, token, onClose, onSaved }) {
     descEn: event.descEn || '', descEs: event.descEs || '',
     date: event.date || '', time: event.time || '7:00 AM',
     location: event.location || '', category: event.category || 'Escalada',
-    isFree: event.isFree || false, price: event.price || 0,
+    image: event.image || '', isFree: event.isFree || false, price: event.price || 0,
     totalSpots: event.totalSpots || 20, draft: event.draft || false,
     tickets: event.tickets?.length ? event.tickets : EMPTY.tickets,
   } : { ...EMPTY })
@@ -183,6 +183,18 @@ function EventModal({ event, token, onClose, onSaved }) {
                 <textarea value={form[k]} onChange={e => setF(k, e.target.value)} rows={3} style={{ ...inputStyle, height: 'auto', padding: '8px 12px', resize: 'vertical' }} />
               </div>
             ))}
+
+            {/* Event Image */}
+            <div style={{ gridColumn: 'span 2' }}>
+              <label style={labelStyle}>Event Image</label>
+              <input value={form.image} onChange={e => setF('image', e.target.value)} placeholder="https://example.com/image.jpg" style={inputStyle} />
+              {form.image && (
+                <div style={{ marginTop: 10, borderRadius: ADM.radius, overflow: 'hidden', border: `1px solid ${ADM.border}`, maxHeight: 180 }}>
+                  <img src={form.image} alt="Preview" onError={e => e.target.style.display = 'none'} style={{ width: '100%', height: 180, objectFit: 'cover', display: 'block' }} />
+                </div>
+              )}
+              <div style={{ fontSize: 11, color: ADM.light, marginTop: 5, fontFamily: 'Nunito,system-ui' }}>Paste an image URL. Tip: upload to imgur.com or postimages.org for free hosting.</div>
+            </div>
 
             {/* Date / Time / Location / Category / Spots */}
             <div>
