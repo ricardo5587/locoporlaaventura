@@ -6,6 +6,7 @@ import DashboardOverview, { OvKpi } from '@/components/admin/Overview'
 import AttendeesBookings from '@/components/admin/Attendees'
 import AdminCRM from '@/components/admin/Contacts'
 import AdminApps from '@/components/admin/Apps'
+import AdminUsers from '@/components/admin/Users'
 
 const API = 'https://locoporlaaventura.vercel.app'
 const TODAY = new Date().toISOString().slice(0, 10)
@@ -331,13 +332,15 @@ function DeleteConfirm({ event, onConfirm, onCancel }) {
 }
 
 // ── Sidebar ───────────────────────────────────────────────────────────────────
-function Sidebar({ activePage, onNav, onLogout, eventCount }) {
+function Sidebar({ activePage, onNav, onLogout, eventCount, currentUser }) {
+  const isOwner = currentUser?.role === 'owner'
   const navItems = [
     { id: 'overview', label: 'Overview', icon: 'chart' },
     { id: 'events', label: 'Events', icon: 'calendar', badge: eventCount },
     { id: 'attendees', label: 'Attendees', icon: 'people' },
     { id: 'contacts', label: 'Contacts', icon: 'user' },
     { id: 'apps', label: 'Apps', icon: 'apps' },
+    ...(isOwner ? [{ id: 'users', label: 'Users', icon: 'people' }] : []),
   ]
 
   return (
@@ -400,11 +403,11 @@ function Sidebar({ activePage, onNav, onLogout, eventCount }) {
       <div style={{ padding: '12px 10px', borderTop: '1px solid rgba(255,255,255,.08)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px', marginBottom: 6 }}>
           <div style={{ width: 30, height: 30, borderRadius: '50%', background: 'linear-gradient(135deg,#294154,#546207)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-            <span style={{ fontFamily: 'Barlow Condensed,system-ui', fontSize: 13, fontWeight: 800, color: '#fff' }}>A</span>
+            <span style={{ fontFamily: 'Barlow Condensed,system-ui', fontSize: 13, fontWeight: 800, color: '#fff' }}>{(currentUser?.name || 'A').charAt(0).toUpperCase()}</span>
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontFamily: 'Nunito,system-ui', fontSize: 13, fontWeight: 700, color: '#fff', lineHeight: 1.2 }}>Admin</div>
-            <div style={{ fontFamily: 'Nunito,system-ui', fontSize: 11, color: 'rgba(255,255,255,.35)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>ricardo8755@gmail.com</div>
+            <div style={{ fontFamily: 'Nunito,system-ui', fontSize: 13, fontWeight: 700, color: '#fff', lineHeight: 1.2 }}>{currentUser?.name || 'Admin'}</div>
+            <div style={{ fontFamily: 'Nunito,system-ui', fontSize: 11, color: 'rgba(255,255,255,.35)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{currentUser?.email || ''}</div>
           </div>
         </div>
         <button onClick={onLogout} style={{ width: '100%', padding: '9px 14px', borderRadius: 8, border: '1px solid rgba(255,255,255,.12)', background: 'transparent', color: 'rgba(255,255,255,.5)', fontFamily: 'Nunito,system-ui', fontSize: 13, fontWeight: 600, cursor: 'pointer', textAlign: 'left' }}>
@@ -416,9 +419,18 @@ function Sidebar({ activePage, onNav, onLogout, eventCount }) {
 }
 
 // ── Main admin page ───────────────────────────────────────────────────────────
+const IDLE_TIMEOUT = 30 * 60 * 1000
+
+function parseJwtPayload(token) {
+  try {
+    return JSON.parse(atob(token.split('.')[1]))
+  } catch { return null }
+}
+
 export default function AdminPage() {
   const router = useRouter()
   const [token, setToken] = useState('')
+  const [currentUser, setCurrentUser] = useState(null)
   const [events, setEvents] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -433,8 +445,27 @@ export default function AdminPage() {
     const t = localStorage.getItem('lpla_admin_token')
     if (!t) { router.push('/admin/login'); return }
     setToken(t)
+    setCurrentUser(parseJwtPayload(t))
     loadEvents(t)
   }, [])
+
+  useEffect(() => {
+    let timer
+    function resetTimer() {
+      clearTimeout(timer)
+      timer = setTimeout(() => {
+        localStorage.removeItem('lpla_admin_token')
+        router.push('/admin/login')
+      }, IDLE_TIMEOUT)
+    }
+    const events_ = ['mousedown', 'keydown', 'scroll', 'touchstart']
+    events_.forEach(e => window.addEventListener(e, resetTimer))
+    resetTimer()
+    return () => {
+      clearTimeout(timer)
+      events_.forEach(e => window.removeEventListener(e, resetTimer))
+    }
+  }, [router])
 
   async function loadEvents(t) {
     setLoading(true)
@@ -485,25 +516,26 @@ export default function AdminPage() {
       `}</style>
       <div style={{ display: 'flex', height: '100vh', fontFamily: 'Nunito,system-ui', background: ADM.bg, overflow: 'hidden' }}>
 
-        <Sidebar activePage={activePage} onNav={setActivePage} onLogout={logout} eventCount={counts.upcoming} />
+        <Sidebar activePage={activePage} onNav={setActivePage} onLogout={logout} eventCount={counts.upcoming} currentUser={currentUser} />
 
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
           {/* Top bar */}
           <div style={{ height: 52, background: ADM.sidebar, borderBottom: '1px solid rgba(255,255,255,.08)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 24px', flexShrink: 0 }}>
             <div>
               <span style={{ fontFamily: 'Barlow Condensed,system-ui', fontSize: 14, fontWeight: 700, letterSpacing: 1.5, textTransform: 'uppercase', color: 'rgba(255,255,255,.9)' }}>
-                {{ overview: 'Overview', events: 'Events', attendees: 'Attendees', contacts: 'Contacts', apps: 'Apps' }[activePage]}
+                {{ overview: 'Overview', events: 'Events', attendees: 'Attendees', contacts: 'Contacts', apps: 'Apps', users: 'Users' }[activePage]}
               </span>
               <span style={{ fontFamily: 'Nunito,system-ui', fontSize: 12, color: 'rgba(255,255,255,.4)', marginLeft: 12 }}>Live &middot; {events.length} events synced</span>
             </div>
           </div>
 
           {/* Content */}
-          <div style={{ flex: 1, overflow: activePage === 'contacts' ? 'hidden' : 'auto', padding: activePage === 'contacts' || activePage === 'overview' || activePage === 'attendees' || activePage === 'apps' ? 0 : '28px 32px', background: ADM.bg, display: 'flex', flexDirection: 'column' }}>
+          <div style={{ flex: 1, overflow: activePage === 'contacts' ? 'hidden' : 'auto', padding: activePage === 'contacts' || activePage === 'overview' || activePage === 'attendees' || activePage === 'apps' || activePage === 'users' ? 0 : '28px 32px', background: ADM.bg, display: 'flex', flexDirection: 'column' }}>
             {activePage === 'overview' && <DashboardOverview events={events} ADM={ADM} CAT_COLORS={CAT_COLORS} onSelectEvent={ev => { setActivePage('events'); setModal(ev) }} onGoEvents={() => setActivePage('events')} />}
             {activePage === 'attendees' && <AttendeesBookings events={events} ADM={ADM} OvKpi={OvKpi} />}
             {activePage === 'contacts' && <AdminCRM events={events} ADM={ADM} OvKpi={OvKpi} />}
             {activePage === 'apps' && <AdminApps ADM={ADM} />}
+            {activePage === 'users' && <AdminUsers ADM={ADM} OvKpi={OvKpi} currentUser={currentUser} />}
             {activePage === 'events' && <div style={{ padding: '28px 32px' }}>
             {/* Page header */}
             <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 24, flexWrap: 'wrap', gap: 12 }}>

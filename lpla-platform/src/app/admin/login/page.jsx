@@ -6,14 +6,16 @@ const API = 'https://locoporlaaventura.vercel.app'
 
 export default function AdminLogin() {
   const router = useRouter()
-  const [email, setEmail] = useState('ricardo8755@gmail.com')
+  const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPw, setShowPw] = useState(false)
   const [remember, setRemember] = useState(true)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [focus, setFocus] = useState('')
+
   const [show2FA, setShow2FA] = useState(false)
+  const [pendingToken, setPendingToken] = useState('')
   const [digits, setDigits] = useState(['','','','','',''])
   const [verifying, setVerifying] = useState(false)
   const [verifyError, setVerifyError] = useState('')
@@ -21,6 +23,17 @@ export default function AdminLogin() {
   const [canResend, setCanResend] = useState(false)
   const digitRefs = useRef([])
   const countdownRef = useRef(null)
+
+  const [showForgot, setShowForgot] = useState(false)
+  const [forgotStep, setForgotStep] = useState('email')
+  const [forgotEmail, setForgotEmail] = useState('')
+  const [forgotError, setForgotError] = useState('')
+  const [forgotLoading, setForgotLoading] = useState(false)
+  const [resetToken, setResetToken] = useState('')
+  const [resetDigits, setResetDigits] = useState(['','','','','',''])
+  const [newPw, setNewPw] = useState('')
+  const [confirmPw, setConfirmPw] = useState('')
+  const resetDigitRefs = useRef([])
 
   useEffect(() => {
     const token = localStorage.getItem('lpla_admin_token')
@@ -53,6 +66,7 @@ export default function AdminLogin() {
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.message || data.error || 'Invalid credentials')
+      setPendingToken(data.pendingToken)
       setShow2FA(true)
     } catch (err) {
       setError(err.message)
@@ -88,7 +102,7 @@ export default function AdminLogin() {
       const res = await fetch(`${API}/api/auth/2fa/verify`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code }),
+        body: JSON.stringify({ code, pendingToken }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.message || data.error || 'Verification failed')
@@ -101,6 +115,64 @@ export default function AdminLogin() {
     } finally {
       setVerifying(false)
     }
+  }
+
+  async function handleResend() {
+    try {
+      await fetch(`${API}/api/auth/2fa/send`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pendingToken }),
+      })
+      setShow2FA(false)
+      setTimeout(() => setShow2FA(true), 50)
+    } catch {}
+  }
+
+  async function handleForgotSubmit() {
+    setForgotError(''); setForgotLoading(true)
+    try {
+      const res = await fetch(`${API}/api/auth/forgot`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: forgotEmail }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Failed')
+      if (data.resetToken) setResetToken(data.resetToken)
+      setForgotStep('code')
+    } catch (err) { setForgotError(err.message) }
+    setForgotLoading(false)
+  }
+
+  async function handleResetPassword() {
+    const code = resetDigits.join('')
+    if (code.length !== 6) { setForgotError('Enter all 6 digits'); return }
+    if (newPw.length < 8) { setForgotError('Password must be at least 8 characters'); return }
+    if (newPw !== confirmPw) { setForgotError('Passwords do not match'); return }
+    setForgotError(''); setForgotLoading(true)
+    try {
+      const res = await fetch(`${API}/api/auth/reset-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code, resetToken, newPassword: newPw }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Reset failed')
+      setForgotStep('done')
+    } catch (err) { setForgotError(err.message) }
+    setForgotLoading(false)
+  }
+
+  function handleResetDigitChange(i, val) {
+    const v = val.replace(/\D/g, '').slice(-1)
+    const next = [...resetDigits]; next[i] = v; setResetDigits(next)
+    if (v && i < 5) resetDigitRefs.current[i + 1]?.focus()
+  }
+
+  function closeForgot() {
+    setShowForgot(false); setForgotStep('email'); setForgotEmail(''); setForgotError('')
+    setResetDigits(['','','','','','']); setNewPw(''); setConfirmPw('')
   }
 
   const fieldWrap = (name) => ({
@@ -200,7 +272,7 @@ export default function AdminLogin() {
             <div style={{ marginBottom: 16 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
                 <label style={labelStyle}>Password</label>
-                <a href="#" onClick={e => e.preventDefault()} style={{ fontFamily: 'Nunito,system-ui', fontSize: 12, color: '#919832', textDecoration: 'none', fontWeight: 600 }}>Forgot?</a>
+                <button type="button" onClick={() => { setForgotEmail(email); setShowForgot(true) }} style={{ fontFamily: 'Nunito,system-ui', fontSize: 12, color: '#919832', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600 }}>Forgot?</button>
               </div>
               <div style={fieldWrap('password')}>
                 <span style={{ fontSize: 15, opacity: .6 }}>&#x1f512;</span>
@@ -248,7 +320,7 @@ export default function AdminLogin() {
               <div style={{ padding: '32px 32px 28px' }}>
                 <div style={{ fontSize: 32, textAlign: 'center', marginBottom: 12 }}>&#x1f510;</div>
                 <h3 style={{ fontFamily: 'Barlow Condensed,system-ui', fontWeight: 800, fontSize: 22, color: '#fff', textAlign: 'center', marginBottom: 8 }}>Verify your identity</h3>
-                <p style={{ fontSize: 13, color: 'rgba(255,255,255,.5)', textAlign: 'center', marginBottom: 28 }}>A 6-digit code has been sent to +1 407 &#x2022;&#x2022;&#x2022; 7361</p>
+                <p style={{ fontSize: 13, color: 'rgba(255,255,255,.5)', textAlign: 'center', marginBottom: 28 }}>A 6-digit code has been sent to your registered phone.</p>
 
                 {verifyError && (
                   <div style={{ background: 'rgba(179,35,23,.15)', border: '1px solid rgba(179,35,23,.4)', borderRadius: 8, padding: '10px 14px', marginBottom: 16, color: '#ff6b5b', fontSize: 13, textAlign: 'center' }}>
@@ -281,12 +353,94 @@ export default function AdminLogin() {
 
                 <p style={{ textAlign: 'center', marginTop: 16, fontSize: 13, color: 'rgba(255,255,255,.35)' }}>
                   {canResend
-                    ? <button onClick={() => { setShow2FA(false); setTimeout(() => handleLogin({ preventDefault: () => {} }), 50) }}
+                    ? <button onClick={handleResend}
                         style={{ background: 'none', border: 'none', color: '#A8B84A', cursor: 'pointer', fontSize: 13, fontFamily: 'Nunito,system-ui', textDecoration: 'underline' }}>
                         Resend code
                       </button>
                     : `Resend code in ${countdown}s`}
                 </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Forgot Password Modal */}
+        {showForgot && (
+          <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 16 }}>
+            <div style={{ width: 'min(420px,92vw)', background: '#2B353F', borderRadius: 18, overflow: 'hidden', boxShadow: '0 24px 80px rgba(0,0,0,.5)' }}>
+              <div style={{ height: 4, background: '#919832' }} />
+              <div style={{ padding: '32px 32px 28px' }}>
+
+                {forgotStep === 'email' && <>
+                  <div style={{ fontSize: 32, textAlign: 'center', marginBottom: 12 }}>&#x1f4f1;</div>
+                  <h3 style={{ fontFamily: 'Barlow Condensed,system-ui', fontWeight: 800, fontSize: 22, color: '#fff', textAlign: 'center', marginBottom: 8 }}>Reset Password</h3>
+                  <p style={{ fontSize: 13, color: 'rgba(255,255,255,.5)', textAlign: 'center', marginBottom: 24 }}>Enter your email and we'll send a verification code to your registered phone via SMS.</p>
+
+                  {forgotError && <div style={{ background: 'rgba(179,35,23,.15)', border: '1px solid rgba(179,35,23,.4)', borderRadius: 8, padding: '10px 14px', marginBottom: 16, color: '#ff6b5b', fontSize: 13, textAlign: 'center' }}>{forgotError}</div>}
+
+                  <div style={{ marginBottom: 20 }}>
+                    <label style={labelStyle}>Email</label>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(255,255,255,.04)', border: '1px solid rgba(255,255,255,.10)', borderRadius: 12, padding: '0 14px', height: 50 }}>
+                      <input type="email" value={forgotEmail} onChange={e => setForgotEmail(e.target.value)} placeholder="your@email.com" style={inputStyle} />
+                    </div>
+                  </div>
+
+                  <button onClick={handleForgotSubmit} disabled={forgotLoading} style={{ width: '100%', padding: '14px', background: forgotLoading ? 'rgba(145,152,50,.5)' : 'linear-gradient(135deg,#A8B84A,#919832)', border: 'none', borderRadius: 10, color: '#fff', fontFamily: 'Barlow Condensed,system-ui', fontWeight: 800, fontSize: 17, cursor: forgotLoading ? 'not-allowed' : 'pointer', marginBottom: 10 }}>
+                    {forgotLoading ? 'Sending...' : 'Send Verification Code'}
+                  </button>
+                </>}
+
+                {forgotStep === 'code' && <>
+                  <div style={{ fontSize: 32, textAlign: 'center', marginBottom: 12 }}>&#x1f510;</div>
+                  <h3 style={{ fontFamily: 'Barlow Condensed,system-ui', fontWeight: 800, fontSize: 22, color: '#fff', textAlign: 'center', marginBottom: 8 }}>Verify & Reset</h3>
+                  <p style={{ fontSize: 13, color: 'rgba(255,255,255,.5)', textAlign: 'center', marginBottom: 24 }}>Enter the 6-digit code sent to your phone and choose a new password.</p>
+
+                  {forgotError && <div style={{ background: 'rgba(179,35,23,.15)', border: '1px solid rgba(179,35,23,.4)', borderRadius: 8, padding: '10px 14px', marginBottom: 16, color: '#ff6b5b', fontSize: 13, textAlign: 'center' }}>{forgotError}</div>}
+
+                  <div style={{ display: 'flex', gap: 8, justifyContent: 'center', marginBottom: 20 }}>
+                    {resetDigits.map((d, i) => (
+                      <input key={i} ref={el => { resetDigitRefs.current[i] = el }}
+                        type="text" inputMode="numeric" maxLength={1} value={d}
+                        onChange={e => handleResetDigitChange(i, e.target.value)}
+                        onKeyDown={e => { if (e.key === 'Backspace' && !resetDigits[i] && i > 0) resetDigitRefs.current[i - 1]?.focus() }}
+                        style={{ width: 44, height: 54, textAlign: 'center', background: 'rgba(255,255,255,.04)', border: '2px solid rgba(255,255,255,.12)', borderRadius: 8, color: '#fff', fontFamily: 'Barlow Condensed,system-ui', fontWeight: 800, fontSize: 24, outline: 'none' }}
+                      />
+                    ))}
+                  </div>
+
+                  <div style={{ marginBottom: 12 }}>
+                    <label style={labelStyle}>New Password</label>
+                    <div style={{ display: 'flex', alignItems: 'center', background: 'rgba(255,255,255,.04)', border: '1px solid rgba(255,255,255,.10)', borderRadius: 12, padding: '0 14px', height: 50 }}>
+                      <input type="password" value={newPw} onChange={e => setNewPw(e.target.value)} placeholder="Min 8 characters" style={inputStyle} />
+                    </div>
+                  </div>
+                  <div style={{ marginBottom: 20 }}>
+                    <label style={labelStyle}>Confirm Password</label>
+                    <div style={{ display: 'flex', alignItems: 'center', background: 'rgba(255,255,255,.04)', border: '1px solid rgba(255,255,255,.10)', borderRadius: 12, padding: '0 14px', height: 50 }}>
+                      <input type="password" value={confirmPw} onChange={e => setConfirmPw(e.target.value)} placeholder="Re-enter password" style={inputStyle} />
+                    </div>
+                  </div>
+
+                  <button onClick={handleResetPassword} disabled={forgotLoading} style={{ width: '100%', padding: '14px', background: forgotLoading ? 'rgba(145,152,50,.5)' : 'linear-gradient(135deg,#A8B84A,#919832)', border: 'none', borderRadius: 10, color: '#fff', fontFamily: 'Barlow Condensed,system-ui', fontWeight: 800, fontSize: 17, cursor: forgotLoading ? 'not-allowed' : 'pointer', marginBottom: 10 }}>
+                    {forgotLoading ? 'Resetting...' : 'Reset Password'}
+                  </button>
+                </>}
+
+                {forgotStep === 'done' && <>
+                  <div style={{ fontSize: 48, textAlign: 'center', marginBottom: 16 }}>&#x2705;</div>
+                  <h3 style={{ fontFamily: 'Barlow Condensed,system-ui', fontWeight: 800, fontSize: 22, color: '#fff', textAlign: 'center', marginBottom: 8 }}>Password Reset!</h3>
+                  <p style={{ fontSize: 14, color: 'rgba(255,255,255,.5)', textAlign: 'center', marginBottom: 24 }}>Your password has been updated. You can now sign in with your new password.</p>
+                  <button onClick={closeForgot} style={{ width: '100%', padding: '14px', background: 'linear-gradient(135deg,#A8B84A,#919832)', border: 'none', borderRadius: 10, color: '#fff', fontFamily: 'Barlow Condensed,system-ui', fontWeight: 800, fontSize: 17, cursor: 'pointer' }}>
+                    Back to Sign In
+                  </button>
+                </>}
+
+                {forgotStep !== 'done' && (
+                  <button onClick={closeForgot}
+                    style={{ width: '100%', padding: '12px', background: 'none', border: '1.5px solid rgba(255,255,255,.15)', borderRadius: 10, color: 'rgba(255,255,255,.6)', fontFamily: 'Nunito,system-ui', fontSize: 14, cursor: 'pointer', marginTop: forgotStep === 'email' ? 0 : 0 }}>
+                    Cancel
+                  </button>
+                )}
               </div>
             </div>
           </div>

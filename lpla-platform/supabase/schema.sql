@@ -45,6 +45,21 @@ create index if not exists orders_email_idx     on orders(email);
 create index if not exists orders_status_idx    on orders(status);
 create index if not exists orders_created_idx   on orders(created_at desc);
 
+-- Admin users table for multi-user access
+create table if not exists admin_users (
+  id           bigserial primary key,
+  email        text unique not null,
+  name         text not null,
+  phone        text not null,
+  password_hash text not null,
+  role         text not null default 'editor' check (role in ('owner','editor','viewer')),
+  active       boolean default true,
+  created_at   timestamptz default now(),
+  updated_at   timestamptz default now()
+);
+
+create index if not exists admin_users_email_idx on admin_users(email);
+
 -- Helper RPC functions for atomic spot management
 create or replace function decrement_spots(event_id bigint, qty integer)
 returns void language sql as $$

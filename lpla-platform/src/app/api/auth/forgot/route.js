@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server';
-import bcrypt from 'bcryptjs';
 import { sendOtp } from '@/lib/twilio';
 import { signPendingToken } from '@/lib/auth';
 import { supabase } from '@/lib/supabase';
@@ -16,27 +15,22 @@ export async function OPTIONS() {
 
 export async function POST(request) {
   try {
-    const { email, password } = await request.json();
+    const { email } = await request.json();
 
     const { data: user } = await supabase
       .from('admin_users')
-      .select('*')
+      .select('id, email, phone, role, name')
       .eq('email', email.toLowerCase())
       .eq('active', true)
       .single();
 
     if (!user) {
-      return NextResponse.json({ error: 'Invalid credentials' }, { status: 401, headers: CORS });
-    }
-
-    const valid = await bcrypt.compare(password, user.password_hash);
-    if (!valid) {
-      return NextResponse.json({ error: 'Invalid credentials' }, { status: 401, headers: CORS });
+      return NextResponse.json({ success: true, message: 'If that email exists, a code was sent.' }, { headers: CORS });
     }
 
     await sendOtp(user.phone);
-    const pendingToken = signPendingToken({ userId: user.id, email: user.email, role: user.role, name: user.name });
-    return NextResponse.json({ success: true, pendingToken, message: 'OTP sent to registered phone' }, { headers: CORS });
+    const resetToken = signPendingToken({ userId: user.id, email: user.email, role: user.role, name: user.name, resetPassword: true });
+    return NextResponse.json({ success: true, resetToken, message: 'Verification code sent via SMS' }, { headers: CORS });
   } catch (err) {
     return NextResponse.json({ error: err.message }, { status: 500, headers: CORS });
   }
