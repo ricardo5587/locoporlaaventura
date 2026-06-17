@@ -1,6 +1,7 @@
 'use client'
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
+import AdmIcon from '@/components/admin/AdmIcon'
 
 const API = 'https://locoporlaaventura.vercel.app'
 
@@ -54,9 +55,37 @@ export default function AdminLogin() {
     return () => clearInterval(countdownRef.current)
   }, [show2FA])
 
+  const handleVerify = useCallback(async (codeOverride) => {
+    const code = codeOverride || digits.join('')
+    if (code.length !== 6) { setVerifyError('Enter all 6 digits'); return }
+    setVerifyError(''); setVerifying(true)
+    try {
+      const res = await fetch(`${API}/api/auth/2fa/verify`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code, pendingToken, remember }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.message || data.error || 'Verification failed')
+      const token = data.token || data.accessToken || data.jwt
+      if (!token) throw new Error('No token returned')
+      localStorage.setItem('lpla_admin_token', token)
+      localStorage.setItem('lpla_remember', remember ? '1' : '0')
+      router.replace('/admin')
+    } catch (err) {
+      setVerifyError(err.message)
+    } finally {
+      setVerifying(false)
+    }
+  }, [digits, pendingToken, remember, router])
+
   async function handleLogin(e) {
     e.preventDefault()
     setError('')
+    if (!email.trim() || !password.trim()) {
+      setError('Enter your email and password.')
+      return
+    }
     setLoading(true)
     try {
       const res = await fetch(`${API}/api/auth/login`, {
@@ -78,7 +107,12 @@ export default function AdminLogin() {
   function handleDigitChange(i, val) {
     const v = val.replace(/\D/g, '').slice(-1)
     const next = [...digits]; next[i] = v; setDigits(next)
-    if (v && i < 5) digitRefs.current[i + 1]?.focus()
+    if (v && i < 5) {
+      digitRefs.current[i + 1]?.focus()
+    } else if (v && i === 5) {
+      const code = next.join('')
+      if (code.length === 6) handleVerify(code)
+    }
   }
 
   function handleDigitKeyDown(i, e) {
@@ -92,29 +126,7 @@ export default function AdminLogin() {
     for (let i = 0; i < text.length; i++) next[i] = text[i]
     setDigits(next)
     digitRefs.current[Math.min(text.length, 5)]?.focus()
-  }
-
-  async function handleVerify() {
-    const code = digits.join('')
-    if (code.length !== 6) { setVerifyError('Enter all 6 digits'); return }
-    setVerifyError(''); setVerifying(true)
-    try {
-      const res = await fetch(`${API}/api/auth/2fa/verify`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code, pendingToken }),
-      })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.message || data.error || 'Verification failed')
-      const token = data.token || data.accessToken || data.jwt
-      if (!token) throw new Error('No token returned')
-      localStorage.setItem('lpla_admin_token', token)
-      router.replace('/admin')
-    } catch (err) {
-      setVerifyError(err.message)
-    } finally {
-      setVerifying(false)
-    }
+    if (text.length === 6) handleVerify(text)
   }
 
   async function handleResend() {
@@ -195,10 +207,10 @@ export default function AdminLogin() {
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800&family=Nunito:wght@400;600;700&display=swap');
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         body { background: #222B33; }
         @keyframes admspin { to { transform: rotate(360deg); } }
+        @keyframes spin { to { transform: rotate(360deg); } }
         @media (max-width: 880px) { .adm-login-brand { display: none !important; } }
         input:-webkit-autofill { -webkit-box-shadow: 0 0 0 100px #2B353F inset !important; -webkit-text-fill-color: #EEF2F0 !important; }
       `}</style>
@@ -255,6 +267,7 @@ export default function AdminLogin() {
 
             {error && (
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(179,35,23,.14)', border: '1px solid rgba(179,35,23,.4)', borderRadius: 10, padding: '11px 14px', marginBottom: 18 }}>
+                <AdmIcon name="shield" size={15} color="#F0A8A2" />
                 <span style={{ fontFamily: 'Nunito,system-ui', fontSize: 13, color: '#F0A8A2', fontWeight: 600 }}>{error}</span>
               </div>
             )}
@@ -262,7 +275,7 @@ export default function AdminLogin() {
             <div style={{ marginBottom: 18 }}>
               <label style={labelStyle}>Email</label>
               <div style={fieldWrap('email')}>
-                <span style={{ fontSize: 15, opacity: .6 }}>&#x2709;&#xfe0f;</span>
+                <AdmIcon name="mail" size={16} color="rgba(255,255,255,.4)" />
                 <input type="email" value={email} autoComplete="username"
                   onFocus={() => setFocus('email')} onBlur={() => setFocus('')}
                   onChange={e => setEmail(e.target.value)} placeholder="admin@lpla.com" style={inputStyle} />
@@ -275,7 +288,7 @@ export default function AdminLogin() {
                 <button type="button" onClick={() => { setForgotEmail(email); setShowForgot(true) }} style={{ fontFamily: 'Nunito,system-ui', fontSize: 12, color: '#919832', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600 }}>Forgot?</button>
               </div>
               <div style={fieldWrap('password')}>
-                <span style={{ fontSize: 15, opacity: .6 }}>&#x1f512;</span>
+                <AdmIcon name="lock" size={16} color="rgba(255,255,255,.4)" />
                 <input type={showPw ? 'text' : 'password'} value={password} autoComplete="current-password"
                   onFocus={() => setFocus('password')} onBlur={() => setFocus('')}
                   onChange={e => setPassword(e.target.value)} placeholder="••••••••" style={inputStyle} />
@@ -293,7 +306,7 @@ export default function AdminLogin() {
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 color: '#fff', fontSize: 11, fontWeight: 800, transition: 'all .15s',
               }}>{remember ? '✓' : ''}</span>
-              <span style={{ fontFamily: 'Nunito,system-ui', fontSize: 13, color: '#9AA5AE' }}>Keep me signed in</span>
+              <span style={{ fontFamily: 'Nunito,system-ui', fontSize: 13, color: '#9AA5AE' }}>Remember this device for 30 days</span>
             </label>
 
             <button type="submit" disabled={loading} style={{
@@ -304,7 +317,9 @@ export default function AdminLogin() {
               letterSpacing: .8, textTransform: 'uppercase',
               boxShadow: '0 8px 22px rgba(145,152,50,.32)', transition: 'transform .12s, box-shadow .15s',
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
-            }}>
+            }}
+              onMouseOver={e => { if (!loading) { e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = '0 12px 28px rgba(145,152,50,.45)'; } }}
+              onMouseOut={e => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = '0 8px 22px rgba(145,152,50,.32)'; }}>
               {loading
                 ? <><span style={{ width: 16, height: 16, border: '2px solid rgba(255,255,255,.4)', borderTopColor: '#fff', borderRadius: '50%', animation: 'admspin .7s linear infinite', display:'inline-block' }} />Signing in...</>
                 : 'Enter dashboard →'}
@@ -318,12 +333,14 @@ export default function AdminLogin() {
             <div style={{ width: 'min(420px,92vw)', background: '#2B353F', borderRadius: 18, overflow: 'hidden', boxShadow: '0 24px 80px rgba(0,0,0,.5)' }}>
               <div style={{ height: 4, background: '#919832' }} />
               <div style={{ padding: '32px 32px 28px' }}>
-                <div style={{ fontSize: 32, textAlign: 'center', marginBottom: 12 }}>&#x1f510;</div>
-                <h3 style={{ fontFamily: 'Barlow Condensed,system-ui', fontWeight: 800, fontSize: 22, color: '#fff', textAlign: 'center', marginBottom: 8 }}>Verify your identity</h3>
-                <p style={{ fontSize: 13, color: 'rgba(255,255,255,.5)', textAlign: 'center', marginBottom: 28 }}>A 6-digit code has been sent to your registered phone.</p>
+                <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 12 }}>
+                  <AdmIcon name="lock" size={32} color="#A8B84A" />
+                </div>
+                <h3 style={{ fontFamily: 'Barlow Condensed,system-ui', fontWeight: 800, fontSize: 22, color: '#fff', textAlign: 'center', textTransform: 'uppercase', letterSpacing: .5, marginBottom: 8 }}>Verify your identity</h3>
+                <p style={{ fontFamily: 'Nunito,system-ui', fontSize: 13, color: 'rgba(255,255,255,.5)', textAlign: 'center', marginBottom: 28 }}>A 6-digit code has been sent to your registered phone.</p>
 
                 {verifyError && (
-                  <div style={{ background: 'rgba(179,35,23,.15)', border: '1px solid rgba(179,35,23,.4)', borderRadius: 8, padding: '10px 14px', marginBottom: 16, color: '#ff6b5b', fontSize: 13, textAlign: 'center' }}>
+                  <div style={{ background: 'rgba(179,35,23,.15)', border: '1px solid rgba(179,35,23,.4)', borderRadius: 8, padding: '10px 14px', marginBottom: 16, color: '#ff6b5b', fontSize: 13, fontFamily: 'Nunito,system-ui', textAlign: 'center' }}>
                     {verifyError}
                   </div>
                 )}
@@ -334,12 +351,12 @@ export default function AdminLogin() {
                       type="text" inputMode="numeric" maxLength={1} value={d}
                       onChange={e => handleDigitChange(i, e.target.value)}
                       onKeyDown={e => handleDigitKeyDown(i, e)}
-                      style={{ width: 44, height: 54, textAlign: 'center', background: 'rgba(255,255,255,.04)', border: '2px solid rgba(255,255,255,.12)', borderRadius: 8, color: '#fff', fontFamily: 'Barlow Condensed,system-ui', fontWeight: 800, fontSize: 24, outline: 'none' }}
+                      style={{ width: 44, height: 54, textAlign: 'center', background: 'rgba(255,255,255,.04)', border: `2px solid ${d ? 'rgba(145,152,50,.5)' : 'rgba(255,255,255,.12)'}`, borderRadius: 8, color: '#fff', fontFamily: 'Barlow Condensed,system-ui', fontWeight: 800, fontSize: 24, outline: 'none', transition: 'border-color .15s' }}
                     />
                   ))}
                 </div>
 
-                <button onClick={handleVerify} disabled={verifying} style={{ width: '100%', padding: '14px', background: verifying ? 'rgba(145,152,50,.5)' : 'linear-gradient(135deg,#A8B84A,#919832)', border: 'none', borderRadius: 10, color: '#fff', fontFamily: 'Barlow Condensed,system-ui', fontWeight: 800, fontSize: 17, cursor: verifying ? 'not-allowed' : 'pointer', marginBottom: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+                <button onClick={() => handleVerify()} disabled={verifying} style={{ width: '100%', padding: '14px', background: verifying ? 'rgba(145,152,50,.5)' : 'linear-gradient(135deg,#A8B84A,#919832)', border: 'none', borderRadius: 10, color: '#fff', fontFamily: 'Barlow Condensed,system-ui', fontWeight: 800, fontSize: 17, textTransform: 'uppercase', letterSpacing: .5, cursor: verifying ? 'not-allowed' : 'pointer', marginBottom: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
                   {verifying ? <>
                     <span style={{ width: 16, height: 16, border: '2px solid rgba(255,255,255,.3)', borderTopColor: '#fff', borderRadius: '50%', display: 'inline-block', animation: 'admspin .8s linear infinite' }} />
                     Verifying...
@@ -351,13 +368,17 @@ export default function AdminLogin() {
                   Cancel
                 </button>
 
-                <p style={{ textAlign: 'center', marginTop: 16, fontSize: 13, color: 'rgba(255,255,255,.35)' }}>
+                <p style={{ textAlign: 'center', marginTop: 16, fontSize: 13, fontFamily: 'Nunito,system-ui', color: 'rgba(255,255,255,.35)' }}>
                   {canResend
                     ? <button onClick={handleResend}
                         style={{ background: 'none', border: 'none', color: '#A8B84A', cursor: 'pointer', fontSize: 13, fontFamily: 'Nunito,system-ui', textDecoration: 'underline' }}>
                         Resend code
                       </button>
                     : `Resend code in ${countdown}s`}
+                </p>
+
+                <p style={{ textAlign: 'center', marginTop: 14, fontSize: 11, fontFamily: 'Nunito,system-ui', color: 'rgba(255,255,255,.25)', lineHeight: 1.5 }}>
+                  Two-factor authentication adds an extra layer of security to your account.
                 </p>
               </div>
             </div>
@@ -372,30 +393,35 @@ export default function AdminLogin() {
               <div style={{ padding: '32px 32px 28px' }}>
 
                 {forgotStep === 'email' && <>
-                  <div style={{ fontSize: 32, textAlign: 'center', marginBottom: 12 }}>&#x1f4f1;</div>
-                  <h3 style={{ fontFamily: 'Barlow Condensed,system-ui', fontWeight: 800, fontSize: 22, color: '#fff', textAlign: 'center', marginBottom: 8 }}>Reset Password</h3>
-                  <p style={{ fontSize: 13, color: 'rgba(255,255,255,.5)', textAlign: 'center', marginBottom: 24 }}>Enter your email and we'll send a verification code to your registered phone via SMS.</p>
+                  <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 12 }}>
+                    <AdmIcon name="phone" size={32} color="#A8B84A" />
+                  </div>
+                  <h3 style={{ fontFamily: 'Barlow Condensed,system-ui', fontWeight: 800, fontSize: 22, color: '#fff', textAlign: 'center', textTransform: 'uppercase', letterSpacing: .5, marginBottom: 8 }}>Reset Password</h3>
+                  <p style={{ fontFamily: 'Nunito,system-ui', fontSize: 13, color: 'rgba(255,255,255,.5)', textAlign: 'center', marginBottom: 24 }}>Enter your email and we&apos;ll send a verification code to your registered phone via SMS.</p>
 
-                  {forgotError && <div style={{ background: 'rgba(179,35,23,.15)', border: '1px solid rgba(179,35,23,.4)', borderRadius: 8, padding: '10px 14px', marginBottom: 16, color: '#ff6b5b', fontSize: 13, textAlign: 'center' }}>{forgotError}</div>}
+                  {forgotError && <div style={{ background: 'rgba(179,35,23,.15)', border: '1px solid rgba(179,35,23,.4)', borderRadius: 8, padding: '10px 14px', marginBottom: 16, color: '#ff6b5b', fontSize: 13, fontFamily: 'Nunito,system-ui', textAlign: 'center' }}>{forgotError}</div>}
 
                   <div style={{ marginBottom: 20 }}>
                     <label style={labelStyle}>Email</label>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(255,255,255,.04)', border: '1px solid rgba(255,255,255,.10)', borderRadius: 12, padding: '0 14px', height: 50 }}>
+                      <AdmIcon name="mail" size={16} color="rgba(255,255,255,.4)" />
                       <input type="email" value={forgotEmail} onChange={e => setForgotEmail(e.target.value)} placeholder="your@email.com" style={inputStyle} />
                     </div>
                   </div>
 
-                  <button onClick={handleForgotSubmit} disabled={forgotLoading} style={{ width: '100%', padding: '14px', background: forgotLoading ? 'rgba(145,152,50,.5)' : 'linear-gradient(135deg,#A8B84A,#919832)', border: 'none', borderRadius: 10, color: '#fff', fontFamily: 'Barlow Condensed,system-ui', fontWeight: 800, fontSize: 17, cursor: forgotLoading ? 'not-allowed' : 'pointer', marginBottom: 10 }}>
+                  <button onClick={handleForgotSubmit} disabled={forgotLoading} style={{ width: '100%', padding: '14px', background: forgotLoading ? 'rgba(145,152,50,.5)' : 'linear-gradient(135deg,#A8B84A,#919832)', border: 'none', borderRadius: 10, color: '#fff', fontFamily: 'Barlow Condensed,system-ui', fontWeight: 800, fontSize: 17, textTransform: 'uppercase', letterSpacing: .5, cursor: forgotLoading ? 'not-allowed' : 'pointer', marginBottom: 10 }}>
                     {forgotLoading ? 'Sending...' : 'Send Verification Code'}
                   </button>
                 </>}
 
                 {forgotStep === 'code' && <>
-                  <div style={{ fontSize: 32, textAlign: 'center', marginBottom: 12 }}>&#x1f510;</div>
-                  <h3 style={{ fontFamily: 'Barlow Condensed,system-ui', fontWeight: 800, fontSize: 22, color: '#fff', textAlign: 'center', marginBottom: 8 }}>Verify & Reset</h3>
-                  <p style={{ fontSize: 13, color: 'rgba(255,255,255,.5)', textAlign: 'center', marginBottom: 24 }}>Enter the 6-digit code sent to your phone and choose a new password.</p>
+                  <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 12 }}>
+                    <AdmIcon name="lock" size={32} color="#A8B84A" />
+                  </div>
+                  <h3 style={{ fontFamily: 'Barlow Condensed,system-ui', fontWeight: 800, fontSize: 22, color: '#fff', textAlign: 'center', textTransform: 'uppercase', letterSpacing: .5, marginBottom: 8 }}>Verify & Reset</h3>
+                  <p style={{ fontFamily: 'Nunito,system-ui', fontSize: 13, color: 'rgba(255,255,255,.5)', textAlign: 'center', marginBottom: 24 }}>Enter the 6-digit code sent to your phone and choose a new password.</p>
 
-                  {forgotError && <div style={{ background: 'rgba(179,35,23,.15)', border: '1px solid rgba(179,35,23,.4)', borderRadius: 8, padding: '10px 14px', marginBottom: 16, color: '#ff6b5b', fontSize: 13, textAlign: 'center' }}>{forgotError}</div>}
+                  {forgotError && <div style={{ background: 'rgba(179,35,23,.15)', border: '1px solid rgba(179,35,23,.4)', borderRadius: 8, padding: '10px 14px', marginBottom: 16, color: '#ff6b5b', fontSize: 13, fontFamily: 'Nunito,system-ui', textAlign: 'center' }}>{forgotError}</div>}
 
                   <div style={{ display: 'flex', gap: 8, justifyContent: 'center', marginBottom: 20 }}>
                     {resetDigits.map((d, i) => (
@@ -403,41 +429,45 @@ export default function AdminLogin() {
                         type="text" inputMode="numeric" maxLength={1} value={d}
                         onChange={e => handleResetDigitChange(i, e.target.value)}
                         onKeyDown={e => { if (e.key === 'Backspace' && !resetDigits[i] && i > 0) resetDigitRefs.current[i - 1]?.focus() }}
-                        style={{ width: 44, height: 54, textAlign: 'center', background: 'rgba(255,255,255,.04)', border: '2px solid rgba(255,255,255,.12)', borderRadius: 8, color: '#fff', fontFamily: 'Barlow Condensed,system-ui', fontWeight: 800, fontSize: 24, outline: 'none' }}
+                        style={{ width: 44, height: 54, textAlign: 'center', background: 'rgba(255,255,255,.04)', border: `2px solid ${d ? 'rgba(145,152,50,.5)' : 'rgba(255,255,255,.12)'}`, borderRadius: 8, color: '#fff', fontFamily: 'Barlow Condensed,system-ui', fontWeight: 800, fontSize: 24, outline: 'none', transition: 'border-color .15s' }}
                       />
                     ))}
                   </div>
 
                   <div style={{ marginBottom: 12 }}>
                     <label style={labelStyle}>New Password</label>
-                    <div style={{ display: 'flex', alignItems: 'center', background: 'rgba(255,255,255,.04)', border: '1px solid rgba(255,255,255,.10)', borderRadius: 12, padding: '0 14px', height: 50 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(255,255,255,.04)', border: '1px solid rgba(255,255,255,.10)', borderRadius: 12, padding: '0 14px', height: 50 }}>
+                      <AdmIcon name="key" size={16} color="rgba(255,255,255,.4)" />
                       <input type="password" value={newPw} onChange={e => setNewPw(e.target.value)} placeholder="Min 8 characters" style={inputStyle} />
                     </div>
                   </div>
                   <div style={{ marginBottom: 20 }}>
                     <label style={labelStyle}>Confirm Password</label>
-                    <div style={{ display: 'flex', alignItems: 'center', background: 'rgba(255,255,255,.04)', border: '1px solid rgba(255,255,255,.10)', borderRadius: 12, padding: '0 14px', height: 50 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(255,255,255,.04)', border: '1px solid rgba(255,255,255,.10)', borderRadius: 12, padding: '0 14px', height: 50 }}>
+                      <AdmIcon name="lock" size={16} color="rgba(255,255,255,.4)" />
                       <input type="password" value={confirmPw} onChange={e => setConfirmPw(e.target.value)} placeholder="Re-enter password" style={inputStyle} />
                     </div>
                   </div>
 
-                  <button onClick={handleResetPassword} disabled={forgotLoading} style={{ width: '100%', padding: '14px', background: forgotLoading ? 'rgba(145,152,50,.5)' : 'linear-gradient(135deg,#A8B84A,#919832)', border: 'none', borderRadius: 10, color: '#fff', fontFamily: 'Barlow Condensed,system-ui', fontWeight: 800, fontSize: 17, cursor: forgotLoading ? 'not-allowed' : 'pointer', marginBottom: 10 }}>
+                  <button onClick={handleResetPassword} disabled={forgotLoading} style={{ width: '100%', padding: '14px', background: forgotLoading ? 'rgba(145,152,50,.5)' : 'linear-gradient(135deg,#A8B84A,#919832)', border: 'none', borderRadius: 10, color: '#fff', fontFamily: 'Barlow Condensed,system-ui', fontWeight: 800, fontSize: 17, textTransform: 'uppercase', letterSpacing: .5, cursor: forgotLoading ? 'not-allowed' : 'pointer', marginBottom: 10 }}>
                     {forgotLoading ? 'Resetting...' : 'Reset Password'}
                   </button>
                 </>}
 
                 {forgotStep === 'done' && <>
-                  <div style={{ fontSize: 48, textAlign: 'center', marginBottom: 16 }}>&#x2705;</div>
-                  <h3 style={{ fontFamily: 'Barlow Condensed,system-ui', fontWeight: 800, fontSize: 22, color: '#fff', textAlign: 'center', marginBottom: 8 }}>Password Reset!</h3>
-                  <p style={{ fontSize: 14, color: 'rgba(255,255,255,.5)', textAlign: 'center', marginBottom: 24 }}>Your password has been updated. You can now sign in with your new password.</p>
-                  <button onClick={closeForgot} style={{ width: '100%', padding: '14px', background: 'linear-gradient(135deg,#A8B84A,#919832)', border: 'none', borderRadius: 10, color: '#fff', fontFamily: 'Barlow Condensed,system-ui', fontWeight: 800, fontSize: 17, cursor: 'pointer' }}>
+                  <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}>
+                    <AdmIcon name="check" size={48} color="#A8B84A" />
+                  </div>
+                  <h3 style={{ fontFamily: 'Barlow Condensed,system-ui', fontWeight: 800, fontSize: 22, color: '#fff', textAlign: 'center', textTransform: 'uppercase', letterSpacing: .5, marginBottom: 8 }}>Password Reset!</h3>
+                  <p style={{ fontFamily: 'Nunito,system-ui', fontSize: 14, color: 'rgba(255,255,255,.5)', textAlign: 'center', marginBottom: 24 }}>Your password has been updated. You can now sign in with your new password.</p>
+                  <button onClick={closeForgot} style={{ width: '100%', padding: '14px', background: 'linear-gradient(135deg,#A8B84A,#919832)', border: 'none', borderRadius: 10, color: '#fff', fontFamily: 'Barlow Condensed,system-ui', fontWeight: 800, fontSize: 17, textTransform: 'uppercase', letterSpacing: .5, cursor: 'pointer' }}>
                     Back to Sign In
                   </button>
                 </>}
 
                 {forgotStep !== 'done' && (
                   <button onClick={closeForgot}
-                    style={{ width: '100%', padding: '12px', background: 'none', border: '1.5px solid rgba(255,255,255,.15)', borderRadius: 10, color: 'rgba(255,255,255,.6)', fontFamily: 'Nunito,system-ui', fontSize: 14, cursor: 'pointer', marginTop: forgotStep === 'email' ? 0 : 0 }}>
+                    style={{ width: '100%', padding: '12px', background: 'none', border: '1.5px solid rgba(255,255,255,.15)', borderRadius: 10, color: 'rgba(255,255,255,.6)', fontFamily: 'Nunito,system-ui', fontSize: 14, cursor: 'pointer' }}>
                     Cancel
                   </button>
                 )}
