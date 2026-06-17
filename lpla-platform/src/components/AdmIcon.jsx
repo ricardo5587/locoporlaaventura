@@ -17,6 +17,23 @@ const PATHS = {
   dollar: <g><path d="M12 2.5v19" /><path d="M16.5 6.8c0-1.8-2-3.3-4.5-3.3s-4.5 1.5-4.5 3.3 2 3.3 4.5 3.3 4.5 1.5 4.5 3.3-2 3.3-4.5 3.3-4.5-1.5-4.5-3.3" /></g>,
   ticket: <g><path d="M3 7.5a1.5 1.5 0 011.5-1.5h15A1.5 1.5 0 0121 7.5V10a2 2 0 000 4v2.5a1.5 1.5 0 01-1.5 1.5h-15A1.5 1.5 0 013 16.5V14a2 2 0 000-4V7.5z" /><path d="M14 6.5v11" strokeDasharray="2 2.4" /></g>,
   globe: <g><circle cx="12" cy="12" r="9" /><path d="M3 12h18M12 3c-2.8 3-4 5.9-4 9s1.2 6 4 9M12 3c2.8 3 4 5.9 4 9s-1.2 6-4 9" /></g>,
+  trend: <path d="M23 6l-9.5 9.5-5-5L1 18" />,
+  star: <g><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" /></g>,
+  check: <path d="M20 6L9 17l-5-5" />,
+  bolt: <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />,
+  clock: <g><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3.5 2" /></g>,
+  note: <g><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" /><path d="M14 2v6h6M8 13h8M8 17h8M8 9h2" /></g>,
+  tag: <g><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z" /><circle cx="7" cy="7" r="1.5" fill="currentColor" /></g>,
+  send: <g><path d="M22 2L11 13" /><path d="M22 2l-7 20-4-9-9-4 20-7z" /></g>,
+  mail: <g><rect x="2" y="4" width="20" height="16" rx="2" /><path d="M22 6l-10 7L2 6" /></g>,
+  chat: <g><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" /></g>,
+  download: <g><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" /><path d="M7 10l5 5 5-5" /><path d="M12 15V3" /></g>,
+  lock: <g><rect x="3" y="11" width="18" height="11" rx="2" /><path d="M7 11V7a5 5 0 0110 0v4" /></g>,
+  phone: <g><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6A19.79 19.79 0 012.12 4.18 2 2 0 014.11 2h3a2 2 0 012 1.72c.13.81.37 1.6.65 2.36a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.76.28 1.55.52 2.36.65A2 2 0 0122 16.92z" /></g>,
+  dots: <g><circle cx="12" cy="5" r="1.5" fill="currentColor" /><circle cx="12" cy="12" r="1.5" fill="currentColor" /><circle cx="12" cy="19" r="1.5" fill="currentColor" /></g>,
+  refund: <g><path d="M3 12a9 9 0 019-9 9 9 0 016.36 2.64" /><path d="M21 3v6h-6" /><path d="M21 12a9 9 0 01-9 9 9 9 0 01-6.36-2.64" /><path d="M3 21v-6h6" /></g>,
+  chevronDown: <path d="M6 9l6 6 6-6" />,
+  chevronLeft: <path d="M15 19l-7-7 7-7" />,
 };
 
 export default function AdmIcon({ name, size = 18, strokeWidth = 1.7, style = {}, color }) {

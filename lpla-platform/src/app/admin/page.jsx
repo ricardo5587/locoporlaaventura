@@ -2,6 +2,10 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import AdmIcon from '@/components/AdmIcon'
+import DashboardOverview, { OvKpi } from '@/components/admin/Overview'
+import AttendeesBookings from '@/components/admin/Attendees'
+import AdminCRM from '@/components/admin/Contacts'
+import AdminApps from '@/components/admin/Apps'
 
 const API = 'https://locoporlaaventura.vercel.app'
 const TODAY = new Date().toISOString().slice(0, 10)
@@ -418,7 +422,7 @@ export default function AdminPage() {
   const [events, setEvents] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  const [activePage, setActivePage] = useState('events')
+  const [activePage, setActivePage] = useState('overview')
   const [statusTab, setStatusTab] = useState('upcoming')
   const [catFilter, setCatFilter] = useState('all')
   const [search, setSearch] = useState('')
@@ -487,30 +491,20 @@ export default function AdminPage() {
           {/* Top bar */}
           <div style={{ height: 52, background: ADM.sidebar, borderBottom: '1px solid rgba(255,255,255,.08)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 24px', flexShrink: 0 }}>
             <div>
-              <span style={{ fontFamily: 'Barlow Condensed,system-ui', fontSize: 14, fontWeight: 700, letterSpacing: 1.5, textTransform: 'uppercase', color: 'rgba(255,255,255,.9)' }}>Events</span>
+              <span style={{ fontFamily: 'Barlow Condensed,system-ui', fontSize: 14, fontWeight: 700, letterSpacing: 1.5, textTransform: 'uppercase', color: 'rgba(255,255,255,.9)' }}>
+                {{ overview: 'Overview', events: 'Events', attendees: 'Attendees', contacts: 'Contacts', apps: 'Apps' }[activePage]}
+              </span>
               <span style={{ fontFamily: 'Nunito,system-ui', fontSize: 12, color: 'rgba(255,255,255,.4)', marginLeft: 12 }}>Live &middot; {events.length} events synced</span>
             </div>
           </div>
 
           {/* Content */}
-          <div style={{ flex: 1, overflow: 'auto', padding: '28px 32px', background: ADM.bg }}>
-            {activePage !== 'events' && (
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '60vh', gap: 16 }}>
-                <div style={{ width: 56, height: 56, borderRadius: 16, background: `${ADM.primary}14`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <AdmIcon name={activePage === 'overview' ? 'chart' : activePage === 'attendees' ? 'people' : activePage === 'contacts' ? 'user' : 'apps'} size={28} color={ADM.primary} />
-                </div>
-                <div style={{ textAlign: 'center' }}>
-                  <div style={{ fontFamily: 'Barlow Condensed,system-ui', fontSize: 22, fontWeight: 800, color: ADM.text, textTransform: 'uppercase', letterSpacing: .5 }}>
-                    {activePage.charAt(0).toUpperCase() + activePage.slice(1)}
-                  </div>
-                  <div style={{ fontFamily: 'Nunito,system-ui', fontSize: 14, color: ADM.muted, marginTop: 6 }}>This section is coming soon.</div>
-                </div>
-                <button onClick={() => setActivePage('events')} style={{ padding: '10px 22px', borderRadius: ADM.radius, border: `1px solid ${ADM.border}`, background: '#fff', cursor: 'pointer', fontFamily: 'Nunito,system-ui', fontSize: 14, fontWeight: 600, color: ADM.primary }}>
-                  ← Back to Events
-                </button>
-              </div>
-            )}
-            {activePage === 'events' && <>
+          <div style={{ flex: 1, overflow: activePage === 'contacts' ? 'hidden' : 'auto', padding: activePage === 'contacts' || activePage === 'overview' || activePage === 'attendees' || activePage === 'apps' ? 0 : '28px 32px', background: ADM.bg, display: 'flex', flexDirection: 'column' }}>
+            {activePage === 'overview' && <DashboardOverview events={events} ADM={ADM} CAT_COLORS={CAT_COLORS} onSelectEvent={ev => { setActivePage('events'); setModal(ev) }} onGoEvents={() => setActivePage('events')} />}
+            {activePage === 'attendees' && <AttendeesBookings events={events} ADM={ADM} OvKpi={OvKpi} />}
+            {activePage === 'contacts' && <AdminCRM events={events} ADM={ADM} OvKpi={OvKpi} />}
+            {activePage === 'apps' && <AdminApps ADM={ADM} />}
+            {activePage === 'events' && <div style={{ padding: '28px 32px' }}>
             {/* Page header */}
             <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 24, flexWrap: 'wrap', gap: 12 }}>
               <div>
@@ -620,7 +614,7 @@ export default function AdminPage() {
                 </div>
               </div>
             )}
-            </>}
+            </div>}
           </div>
         </div>
 
