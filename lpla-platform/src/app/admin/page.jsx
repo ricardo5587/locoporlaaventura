@@ -348,7 +348,7 @@ function Sidebar({ activePage, onNav, onLogout, eventCount, currentUser }) {
       {/* Logo */}
       <div style={{ padding: '20px 20px 12px', borderBottom: '1px solid rgba(255,255,255,.08)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <img src="/logo.png" alt="LPLA" style={{ height: 34, filter: 'brightness(0) invert(1)' }} onError={e => e.target.style.display = 'none'} />
+          <img src="/logo.png" alt="LPLA" style={{ height: 34 }} onError={e => e.target.style.display = 'none'} />
           <div>
             <div style={{ fontFamily: 'Barlow Condensed,system-ui', fontSize: 16, fontWeight: 800, color: '#fff', textTransform: 'uppercase', letterSpacing: .5, lineHeight: 1 }}>LPLA</div>
             <div style={{ fontFamily: 'Nunito,system-ui', fontSize: 11, color: 'rgba(255,255,255,.4)', marginTop: 2 }}>Admin</div>

@@ -220,7 +220,7 @@ export default function AdminLogin() {
           </svg>
 
           <div style={{ position: 'absolute', top: 44, left: 56, zIndex: 2, display: 'flex', alignItems: 'center', gap: 12 }}>
-            <img src="/logo.png" alt="LPLA" style={{ height: 46, width: 'auto', filter: 'drop-shadow(0 3px 10px rgba(0,0,0,.5)) brightness(0) invert(1)' }} />
+            <img src="/logo.png" alt="LPLA" style={{ height: 46, width: 'auto', filter: 'drop-shadow(0 3px 10px rgba(0,0,0,.5))' }} />
             <div>
               <div style={{ fontFamily: 'Barlow Condensed,system-ui', fontSize: 19, fontWeight: 800, color: '#fff', textTransform: 'uppercase', letterSpacing: .5, lineHeight: 1 }}>Loco Por La Aventura</div>
               <div style={{ fontFamily: 'Nunito,system-ui', fontSize: 12, color: '#7C8893', fontWeight: 600, letterSpacing: .4, marginTop: 2 }}>Management Platform</div>
