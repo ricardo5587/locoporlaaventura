@@ -559,15 +559,12 @@ function CrmImportModal({ onClose, onImport, ADM }) {
             </button>
             <div style={{ marginLeft:'auto', display:'flex', gap:10 }}>
               <button onClick={close} style={{ height:38, padding:'0 16px', borderRadius:ADM.radius, border:`1px solid ${ADM.border}`, background:'transparent', cursor:'pointer', fontFamily:'Nunito,system-ui', fontSize:13.5, fontWeight:700, color:ADM.muted }}>Cancel</button>
-              {step==='map' && (() => {
-                const hasEmail = mapping.some(m=>m==='email')
-                return (
-                  <button onClick={()=>hasEmail && setStep('preview')}
-                    style={{ height:38, padding:'0 20px', borderRadius:ADM.radius, border:'none', background:hasEmail ? ADM.primary : '#CBD5E1', color:'#fff', cursor:hasEmail ? 'pointer' : 'not-allowed', fontFamily:'Barlow Condensed,system-ui', fontSize:15, fontWeight:800, letterSpacing:.3, display:'inline-flex', alignItems:'center', gap:8, opacity:hasEmail ? 1 : 0.7 }}>
-                    {hasEmail ? 'Preview' : 'Map an Email column first'} <AdmIcon name="chevronRight" size={14} color="#fff" />
-                  </button>
-                )
-              })()}
+              {step==='map' && (
+                <button onClick={()=>setStep('preview')}
+                  style={{ height:38, padding:'0 20px', borderRadius:ADM.radius, border:'none', background:ADM.primary, color:'#fff', cursor:'pointer', fontFamily:'Barlow Condensed,system-ui', fontSize:15, fontWeight:800, letterSpacing:.3, display:'inline-flex', alignItems:'center', gap:8 }}>
+                  Preview <AdmIcon name="chevronRight" size={14} color="#fff" />
+                </button>
+              )}
               {step==='preview' && (
                 <button onClick={doImport}
                   style={{ height:38, padding:'0 20px', borderRadius:ADM.radius, border:'none', background:ADM.success, color:'#fff', cursor:'pointer', fontFamily:'Barlow Condensed,system-ui', fontSize:15, fontWeight:800, letterSpacing:.3, display:'inline-flex', alignItems:'center', gap:8 }}>
