@@ -414,7 +414,7 @@ function StatusTabs({ value, onChange, counts }) {
   )
 }
 
-function ListView({ events, onEdit, onDelete, loading }) {
+function ListView({ events, onEdit, onDelete, onSelect, loading }) {
   const STATUS_LABEL = { active: 'Active', past: 'Past', draft: 'Draft', full: 'Full' }
   const STATUS_COLOR = { active: ADM.success, past: ADM.light, draft: ADM.warning, full: ADM.danger }
   return (
@@ -438,26 +438,26 @@ function ListView({ events, onEdit, onDelete, loading }) {
             ) : events.map(ev => {
               const s = getStatus(ev)
               return (
-                <tr key={ev.id} style={{ background: '#fff', borderBottom: `1px solid ${ADM.border}`, transition: 'background .12s' }}
+                <tr key={ev.id} style={{ background: '#fff', borderBottom: `1px solid ${ADM.border}`, transition: 'background .12s', cursor: 'pointer' }}
                   onMouseOver={e => e.currentTarget.style.background = '#F8FAFC'}
                   onMouseOut={e => e.currentTarget.style.background = '#fff'}>
-                  <td style={{ padding: '14px 16px' }}>
+                  <td style={{ padding: '14px 16px' }} onClick={() => onSelect(ev)}>
                     <div style={{ fontFamily: 'Barlow Condensed,system-ui', fontSize: 15, fontWeight: 800, color: ADM.text, textTransform: 'uppercase', letterSpacing: .3, lineHeight: 1.15 }}>
                       {ev.titleEn}
                       {ev.recurring && <span style={{ marginLeft: 6, fontSize: 10, background: '#EDE9FE', color: '#7C3AED', borderRadius: 6, padding: '1px 6px', fontFamily: 'Nunito,system-ui', fontWeight: 700 }}>↺ {ev.recurring.freq}</span>}
                     </div>
                     <div style={{ fontFamily: 'Nunito,system-ui', fontSize: 12, color: ADM.light, marginTop: 2 }}>{ev.date} · {ev.location}</div>
                   </td>
-                  <td style={{ padding: '14px 16px' }}>
+                  <td style={{ padding: '14px 16px' }} onClick={() => onSelect(ev)}>
                     <div style={{ fontFamily: 'Barlow Condensed,system-ui', fontSize: 17, fontWeight: 800, color: ADM.text }}>{sold(ev)}</div>
                     <div style={{ fontFamily: 'Nunito,system-ui', fontSize: 11, color: ADM.light }}>of {ev.totalSpots}</div>
                   </td>
-                  <td style={{ padding: '14px 16px' }}>
+                  <td style={{ padding: '14px 16px' }} onClick={() => onSelect(ev)}>
                     <div style={{ fontFamily: 'Barlow Condensed,system-ui', fontSize: 17, fontWeight: 800, color: ev.isFree ? ADM.light : ADM.primary }}>
                       {ev.isFree ? '—' : `$${gross(ev).toLocaleString()}`}
                     </div>
                   </td>
-                  <td style={{ padding: '14px 16px' }}>
+                  <td style={{ padding: '14px 16px' }} onClick={() => onSelect(ev)}>
                     <span style={{ display: 'inline-block', padding: '3px 10px', borderRadius: 16, background: `${STATUS_COLOR[s]}18`, color: STATUS_COLOR[s], fontFamily: 'Barlow Condensed,system-ui', fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: .4 }}>{STATUS_LABEL[s]}</span>
                   </td>
                   <td style={{ padding: '14px 12px' }}>
@@ -629,13 +629,17 @@ function CalendarView({ events, onSelect }) {
 }
 
 // ── Event Manager ───────────────────────────────────────────────────────────
-export default function EventManager({ events, token, loading, onEventsChange }) {
+export default function EventManager({ events, token, loading, onEventsChange, onSelectEvent, openEditEvent, onEditConsumed }) {
   const [statusTab, setStatusTab] = useState('upcoming')
   const [catFilter, setCatFilter] = useState('all')
   const [search, setSearch] = useState('')
   const [view, setView] = useState('list')
   const [modal, setModal] = useState(null)
   const [delTarget, setDelTarget] = useState(null)
+
+  useEffect(() => {
+    if (openEditEvent) { setModal(openEditEvent); onEditConsumed && onEditConsumed() }
+  }, [openEditEvent, onEditConsumed])
 
   const counts = useMemo(() => ({
     upcoming: events.filter(e => !e.draft && e.date >= TODAY_STR).length,
@@ -701,8 +705,8 @@ export default function EventManager({ events, token, loading, onEventsChange })
       </div>
 
       {view === 'list'
-        ? <ListView events={filtered} loading={loading} onEdit={e => setModal(e)} onDelete={e => setDelTarget(e)} />
-        : <CalendarView events={filtered} onSelect={e => setModal(e)} />
+        ? <ListView events={filtered} loading={loading} onEdit={e => setModal(e)} onDelete={e => setDelTarget(e)} onSelect={ev => onSelectEvent && onSelectEvent(ev)} />
+        : <CalendarView events={filtered} onSelect={ev => onSelectEvent && onSelectEvent(ev)} />
       }
 
       {modal && <EventModal event={modal === 'create' ? null : modal} token={token} onClose={() => setModal(null)} onSaved={onEventsChange} />}

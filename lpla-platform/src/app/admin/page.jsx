@@ -10,6 +10,7 @@ import AdminApps from '@/components/admin/Apps'
 import AdminUsers from '@/components/admin/Users'
 import AdminInstall from '@/components/admin/Launch'
 import EventManager from '@/components/admin/Events'
+import EventDetailDashboard from '@/components/admin/EventDetail'
 
 const API = 'https://locoporlaaventura.vercel.app'
 const IDLE_TIMEOUT = 30 * 60 * 1000
@@ -70,6 +71,8 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [activePage, setActivePage] = useState('overview')
+  const [currentEvent, setCurrentEvent] = useState(null)
+  const [openEditEvent, setOpenEditEvent] = useState(null)
 
   useEffect(() => {
     const t = localStorage.getItem('lpla_admin_token')
@@ -141,6 +144,16 @@ export default function AdminPage() {
         @keyframes spin { to { transform: rotate(360deg); } }
       `}</style>
       <div style={{ display: 'flex', height: '100vh', fontFamily: 'Nunito,system-ui', background: ADM.bg, overflow: 'hidden' }}>
+
+        {currentEvent ? (
+          <EventDetailDashboard
+            event={currentEvent}
+            onBack={() => setCurrentEvent(null)}
+            onEdit={() => { const ev = currentEvent; setCurrentEvent(null); setActivePage('events'); setOpenEditEvent(ev) }}
+            onPreview={handlePreview}
+          />
+        ) : (
+        <>
 
         {/* ── Sidebar ─────────────────────────────────────────────── */}
         <aside style={{ position: 'relative', width: 240, flexShrink: 0, background: 'linear-gradient(176deg,#16262F 0%,#0E1A22 60%,#0B151C 100%)', display: 'flex', flexDirection: 'column', overflow: 'hidden', zIndex: 10 }}>
@@ -244,9 +257,12 @@ export default function AdminPage() {
               </div>
             )}
 
-            {activePage === 'events' && <EventManager events={events} token={token} loading={loading} onEventsChange={() => loadEvents(token)} />}
+            {activePage === 'events' && <EventManager events={events} token={token} loading={loading} onEventsChange={() => loadEvents(token)} onSelectEvent={ev => setCurrentEvent(ev)} openEditEvent={openEditEvent} onEditConsumed={() => setOpenEditEvent(null)} />}
           </div>
         </main>
+
+        </>
+        )}
 
       </div>
     </>
