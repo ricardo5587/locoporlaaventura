@@ -17,8 +17,14 @@ create table if not exists events (
   draft        boolean default false,
   image        text,
   tickets      jsonb default '[]',
+  duration     text,
+  recurring    jsonb,
   created_at   timestamptz default now()
 );
+
+-- Migration for existing databases (safe to re-run):
+alter table events add column if not exists duration text;
+alter table events add column if not exists recurring jsonb;
 
 create table if not exists orders (
   id               bigserial primary key,

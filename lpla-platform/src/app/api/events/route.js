@@ -30,6 +30,8 @@ function mapEvent(row) {
     draft: row.draft,
     image: row.image,
     tickets: row.tickets,
+    duration: row.duration,
+    recurring: row.recurring,
     createdAt: row.created_at,
   };
 }
@@ -80,6 +82,8 @@ export async function POST(request) {
       draft: body.draft ?? false,
       image: body.image,
       tickets: body.tickets ?? [],
+      duration: body.duration,
+      recurring: body.recurring ?? null,
     }).select().single();
 
     if (error) throw error;

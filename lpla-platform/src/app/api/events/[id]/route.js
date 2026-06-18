@@ -19,7 +19,8 @@ function mapEvent(row) {
     time: row.time, location: row.location, category: row.category,
     price: row.price, isFree: row.is_free, totalSpots: row.total_spots,
     spotsLeft: row.spots_left, draft: row.draft, image: row.image,
-    tickets: row.tickets, createdAt: row.created_at,
+    tickets: row.tickets, duration: row.duration, recurring: row.recurring,
+    createdAt: row.created_at,
   };
 }
 
@@ -44,6 +45,8 @@ export async function PATCH(request, { params }) {
     if (body.draft !== undefined)      updates.draft       = body.draft;
     if (body.image !== undefined)      updates.image       = body.image;
     if (body.tickets !== undefined)    updates.tickets     = body.tickets;
+    if (body.duration !== undefined)   updates.duration    = body.duration;
+    if (body.recurring !== undefined)  updates.recurring   = body.recurring;
     const { data, error } = await supabase
       .from('events').update(updates).eq('id', params.id).select().single();
     if (error) throw error;
