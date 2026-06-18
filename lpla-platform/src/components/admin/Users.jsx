@@ -1,6 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
-import AdmIcon from '@/components/AdmIcon'
+import AdmIcon from '@/components/admin/AdmIcon'
 
 const API = 'https://locoporlaaventura.vercel.app'
 

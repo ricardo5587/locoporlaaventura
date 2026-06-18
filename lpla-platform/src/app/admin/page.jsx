@@ -1,30 +1,18 @@
 'use client'
 import { useState, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
-import AdmIcon from '@/components/AdmIcon'
+import AdmIcon from '@/components/admin/AdmIcon'
+import { ADM, CAT_COLORS, CATS_ALL } from '@/lib/tokens'
 import DashboardOverview, { OvKpi } from '@/components/admin/Overview'
 import AttendeesBookings from '@/components/admin/Attendees'
 import AdminCRM from '@/components/admin/Contacts'
 import AdminApps from '@/components/admin/Apps'
 import AdminUsers from '@/components/admin/Users'
+import AdminInstall from '@/components/admin/Launch'
 
 const API = 'https://locoporlaaventura.vercel.app'
 const TODAY = new Date().toISOString().slice(0, 10)
-
-const ADM = {
-  bg: '#F7F6F1', sidebar: '#2B353F', card: '#FFFFFF', border: '#E6E1D5',
-  text: '#2B353F', muted: '#6B7280', light: '#A0998C',
-  primary: '#294154', navAccent: '#A8B84A',
-  success: '#5E7A0C', danger: '#B32317', warning: '#D9831F',
-  lime: '#919832',
-  radius: 10, radiusMd: 14, radiusLg: 18,
-}
-
-const CAT_COLORS = {
-  Escalada: '#294154', Senderismo: '#546207', Taller: '#A54399',
-  Keynote: '#5E8BBD', Social: '#D9831F', 'Expedición': '#B32317', Voluntario: '#00897A',
-}
-const CATS = ['Escalada', 'Senderismo', 'Taller', 'Keynote', 'Social', 'Expedición', 'Voluntario']
+const IDLE_TIMEOUT = 30 * 60 * 1000
 
 function getStatus(ev) {
   if (ev.draft) return 'draft'
@@ -35,7 +23,54 @@ function getStatus(ev) {
 function sold(ev) { return Math.max(0, (ev.totalSpots || 0) - (ev.spotsLeft || 0)) }
 function gross(ev) { return ev.isFree ? 0 : sold(ev) * (ev.price || 0) }
 
-// ── StatCard ──────────────────────────────────────────────────────────────────
+function parseJwtPayload(token) {
+  try { return JSON.parse(atob(token.split('.')[1])) } catch { return null }
+}
+
+function NavItem({ icon, label, active, onClick, badge, featured }) {
+  const [hov, setHov] = useState(false)
+  if (featured) {
+    return (
+      <button onClick={onClick}
+        onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}
+        style={{
+          display: 'flex', alignItems: 'center', gap: 10,
+          width: '100%', padding: '10px 16px', borderRadius: 10,
+          border: `1px solid ${hov || active ? 'rgba(168,184,74,.5)' : 'rgba(168,184,74,.25)'}`,
+          cursor: 'pointer', textAlign: 'left', background: 'transparent',
+          color: hov || active ? ADM.navAccent : 'rgba(168,184,74,.6)',
+          fontFamily: 'Barlow Condensed,system-ui', fontSize: 14, fontWeight: 800,
+          transition: 'all .18s', marginBottom: 2, marginTop: 6, letterSpacing: .5,
+        }}>
+        <AdmIcon name={icon} size={17} color={hov || active ? ADM.navAccent : 'rgba(168,184,74,.6)'} />
+        <span style={{ flex: 1 }}>{label}</span>
+        <AdmIcon name="chevronRight" size={13} color={hov || active ? ADM.navAccent : 'rgba(168,184,74,.4)'} />
+      </button>
+    )
+  }
+  return (
+    <button onClick={onClick}
+      onMouseOver={() => setHov(true)} onMouseOut={() => setHov(false)}
+      style={{
+        display: 'flex', alignItems: 'center', gap: 12,
+        width: '100%', padding: '10px 16px', borderRadius: 10,
+        border: 'none', cursor: 'pointer', textAlign: 'left',
+        background: active ? '#2C3A2E' : hov ? 'rgba(255,255,255,.06)' : 'transparent',
+        color: active ? ADM.navAccent : hov ? '#CBD5E1' : '#94A0A0',
+        fontFamily: 'Nunito,system-ui', fontSize: 14, fontWeight: active ? 700 : 500,
+        transition: 'all .18s', marginBottom: 2,
+      }}>
+      <AdmIcon name={icon} size={19} style={{ opacity: active ? 1 : 0.85 }} />
+      <span style={{ flex: 1 }}>{label}</span>
+      {badge != null && (
+        <span style={{ background: active ? ADM.navAccent : '#3A4651', color: active ? '#232B1A' : '#94A0A0',
+          borderRadius: 10, padding: '1px 7px', fontSize: 11, fontWeight: 700 }}>{badge}</span>
+      )}
+      {active && <div style={{ width: 3, height: 18, borderRadius: 2, background: ADM.navAccent, flexShrink: 0 }} />}
+    </button>
+  )
+}
+
 function StatCard({ label, value, sub, color }) {
   return (
     <div style={{ background: ADM.card, borderRadius: ADM.radiusMd, border: `1px solid ${ADM.border}`, padding: '20px 22px' }}>
@@ -46,7 +81,6 @@ function StatCard({ label, value, sub, color }) {
   )
 }
 
-// ── StatusTabs ────────────────────────────────────────────────────────────────
 function StatusTabs({ value, onChange, counts }) {
   const tabs = [
     { id: 'upcoming', label: 'Upcoming' },
@@ -79,7 +113,6 @@ function StatusTabs({ value, onChange, counts }) {
   )
 }
 
-// ── TicketRow ─────────────────────────────────────────────────────────────────
 function TicketRow({ ticket, onChange, onRemove, canRemove }) {
   return (
     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 80px 32px', gap: 8, alignItems: 'center', background: '#F8FAFC', borderRadius: ADM.radius, padding: '10px 12px', border: `1px solid ${ADM.border}` }}>
@@ -93,13 +126,14 @@ function TicketRow({ ticket, onChange, onRemove, canRemove }) {
           style={{ width: '100%', borderRadius: 7, border: `1px solid ${ADM.border}`, padding: '0 8px', height: 34, fontFamily: 'Nunito,system-ui', fontSize: 14, outline: 'none', boxSizing: 'border-box' }} />
       </div>
       {canRemove
-        ? <button onClick={onRemove} style={{ width: 32, height: 32, borderRadius: 7, border: `1px solid ${ADM.border}`, background: '#fff', cursor: 'pointer', color: ADM.danger, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>&#xd7;</button>
+        ? <button onClick={onRemove} style={{ width: 32, height: 32, borderRadius: 7, border: `1px solid ${ADM.border}`, background: '#fff', cursor: 'pointer', color: ADM.danger, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <AdmIcon name="x" size={14} color={ADM.danger} />
+          </button>
         : <div />}
     </div>
   )
 }
 
-// ── Event Modal ───────────────────────────────────────────────────────────────
 const EMPTY = {
   titleEn: '', titleEs: '', descEn: '', descEs: '',
   date: '', time: '7:00 AM', location: '', category: 'Escalada',
@@ -184,12 +218,13 @@ function EventModal({ event, token, onClose, onSaved }) {
             <div style={{ fontFamily: 'Barlow Condensed,system-ui', fontSize: 22, fontWeight: 800, color: ADM.text, textTransform: 'uppercase', letterSpacing: .5 }}>{isEdit ? 'Edit Event' : 'Create New Event'}</div>
             <div style={{ fontFamily: 'Nunito,system-ui', fontSize: 13, color: ADM.muted, marginTop: 2 }}>{isEdit ? 'Update event details below.' : 'Fill in the details to publish a new event.'}</div>
           </div>
-          <button onClick={onClose} style={{ width: 34, height: 34, borderRadius: 8, border: `1px solid ${ADM.border}`, background: 'transparent', cursor: 'pointer', fontSize: 20, color: ADM.muted, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>&#xd7;</button>
+          <button onClick={onClose} style={{ width: 34, height: 34, borderRadius: 8, border: `1px solid ${ADM.border}`, background: 'transparent', cursor: 'pointer', color: ADM.muted, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <AdmIcon name="x" size={16} />
+          </button>
         </div>
 
         <div style={{ overflow: 'auto', flex: 1, padding: '24px 28px' }}>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-            {/* Titles */}
             {[['titleEn', 'Event Title (English)', true], ['titleEs', 'Título del Evento (Español)', false]].map(([k, l, req]) => (
               <div key={k}>
                 <label style={labelStyle}>{l}{req && <span style={{ color: ADM.danger }}> *</span>}</label>
@@ -198,7 +233,6 @@ function EventModal({ event, token, onClose, onSaved }) {
               </div>
             ))}
 
-            {/* Descriptions */}
             {[['descEn', 'Description (English)'], ['descEs', 'Descripción (Español)']].map(([k, l]) => (
               <div key={k}>
                 <label style={labelStyle}>{l}</label>
@@ -206,13 +240,14 @@ function EventModal({ event, token, onClose, onSaved }) {
               </div>
             ))}
 
-            {/* Event Image */}
             <div style={{ gridColumn: 'span 2' }}>
               <label style={labelStyle}>Event Image</label>
               {form.image ? (
                 <div style={{ position: 'relative', borderRadius: ADM.radius, overflow: 'hidden', border: `1px solid ${ADM.border}`, maxHeight: 200 }}>
                   <img src={form.image} alt="Preview" style={{ width: '100%', height: 200, objectFit: 'cover', display: 'block' }} />
-                  <button onClick={() => setF('image', '')} style={{ position: 'absolute', top: 8, right: 8, width: 28, height: 28, borderRadius: '50%', border: 'none', background: 'rgba(0,0,0,.6)', color: '#fff', cursor: 'pointer', fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>&#xd7;</button>
+                  <button onClick={() => setF('image', '')} style={{ position: 'absolute', top: 8, right: 8, width: 28, height: 28, borderRadius: '50%', border: 'none', background: 'rgba(0,0,0,.6)', color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <AdmIcon name="x" size={14} color="#fff" />
+                  </button>
                 </div>
               ) : (
                 <div
@@ -231,7 +266,7 @@ function EventModal({ event, token, onClose, onSaved }) {
                     </div>
                   ) : (
                     <>
-                      <div style={{ fontSize: 28, marginBottom: 6, opacity: .4 }}>&#x1f4f7;</div>
+                      <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 6, opacity: .4 }}><AdmIcon name="camera" size={28} /></div>
                       <div style={{ fontFamily: 'Nunito,system-ui', fontSize: 14, fontWeight: 600, color: ADM.text }}>Drop an image here or click to browse</div>
                       <div style={{ fontFamily: 'Nunito,system-ui', fontSize: 12, color: ADM.light, marginTop: 4 }}>JPEG, PNG, WebP, GIF — max 50 MB</div>
                     </>
@@ -243,7 +278,6 @@ function EventModal({ event, token, onClose, onSaved }) {
               {uploadError && <div style={{ fontSize: 12, color: ADM.danger, marginTop: 6 }}>{uploadError}</div>}
             </div>
 
-            {/* Date / Time / Location / Category / Spots */}
             <div>
               <label style={labelStyle}>Date{' '}<span style={{ color: ADM.danger }}>*</span></label>
               <input type="date" value={form.date} onChange={e => setF('date', e.target.value)} style={{ ...inputStyle, borderColor: errors.date ? ADM.danger : ADM.border }} />
@@ -259,7 +293,7 @@ function EventModal({ event, token, onClose, onSaved }) {
             <div>
               <label style={labelStyle}>Category</label>
               <select value={form.category} onChange={e => setF('category', e.target.value)} style={{ ...inputStyle }}>
-                {CATS.map(c => <option key={c} value={c}>{c}</option>)}
+                {CATS_ALL.map(c => <option key={c} value={c}>{c}</option>)}
               </select>
             </div>
             <div>
@@ -267,7 +301,6 @@ function EventModal({ event, token, onClose, onSaved }) {
               <input type="number" value={form.totalSpots} onChange={e => setF('totalSpots', e.target.value)} style={inputStyle} />
             </div>
 
-            {/* Pricing row */}
             <div style={{ gridColumn: 'span 2', display: 'flex', alignItems: 'center', gap: 24, background: '#F8FAFC', borderRadius: ADM.radius, padding: '14px 16px', border: `1px solid ${ADM.border}` }}>
               <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
                 <input type="checkbox" checked={form.isFree} onChange={e => setF('isFree', e.target.checked)} style={{ width: 16, height: 16, accentColor: ADM.success }} />
@@ -286,7 +319,6 @@ function EventModal({ event, token, onClose, onSaved }) {
               )}
             </div>
 
-            {/* Tickets */}
             <div style={{ gridColumn: 'span 2' }}>
               <div style={{ fontFamily: 'Nunito,system-ui', fontSize: 12, fontWeight: 700, color: ADM.muted, textTransform: 'uppercase', letterSpacing: .6, marginBottom: 10 }}>Ticket Types</div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 10 }}>
@@ -312,7 +344,6 @@ function EventModal({ event, token, onClose, onSaved }) {
   )
 }
 
-// ── Delete Confirm ────────────────────────────────────────────────────────────
 function DeleteConfirm({ event, onConfirm, onCancel }) {
   return (
     <>
@@ -320,7 +351,7 @@ function DeleteConfirm({ event, onConfirm, onCancel }) {
       <div style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', zIndex: 601, background: '#fff', borderRadius: ADM.radiusMd, boxShadow: '0 20px 60px rgba(0,0,0,.2)', width: 'min(400px,90vw)', padding: '28px' }}>
         <div style={{ fontFamily: 'Barlow Condensed,system-ui', fontSize: 20, fontWeight: 800, color: ADM.text, textAlign: 'center', marginBottom: 8 }}>Delete Event?</div>
         <div style={{ fontFamily: 'Nunito,system-ui', fontSize: 14, color: ADM.muted, textAlign: 'center', marginBottom: 24, lineHeight: 1.6 }}>
-          <strong>"{event.titleEn}"</strong> will be permanently removed.
+          <strong>&quot;{event.titleEn}&quot;</strong> will be permanently removed.
         </div>
         <div style={{ display: 'flex', gap: 10 }}>
           <button onClick={onCancel} style={{ flex: 1, height: 42, borderRadius: ADM.radius, border: `1px solid ${ADM.border}`, background: 'transparent', cursor: 'pointer', fontFamily: 'Nunito,system-ui', fontSize: 14, fontWeight: 600, color: ADM.muted }}>Cancel</button>
@@ -329,102 +360,6 @@ function DeleteConfirm({ event, onConfirm, onCancel }) {
       </div>
     </>
   )
-}
-
-// ── Sidebar ───────────────────────────────────────────────────────────────────
-function Sidebar({ activePage, onNav, onLogout, eventCount, currentUser }) {
-  const isOwner = currentUser?.role === 'owner'
-  const navItems = [
-    { id: 'overview', label: 'Overview', icon: 'chart' },
-    { id: 'events', label: 'Events', icon: 'calendar', badge: eventCount },
-    { id: 'attendees', label: 'Attendees', icon: 'people' },
-    { id: 'contacts', label: 'Contacts', icon: 'user' },
-    { id: 'apps', label: 'Apps', icon: 'apps' },
-    ...(isOwner ? [{ id: 'users', label: 'Users', icon: 'people' }] : []),
-  ]
-
-  return (
-    <div style={{ width: 240, background: ADM.sidebar, display: 'flex', flexDirection: 'column', flexShrink: 0, height: '100vh' }}>
-      {/* Logo */}
-      <div style={{ padding: '20px 20px 12px', borderBottom: '1px solid rgba(255,255,255,.08)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <img src="/logo.png" alt="LPLA" style={{ height: 34 }} onError={e => e.target.style.display = 'none'} />
-          <div>
-            <div style={{ fontFamily: 'Barlow Condensed,system-ui', fontSize: 16, fontWeight: 800, color: '#fff', textTransform: 'uppercase', letterSpacing: .5, lineHeight: 1 }}>LPLA</div>
-            <div style={{ fontFamily: 'Nunito,system-ui', fontSize: 11, color: 'rgba(255,255,255,.4)', marginTop: 2 }}>Admin</div>
-          </div>
-        </div>
-      </div>
-
-      {/* Nav */}
-      <nav style={{ flex: 1, padding: '12px 10px', overflow: 'auto' }}>
-        {navItems.map(item => {
-          const active = activePage === item.id
-          return (
-            <button key={item.id} onClick={() => onNav(item.id)} style={{
-              position: 'relative', width: '100%', display: 'flex', alignItems: 'center', gap: 10,
-              padding: '9px 14px', borderRadius: 8, marginBottom: 2, cursor: 'pointer', border: 'none',
-              background: active ? 'rgba(168,184,74,.18)' : 'transparent',
-              color: active ? ADM.navAccent : 'rgba(255,255,255,.5)',
-              fontFamily: 'Nunito,system-ui', fontSize: 14, fontWeight: 600, textAlign: 'left',
-              transition: 'all .15s',
-            }}
-              onMouseOver={e => { if (!active) e.currentTarget.style.background = 'rgba(255,255,255,.06)' }}
-              onMouseOut={e => { if (!active) e.currentTarget.style.background = 'transparent' }}>
-              {active && <div style={{ position: 'absolute', right: 0, top: '50%', transform: 'translateY(-50%)', width: 3, height: 20, borderRadius: 2, background: ADM.navAccent }} />}
-              <AdmIcon name={item.icon} size={16} />
-              {item.label}
-              {item.badge != null && (
-                <span style={{ marginLeft: 'auto', background: active ? ADM.navAccent : 'rgba(255,255,255,.15)', color: active ? '#fff' : 'rgba(255,255,255,.6)', borderRadius: 10, padding: '1px 7px', fontSize: 11, fontWeight: 700 }}>
-                  {item.badge}
-                </span>
-              )}
-            </button>
-          )
-        })}
-
-        {/* Launch */}
-        <a href="https://locoporlaaventura-k1oz3.vercel.app" target="_blank" rel="noreferrer" style={{
-          width: '100%', display: 'flex', alignItems: 'center', gap: 10, marginTop: 6,
-          padding: '9px 14px', borderRadius: 8, cursor: 'pointer', border: '1px solid rgba(168,184,74,.25)',
-          background: 'transparent', color: 'rgba(168,184,74,.6)',
-          fontFamily: 'Nunito,system-ui', fontSize: 14, fontWeight: 600, textDecoration: 'none',
-          transition: 'all .15s',
-        }}
-          onMouseOver={e => { e.currentTarget.style.borderColor = 'rgba(168,184,74,.6)'; e.currentTarget.style.color = '#A8B84A' }}
-          onMouseOut={e => { e.currentTarget.style.borderColor = 'rgba(168,184,74,.25)'; e.currentTarget.style.color = 'rgba(168,184,74,.6)' }}>
-          <AdmIcon name="launch" size={16} />
-          Launch
-          <AdmIcon name="chevronRight" size={14} style={{ marginLeft: 'auto' }} />
-        </a>
-      </nav>
-
-      {/* Bottom */}
-      <div style={{ padding: '12px 10px', borderTop: '1px solid rgba(255,255,255,.08)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px', marginBottom: 6 }}>
-          <div style={{ width: 30, height: 30, borderRadius: '50%', background: 'linear-gradient(135deg,#294154,#546207)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-            <span style={{ fontFamily: 'Barlow Condensed,system-ui', fontSize: 13, fontWeight: 800, color: '#fff' }}>{(currentUser?.name || 'A').charAt(0).toUpperCase()}</span>
-          </div>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontFamily: 'Nunito,system-ui', fontSize: 13, fontWeight: 700, color: '#fff', lineHeight: 1.2 }}>{currentUser?.name || 'Admin'}</div>
-            <div style={{ fontFamily: 'Nunito,system-ui', fontSize: 11, color: 'rgba(255,255,255,.35)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{currentUser?.email || ''}</div>
-          </div>
-        </div>
-        <button onClick={onLogout} style={{ width: '100%', padding: '9px 14px', borderRadius: 8, border: '1px solid rgba(255,255,255,.12)', background: 'transparent', color: 'rgba(255,255,255,.5)', fontFamily: 'Nunito,system-ui', fontSize: 13, fontWeight: 600, cursor: 'pointer', textAlign: 'left' }}>
-          Log out
-        </button>
-      </div>
-    </div>
-  )
-}
-
-// ── Main admin page ───────────────────────────────────────────────────────────
-const IDLE_TIMEOUT = 30 * 60 * 1000
-
-function parseJwtPayload(token) {
-  try {
-    return JSON.parse(atob(token.split('.')[1]))
-  } catch { return null }
 }
 
 export default function AdminPage() {
@@ -450,6 +385,9 @@ export default function AdminPage() {
   }, [])
 
   useEffect(() => {
+    if (typeof window === 'undefined') return
+    if (localStorage.getItem('lpla_remember') === '1') return
+
     let timer
     function resetTimer() {
       clearTimeout(timer)
@@ -458,12 +396,12 @@ export default function AdminPage() {
         router.push('/admin/login')
       }, IDLE_TIMEOUT)
     }
-    const events_ = ['mousedown', 'keydown', 'scroll', 'touchstart']
-    events_.forEach(e => window.addEventListener(e, resetTimer))
+    const evts = ['mousedown', 'keydown', 'scroll', 'touchstart']
+    evts.forEach(e => window.addEventListener(e, resetTimer))
     resetTimer()
     return () => {
       clearTimeout(timer)
-      events_.forEach(e => window.removeEventListener(e, resetTimer))
+      evts.forEach(e => window.removeEventListener(e, resetTimer))
     }
   }, [router])
 
@@ -479,6 +417,7 @@ export default function AdminPage() {
 
   function logout() {
     localStorage.removeItem('lpla_admin_token')
+    localStorage.removeItem('lpla_remember')
     router.push('/admin/login')
   }
 
@@ -486,6 +425,10 @@ export default function AdminPage() {
     await fetch(`${API}/api/events/${ev.id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } })
     setDelTarget(null)
     loadEvents(token)
+  }
+
+  function handlePreview() {
+    window.open('https://locoporlaaventura-k1oz3.vercel.app', '_blank')
   }
 
   const counts = useMemo(() => ({
@@ -506,149 +449,240 @@ export default function AdminPage() {
   const STATUS_LABEL = { active: 'Active', past: 'Past', draft: 'Draft', full: 'Full' }
   const STATUS_COLOR = { active: ADM.success, past: ADM.light, draft: ADM.warning, full: ADM.danger }
 
+  const isOwner = currentUser?.role === 'owner'
+  const navItems = [
+    { id: 'overview',  icon: 'chart',    label: 'Overview' },
+    { id: 'events',    icon: 'calendar', label: 'Events', badge: events.length },
+    { id: 'attendees', icon: 'people',   label: 'Attendees' },
+    { id: 'crm',       icon: 'user',     label: 'Contacts' },
+    { id: 'apps',      icon: 'apps',     label: 'Apps' },
+    { id: 'users',     icon: 'team',     label: 'Users' },
+    { id: 'widget',    icon: 'launch',   label: 'Launch', featured: true },
+  ]
+
+  const avatarLetter = (currentUser?.name || currentUser?.email || 'A').trim().charAt(0).toUpperCase()
+  const pageLabel = activePage === 'settings' ? 'Profile Settings' : (navItems.find(n => n.id === activePage) || {}).label || ''
+
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800&family=Nunito:wght@400;600;700&display=swap');
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         body { background: ${ADM.bg}; }
         @keyframes spin { to { transform: rotate(360deg); } }
       `}</style>
       <div style={{ display: 'flex', height: '100vh', fontFamily: 'Nunito,system-ui', background: ADM.bg, overflow: 'hidden' }}>
 
-        <Sidebar activePage={activePage} onNav={setActivePage} onLogout={logout} eventCount={counts.upcoming} currentUser={currentUser} />
+        {/* ── Sidebar ─────────────────────────────────────────────── */}
+        <aside style={{ position: 'relative', width: 240, flexShrink: 0, background: 'linear-gradient(176deg,#16262F 0%,#0E1A22 60%,#0B151C 100%)', display: 'flex', flexDirection: 'column', overflow: 'hidden', zIndex: 10 }}>
 
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-          {/* Top bar */}
-          <div style={{ height: 52, background: ADM.sidebar, borderBottom: '1px solid rgba(255,255,255,.08)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 24px', flexShrink: 0 }}>
-            <div>
-              <span style={{ fontFamily: 'Barlow Condensed,system-ui', fontSize: 14, fontWeight: 700, letterSpacing: 1.5, textTransform: 'uppercase', color: 'rgba(255,255,255,.9)' }}>
-                {{ overview: 'Overview', events: 'Events', attendees: 'Attendees', contacts: 'Contacts', apps: 'Apps', users: 'Users' }[activePage]}
-              </span>
-              <span style={{ fontFamily: 'Nunito,system-ui', fontSize: 12, color: 'rgba(255,255,255,.4)', marginLeft: 12 }}>Live &middot; {events.length} events synced</span>
+          {/* Logo lockup */}
+          <div style={{ position: 'relative', zIndex: 1, padding: '22px 20px 18px', borderBottom: '1px solid rgba(255,255,255,.07)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 11 }}>
+              <img src="/logo.png" alt="LPLA" style={{ height: 38, width: 'auto', filter: 'drop-shadow(0 2px 6px rgba(0,0,0,.45))' }} onError={e => { e.target.style.display = 'none' }} />
+              <div>
+                <div style={{ fontFamily: 'Barlow Condensed,system-ui', fontSize: 15, fontWeight: 800, color: '#fff', textTransform: 'uppercase', letterSpacing: .4, lineHeight: 1, maxWidth: 132 }}>Loco por la Aventura</div>
+                <div style={{ fontFamily: 'ui-monospace,Menlo,monospace', fontSize: 9.5, color: '#7E8C7A', fontWeight: 600, letterSpacing: 1.2, textTransform: 'uppercase', marginTop: 2 }}>Field Station · Admin</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Nav */}
+          <nav style={{ position: 'relative', zIndex: 1, padding: '16px 12px', flex: 1, overflow: 'auto' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 10, paddingLeft: 4 }}>
+              <span style={{ width: 12, height: 1.5, background: '#5A6672' }} />
+              <div style={{ fontFamily: 'Barlow Condensed,system-ui', fontSize: 10, fontWeight: 800, color: '#6B7A6A', textTransform: 'uppercase', letterSpacing: 2 }}>Modules</div>
+            </div>
+            {navItems.map(item => (
+              <NavItem key={item.id} {...item} active={activePage === item.id} onClick={() => setActivePage(item.id)} />
+            ))}
+          </nav>
+
+          {/* Footer */}
+          <div style={{ position: 'relative', zIndex: 1, padding: '14px 16px', borderTop: '1px solid rgba(255,255,255,.07)' }}>
+            {/* Admin user row + gear */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+              <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'linear-gradient(135deg,#294154,#546207)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Barlow Condensed,system-ui', fontSize: 14, fontWeight: 800, color: '#fff', flexShrink: 0 }}>{avatarLetter}</div>
+              <div style={{ minWidth: 0, flex: 1 }}>
+                <div style={{ fontFamily: 'Nunito,system-ui', fontSize: 13, fontWeight: 700, color: '#CBD3D3' }}>{currentUser?.name || 'Admin'}</div>
+                <div style={{ fontFamily: 'Nunito,system-ui', fontSize: 11, color: '#7A8590', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{currentUser?.email || ''}</div>
+              </div>
+              <button onClick={() => setActivePage('settings')} title="Profile settings"
+                style={{ flexShrink: 0, width: 30, height: 30, borderRadius: 8, border: `1px solid ${activePage === 'settings' ? 'rgba(168,184,74,.4)' : 'rgba(255,255,255,.12)'}`, background: activePage === 'settings' ? 'rgba(168,184,74,.18)' : 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all .15s' }}
+                onMouseOver={e => { e.currentTarget.style.background = 'rgba(255,255,255,.09)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,.22)' }}
+                onMouseOut={e => { e.currentTarget.style.background = activePage === 'settings' ? 'rgba(168,184,74,.18)' : 'transparent'; e.currentTarget.style.borderColor = activePage === 'settings' ? 'rgba(168,184,74,.4)' : 'rgba(255,255,255,.12)' }}>
+                <AdmIcon name="settings" size={15} color={activePage === 'settings' ? '#A8B84A' : '#64748B'} />
+              </button>
+            </div>
+
+            {/* Preview Widget */}
+            <div style={{ marginBottom: 6 }}>
+              <button onClick={handlePreview}
+                style={{ width: '100%', padding: '7px 10px', borderRadius: 8, border: '1px solid rgba(255,255,255,.1)', background: 'transparent', color: '#64748B', fontFamily: 'Nunito,system-ui', fontSize: 11, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5, transition: 'color .15s' }}
+                onMouseOver={e => e.currentTarget.style.color = '#94A3B8'}
+                onMouseOut={e => e.currentTarget.style.color = '#64748B'}>
+                <AdmIcon name="launch" size={14} /> Preview Widget
+              </button>
+            </div>
+
+            {/* Log out */}
+            <button onClick={logout}
+              style={{ width: '100%', padding: '8px 10px', borderRadius: 8, border: '1px solid rgba(179,35,23,.25)', background: 'rgba(179,35,23,.08)', color: '#D98A84', fontFamily: 'Nunito,system-ui', fontSize: 12, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, transition: 'all .15s' }}
+              onMouseOver={e => { e.currentTarget.style.background = 'rgba(179,35,23,.16)'; e.currentTarget.style.color = '#EFA9A3' }}
+              onMouseOut={e => { e.currentTarget.style.background = 'rgba(179,35,23,.08)'; e.currentTarget.style.color = '#D98A84' }}>
+              <AdmIcon name="power" size={14} /> Log out
+            </button>
+
+            {/* Coordinate readout */}
+            <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid rgba(255,255,255,.05)', display: 'flex', alignItems: 'center', gap: 7 }}>
+              <span style={{ width: 5, height: 5, borderRadius: '50%', background: '#A8B84A', flexShrink: 0 }} />
+              <span style={{ fontFamily: 'ui-monospace,Menlo,monospace', fontSize: 9.5, color: '#566270', letterSpacing: .5 }}>45.52°N 122.68°W · PORTLAND</span>
+            </div>
+          </div>
+        </aside>
+
+        {/* ── Main ────────────────────────────────────────────────── */}
+        <main style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+          {/* Topbar */}
+          <div style={{ background: '#fff', borderBottom: '1px solid #E3DBCB', padding: '13px 28px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 11 }}>
+              <span style={{ width: 9, height: 9, background: '#A8B84A', borderRadius: 2, transform: 'rotate(45deg)', flexShrink: 0 }} />
+              <div style={{ fontFamily: 'Barlow Condensed,system-ui', fontSize: 17, fontWeight: 800, color: '#1B2A38', textTransform: 'uppercase', letterSpacing: .6 }}>
+                {pageLabel}
+              </div>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '5px 13px', borderRadius: 20, background: 'rgba(94,122,12,.1)', border: '1px solid rgba(94,122,12,.22)' }}>
+              <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#5E7A0C', boxShadow: '0 0 0 3px rgba(94,122,12,.15)' }} />
+              <span style={{ fontFamily: 'Nunito,system-ui', fontSize: 12.5, color: '#46570F', fontWeight: 700 }}>Trail open · {events.length} events synced</span>
             </div>
           </div>
 
           {/* Content */}
-          <div style={{ flex: 1, overflow: activePage === 'contacts' ? 'hidden' : 'auto', padding: activePage === 'contacts' || activePage === 'overview' || activePage === 'attendees' || activePage === 'apps' || activePage === 'users' ? 0 : '28px 32px', background: ADM.bg, display: 'flex', flexDirection: 'column' }}>
+          <div style={{ flex: 1, overflow: ['crm', 'contacts'].includes(activePage) ? 'hidden' : 'auto', padding: ['crm', 'contacts', 'overview', 'attendees', 'apps', 'users', 'widget', 'settings'].includes(activePage) ? 0 : '28px 32px', background: ADM.bg, display: 'flex', flexDirection: 'column' }}>
             {activePage === 'overview' && <DashboardOverview events={events} ADM={ADM} CAT_COLORS={CAT_COLORS} onSelectEvent={ev => { setActivePage('events'); setModal(ev) }} onGoEvents={() => setActivePage('events')} />}
             {activePage === 'attendees' && <AttendeesBookings events={events} ADM={ADM} OvKpi={OvKpi} />}
-            {activePage === 'contacts' && <AdminCRM events={events} ADM={ADM} OvKpi={OvKpi} />}
+            {(activePage === 'crm' || activePage === 'contacts') && <AdminCRM events={events} ADM={ADM} OvKpi={OvKpi} />}
             {activePage === 'apps' && <AdminApps ADM={ADM} />}
             {activePage === 'users' && <AdminUsers ADM={ADM} OvKpi={OvKpi} currentUser={currentUser} />}
-            {activePage === 'events' && <div style={{ padding: '28px 32px' }}>
-            {/* Page header */}
-            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 24, flexWrap: 'wrap', gap: 12 }}>
-              <div>
-                <h1 style={{ fontFamily: 'Barlow Condensed,system-ui', fontSize: 28, fontWeight: 800, color: ADM.text, margin: 0, textTransform: 'uppercase', letterSpacing: .5 }}>Event Manager</h1>
-                <p style={{ fontFamily: 'Nunito,system-ui', fontSize: 14, color: ADM.muted, margin: '4px 0 0' }}>Changes sync instantly to the widget.</p>
-              </div>
-              <button onClick={() => setModal('create')} style={{
-                display: 'flex', alignItems: 'center', gap: 8, padding: '11px 22px', borderRadius: ADM.radiusMd,
-                border: 'none', background: ADM.primary, color: '#fff',
-                fontFamily: 'Barlow Condensed,system-ui', fontSize: 16, fontWeight: 800, letterSpacing: .5,
-                cursor: 'pointer', boxShadow: '0 4px 14px rgba(41,65,84,.3)',
-              }}>
-                <AdmIcon name="plus" size={16} />
-                Create Event
-              </button>
-            </div>
-
-            {/* Stats */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 14, marginBottom: 24 }}>
-              <StatCard label="Total Events" value={events.length} sub={`${counts.upcoming} upcoming`} />
-              <StatCard label="Total Sold" value={totalSold} color={ADM.success} />
-              <StatCard label="Est. Gross" value={`$${totalGross.toLocaleString()}`} color={ADM.primary} />
-              <StatCard label="Drafts" value={counts.draft} color={ADM.warning} />
-            </div>
-
-            {error && <div style={{ background: '#FEE2E2', border: '1px solid #FCA5A5', borderRadius: ADM.radius, padding: '12px 16px', marginBottom: 16, color: ADM.danger, fontSize: 14 }}>{error}</div>}
-
-            {/* Controls */}
-            <div style={{ display: 'flex', gap: 12, marginBottom: 16, flexWrap: 'wrap', alignItems: 'center' }}>
-              <StatusTabs value={statusTab} onChange={setStatusTab} counts={counts} />
-              <select value={catFilter} onChange={e => setCatFilter(e.target.value)} style={{ height: 38, borderRadius: ADM.radius, border: `1px solid ${ADM.border}`, padding: '0 12px', fontFamily: 'Nunito,system-ui', fontSize: 13, color: ADM.text, background: '#fff', outline: 'none', cursor: 'pointer' }}>
-                <option value="all">All Categories</option>
-                {CATS.map(c => <option key={c} value={c}>{c}</option>)}
-              </select>
-              <div style={{ flex: 1, minWidth: 180, display: 'flex', alignItems: 'center', gap: 8, background: '#fff', borderRadius: ADM.radius, padding: '0 12px', height: 38, border: `1px solid ${ADM.border}` }}>
-                <AdmIcon name="search" size={14} color="#94A3B8" />
-                <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search events..."
-                  style={{ border: 'none', outline: 'none', fontFamily: 'Nunito,system-ui', fontSize: 13, color: ADM.text, flex: 1, background: 'transparent' }} />
-              </div>
-              <span style={{ fontFamily: 'Nunito,system-ui', fontSize: 12, color: ADM.light }}>{filtered.length} events</span>
-            </div>
-
-            {/* Table */}
-            {loading ? (
-              <div style={{ textAlign: 'center', padding: 60, color: ADM.muted }}>
-                <span style={{ width: 24, height: 24, border: `3px solid ${ADM.border}`, borderTopColor: ADM.primary, borderRadius: '50%', display: 'inline-block', animation: 'spin 1s linear infinite' }} />
-              </div>
-            ) : (
-              <div style={{ background: ADM.card, borderRadius: ADM.radiusMd, border: `1px solid ${ADM.border}`, overflow: 'hidden' }}>
-                <div style={{ overflowX: 'auto' }}>
-                  <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                    <thead>
-                      <tr style={{ background: '#F8FAFC', borderBottom: `1px solid ${ADM.border}` }}>
-                        {['Event', 'Sold', 'Gross', 'Status', ''].map(h => (
-                          <th key={h} style={{ padding: '11px 16px', textAlign: 'left', fontFamily: 'Barlow Condensed,system-ui', fontSize: 11, fontWeight: 800, color: ADM.light, textTransform: 'uppercase', letterSpacing: 1.2, whiteSpace: 'nowrap' }}>{h}</th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {filtered.length === 0 ? (
-                        <tr><td colSpan={5} style={{ padding: 48, textAlign: 'center', fontFamily: 'Nunito,system-ui', fontSize: 15, color: ADM.light }}>
-                          {events.length === 0 ? 'No events yet. Click "Create Event" to add your first.' : 'No events match the current filters.'}
-                        </td></tr>
-                      ) : filtered.map(ev => {
-                        const s = getStatus(ev)
-                        return (
-                          <tr key={ev.id} style={{ background: '#fff', borderBottom: `1px solid ${ADM.border}`, transition: 'background .12s', cursor: 'default' }}
-                            onMouseOver={e => e.currentTarget.style.background = '#F8FAFC'}
-                            onMouseOut={e => e.currentTarget.style.background = '#fff'}>
-                            <td style={{ padding: '14px 16px' }}>
-                              <div style={{ fontFamily: 'Barlow Condensed,system-ui', fontSize: 15, fontWeight: 800, color: ADM.text, textTransform: 'uppercase', letterSpacing: .3, lineHeight: 1.15 }}>{ev.titleEn}</div>
-                              <div style={{ fontFamily: 'Nunito,system-ui', fontSize: 12, color: ADM.light, marginTop: 2 }}>{ev.date} · {ev.location}</div>
-                            </td>
-                            <td style={{ padding: '14px 16px' }}>
-                              <div style={{ fontFamily: 'Barlow Condensed,system-ui', fontSize: 17, fontWeight: 800, color: ADM.text }}>{sold(ev)}</div>
-                              <div style={{ fontFamily: 'Nunito,system-ui', fontSize: 11, color: ADM.light }}>of {ev.totalSpots}</div>
-                            </td>
-                            <td style={{ padding: '14px 16px' }}>
-                              <div style={{ fontFamily: 'Barlow Condensed,system-ui', fontSize: 17, fontWeight: 800, color: ev.isFree ? ADM.light : ADM.primary }}>
-                                {ev.isFree ? '—' : `$${gross(ev).toLocaleString()}`}
-                              </div>
-                            </td>
-                            <td style={{ padding: '14px 16px' }}>
-                              <span style={{ display: 'inline-block', padding: '3px 10px', borderRadius: 16, background: `${STATUS_COLOR[s]}18`, color: STATUS_COLOR[s], fontFamily: 'Barlow Condensed,system-ui', fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: .4 }}>
-                                {STATUS_LABEL[s]}
-                              </span>
-                            </td>
-                            <td style={{ padding: '14px 12px' }}>
-                              <div style={{ display: 'flex', gap: 6 }}>
-                                <button onClick={() => setModal(ev)} style={{ padding: '5px 12px', borderRadius: 7, border: `1px solid ${ADM.primary}30`, background: `${ADM.primary}10`, color: ADM.primary, fontFamily: 'Nunito,system-ui', fontSize: 12, fontWeight: 700, cursor: 'pointer', transition: 'all .15s' }}
-                                  onMouseOver={e => { e.currentTarget.style.background = ADM.primary; e.currentTarget.style.color = '#fff' }}
-                                  onMouseOut={e => { e.currentTarget.style.background = `${ADM.primary}10`; e.currentTarget.style.color = ADM.primary }}>
-                                  Edit
-                                </button>
-                                <button onClick={() => setDelTarget(ev)} style={{ padding: '5px 12px', borderRadius: 7, border: `1px solid ${ADM.danger}30`, background: `${ADM.danger}10`, color: ADM.danger, fontFamily: 'Nunito,system-ui', fontSize: 12, fontWeight: 700, cursor: 'pointer', transition: 'all .15s' }}
-                                  onMouseOver={e => { e.currentTarget.style.background = ADM.danger; e.currentTarget.style.color = '#fff' }}
-                                  onMouseOut={e => { e.currentTarget.style.background = `${ADM.danger}10`; e.currentTarget.style.color = ADM.danger }}>
-                                  Delete
-                                </button>
-                              </div>
-                            </td>
-                          </tr>
-                        )
-                      })}
-                    </tbody>
-                  </table>
+            {activePage === 'widget' && <AdminInstall onPreview={handlePreview} events={events} />}
+            {activePage === 'settings' && (
+              <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 48 }}>
+                <div style={{ background: '#fff', borderRadius: 20, border: `1px solid ${ADM.border}`, padding: '48px 56px', textAlign: 'center', maxWidth: 460 }}>
+                  <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}><AdmIcon name="mountain" size={46} color="#94A3B8" strokeWidth={1.5} /></div>
+                  <h2 style={{ fontFamily: 'Barlow Condensed,system-ui', fontSize: 26, fontWeight: 800, color: ADM.text, textTransform: 'uppercase', letterSpacing: .5, margin: '0 0 10px' }}>Profile Settings</h2>
+                  <p style={{ fontFamily: 'Nunito,system-ui', fontSize: 14, color: ADM.muted, lineHeight: 1.6, margin: 0 }}>Personal info, security, and preferences — coming soon.</p>
                 </div>
               </div>
             )}
+
+            {activePage === 'events' && <div style={{ padding: '28px 32px' }}>
+              <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 24, flexWrap: 'wrap', gap: 12 }}>
+                <div>
+                  <h1 style={{ fontFamily: 'Barlow Condensed,system-ui', fontSize: 28, fontWeight: 800, color: ADM.text, margin: 0, textTransform: 'uppercase', letterSpacing: .5 }}>Event Manager</h1>
+                  <p style={{ fontFamily: 'Nunito,system-ui', fontSize: 14, color: ADM.muted, margin: '4px 0 0' }}>Changes sync instantly to the widget.</p>
+                </div>
+                <button onClick={() => setModal('create')} style={{
+                  display: 'flex', alignItems: 'center', gap: 8, padding: '11px 22px', borderRadius: ADM.radiusMd,
+                  border: 'none', background: ADM.primary, color: '#fff',
+                  fontFamily: 'Barlow Condensed,system-ui', fontSize: 16, fontWeight: 800, letterSpacing: .5,
+                  cursor: 'pointer', boxShadow: '0 4px 14px rgba(41,65,84,.3)',
+                }}>
+                  <AdmIcon name="plus" size={16} />
+                  Create Event
+                </button>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 14, marginBottom: 24 }}>
+                <StatCard label="Total Events" value={events.length} sub={`${counts.upcoming} upcoming`} />
+                <StatCard label="Total Sold" value={totalSold} color={ADM.success} />
+                <StatCard label="Est. Gross" value={`$${totalGross.toLocaleString()}`} color={ADM.primary} />
+                <StatCard label="Drafts" value={counts.draft} color={ADM.warning} />
+              </div>
+
+              {error && <div style={{ background: '#FEE2E2', border: '1px solid #FCA5A5', borderRadius: ADM.radius, padding: '12px 16px', marginBottom: 16, color: ADM.danger, fontSize: 14 }}>{error}</div>}
+
+              <div style={{ display: 'flex', gap: 12, marginBottom: 16, flexWrap: 'wrap', alignItems: 'center' }}>
+                <StatusTabs value={statusTab} onChange={setStatusTab} counts={counts} />
+                <select value={catFilter} onChange={e => setCatFilter(e.target.value)} style={{ height: 38, borderRadius: ADM.radius, border: `1px solid ${ADM.border}`, padding: '0 12px', fontFamily: 'Nunito,system-ui', fontSize: 13, color: ADM.text, background: '#fff', outline: 'none', cursor: 'pointer' }}>
+                  <option value="all">All Categories</option>
+                  {CATS_ALL.map(c => <option key={c} value={c}>{c}</option>)}
+                </select>
+                <div style={{ flex: 1, minWidth: 180, display: 'flex', alignItems: 'center', gap: 8, background: '#fff', borderRadius: ADM.radius, padding: '0 12px', height: 38, border: `1px solid ${ADM.border}` }}>
+                  <AdmIcon name="search" size={14} color="#94A3B8" />
+                  <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search events..."
+                    style={{ border: 'none', outline: 'none', fontFamily: 'Nunito,system-ui', fontSize: 13, color: ADM.text, flex: 1, background: 'transparent' }} />
+                </div>
+                <span style={{ fontFamily: 'Nunito,system-ui', fontSize: 12, color: ADM.light }}>{filtered.length} events</span>
+              </div>
+
+              {loading ? (
+                <div style={{ textAlign: 'center', padding: 60, color: ADM.muted }}>
+                  <span style={{ width: 24, height: 24, border: `3px solid ${ADM.border}`, borderTopColor: ADM.primary, borderRadius: '50%', display: 'inline-block', animation: 'spin 1s linear infinite' }} />
+                </div>
+              ) : (
+                <div style={{ background: ADM.card, borderRadius: ADM.radiusMd, border: `1px solid ${ADM.border}`, overflow: 'hidden' }}>
+                  <div style={{ overflowX: 'auto' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                      <thead>
+                        <tr style={{ background: '#F8FAFC', borderBottom: `1px solid ${ADM.border}` }}>
+                          {['Event', 'Sold', 'Gross', 'Status', ''].map(h => (
+                            <th key={h} style={{ padding: '11px 16px', textAlign: 'left', fontFamily: 'Barlow Condensed,system-ui', fontSize: 11, fontWeight: 800, color: ADM.light, textTransform: 'uppercase', letterSpacing: 1.2, whiteSpace: 'nowrap' }}>{h}</th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {filtered.length === 0 ? (
+                          <tr><td colSpan={5} style={{ padding: 48, textAlign: 'center', fontFamily: 'Nunito,system-ui', fontSize: 15, color: ADM.light }}>
+                            {events.length === 0 ? 'No events yet. Click "Create Event" to add your first.' : 'No events match the current filters.'}
+                          </td></tr>
+                        ) : filtered.map(ev => {
+                          const s = getStatus(ev)
+                          return (
+                            <tr key={ev.id} style={{ background: '#fff', borderBottom: `1px solid ${ADM.border}`, transition: 'background .12s', cursor: 'default' }}
+                              onMouseOver={e => e.currentTarget.style.background = '#F8FAFC'}
+                              onMouseOut={e => e.currentTarget.style.background = '#fff'}>
+                              <td style={{ padding: '14px 16px' }}>
+                                <div style={{ fontFamily: 'Barlow Condensed,system-ui', fontSize: 15, fontWeight: 800, color: ADM.text, textTransform: 'uppercase', letterSpacing: .3, lineHeight: 1.15 }}>{ev.titleEn}</div>
+                                <div style={{ fontFamily: 'Nunito,system-ui', fontSize: 12, color: ADM.light, marginTop: 2 }}>{ev.date} · {ev.location}</div>
+                              </td>
+                              <td style={{ padding: '14px 16px' }}>
+                                <div style={{ fontFamily: 'Barlow Condensed,system-ui', fontSize: 17, fontWeight: 800, color: ADM.text }}>{sold(ev)}</div>
+                                <div style={{ fontFamily: 'Nunito,system-ui', fontSize: 11, color: ADM.light }}>of {ev.totalSpots}</div>
+                              </td>
+                              <td style={{ padding: '14px 16px' }}>
+                                <div style={{ fontFamily: 'Barlow Condensed,system-ui', fontSize: 17, fontWeight: 800, color: ev.isFree ? ADM.light : ADM.primary }}>
+                                  {ev.isFree ? '—' : `$${gross(ev).toLocaleString()}`}
+                                </div>
+                              </td>
+                              <td style={{ padding: '14px 16px' }}>
+                                <span style={{ display: 'inline-block', padding: '3px 10px', borderRadius: 16, background: `${STATUS_COLOR[s]}18`, color: STATUS_COLOR[s], fontFamily: 'Barlow Condensed,system-ui', fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: .4 }}>
+                                  {STATUS_LABEL[s]}
+                                </span>
+                              </td>
+                              <td style={{ padding: '14px 12px' }}>
+                                <div style={{ display: 'flex', gap: 6 }}>
+                                  <button onClick={() => setModal(ev)} style={{ padding: '5px 12px', borderRadius: 7, border: `1px solid ${ADM.primary}30`, background: `${ADM.primary}10`, color: ADM.primary, fontFamily: 'Nunito,system-ui', fontSize: 12, fontWeight: 700, cursor: 'pointer', transition: 'all .15s' }}
+                                    onMouseOver={e => { e.currentTarget.style.background = ADM.primary; e.currentTarget.style.color = '#fff' }}
+                                    onMouseOut={e => { e.currentTarget.style.background = `${ADM.primary}10`; e.currentTarget.style.color = ADM.primary }}>
+                                    Edit
+                                  </button>
+                                  <button onClick={() => setDelTarget(ev)} style={{ padding: '5px 12px', borderRadius: 7, border: `1px solid ${ADM.danger}30`, background: `${ADM.danger}10`, color: ADM.danger, fontFamily: 'Nunito,system-ui', fontSize: 12, fontWeight: 700, cursor: 'pointer', transition: 'all .15s' }}
+                                    onMouseOver={e => { e.currentTarget.style.background = ADM.danger; e.currentTarget.style.color = '#fff' }}
+                                    onMouseOut={e => { e.currentTarget.style.background = `${ADM.danger}10`; e.currentTarget.style.color = ADM.danger }}>
+                                    Delete
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          )
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
             </div>}
           </div>
-        </div>
+        </main>
 
         {modal && <EventModal event={modal === 'create' ? null : modal} token={token} onClose={() => setModal(null)} onSaved={() => loadEvents(token)} />}
         {delTarget && <DeleteConfirm event={delTarget} onConfirm={() => deleteEvent(delTarget)} onCancel={() => setDelTarget(null)} />}

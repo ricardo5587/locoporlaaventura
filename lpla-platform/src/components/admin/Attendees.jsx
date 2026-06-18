@@ -1,6 +1,6 @@
 'use client'
 import { useState, useEffect, useMemo } from 'react'
-import AdmIcon from '@/components/AdmIcon'
+import AdmIcon from '@/components/admin/AdmIcon'
 import { admBuildOrders, admMoney, admDateShort, admTimeAgo } from '@/lib/admin-data'
 
 const ATT_STATUS = {

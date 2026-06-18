@@ -1,6 +1,6 @@
 'use client'
 import { useState, useEffect, useRef } from 'react'
-import AdmIcon from '@/components/AdmIcon'
+import AdmIcon from '@/components/admin/AdmIcon'
 
 function LogoClover({ size = 36 }) {
   return (

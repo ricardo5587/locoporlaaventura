@@ -1,6 +1,6 @@
 'use client'
 import { useState } from 'react'
-import AdmIcon from '@/components/AdmIcon'
+import AdmIcon from '@/components/admin/AdmIcon'
 import { admBuildOrders, admWeekly, admGross, admSold, admMoney, admMoneyK, admDateShort, admTimeAgo } from '@/lib/admin-data'
 
 function OvKpi({ label, value, sub, icon, accent, delta, ADM }) {
