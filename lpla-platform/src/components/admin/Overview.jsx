@@ -6,14 +6,12 @@ import { admBuildOrders, admWeekly, admGross, admSold, admMoney, admMoneyK, admD
 function OvKpi({ label, value, sub, icon, accent, delta, ADM }) {
   return (
     <div style={{ background: ADM.card, borderRadius: ADM.radiusMd, border: `1px solid ${ADM.border}`, padding: '18px 20px' }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-        <span style={{ fontFamily: 'Barlow Condensed,system-ui', fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: 1.2, color: ADM.light }}>{label}</span>
-        <span style={{ width: 30, height: 30, borderRadius: 9, background: `${accent}14`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-          <AdmIcon name={icon} size={16} color={accent} />
-        </span>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
+        <AdmIcon name={icon} size={14} color={accent} />
+        <span style={{ fontFamily: 'Barlow Condensed,system-ui', fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: 1.4, color: ADM.muted }}>{label}</span>
       </div>
       <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap' }}>
-        <span style={{ fontFamily: 'Barlow Condensed,system-ui', fontSize: 34, fontWeight: 800, color: ADM.text, lineHeight: 1 }}>{value}</span>
+        <span style={{ fontFamily: 'Barlow Condensed,system-ui', fontSize: 38, fontWeight: 800, color: ADM.text, lineHeight: .9, letterSpacing: .5 }}>{value}</span>
         {delta != null &&
         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, fontFamily: 'Nunito,system-ui', fontSize: 12.5, fontWeight: 800, color: delta >= 0 ? ADM.success : ADM.danger }}>
             <AdmIcon name="trend" size={13} color={delta >= 0 ? ADM.success : ADM.danger} style={{ transform: delta >= 0 ? 'none' : 'scaleY(-1)' }} />
@@ -21,7 +19,8 @@ function OvKpi({ label, value, sub, icon, accent, delta, ADM }) {
           </span>
         }
       </div>
-      {sub && <div style={{ fontFamily: 'Nunito,system-ui', fontSize: 12, color: ADM.muted, marginTop: 5 }}>{sub}</div>}
+      <div style={{ height: 3, width: 32, borderRadius: 2, background: accent, marginTop: 12, opacity: .85 }} />
+      {sub && <div style={{ fontFamily: 'Nunito,system-ui', fontSize: 12, color: ADM.muted, marginTop: 9 }}>{sub}</div>}
     </div>
   )
 }
@@ -146,7 +145,7 @@ export default function DashboardOverview({ events, ADM, CAT_COLORS, onSelectEve
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,minmax(0,1fr))', gap: 14, marginBottom: 16 }}>
         <OvKpi label="Gross Revenue" value={admMoney(grossCollected)} icon="dollar" accent={ADM.success} delta={pct(revLast, revPrev)} sub="Collected to date" ADM={ADM} />
         <OvKpi label="Tickets Sold" value={ticketsSold.toLocaleString()} icon="ticket" accent={ADM.primary} delta={pct(tkLast, tkPrev)} sub={`${orders.length} orders`} ADM={ADM} />
-        <OvKpi label="Active Events" value={activeEvents} icon="calendar" accent={'#5E8BBD'} sub={`${cats.length} categories`} ADM={ADM} />
+        <OvKpi label="Active Events" value={activeEvents} icon="calendar" accent={ADM.blue} sub={`${cats.length} categories`} ADM={ADM} />
         <OvKpi label="Avg. Fill Rate" value={fillRate + '%'} icon="people" accent={ADM.lime} sub={`${ticketsSold} of ${capacity.toLocaleString()} seats`} ADM={ADM} />
       </div>
 
