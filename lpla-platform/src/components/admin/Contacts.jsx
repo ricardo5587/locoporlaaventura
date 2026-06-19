@@ -316,15 +316,6 @@ function CrmDrawer({ contact: base, allTags, onClose }) {
   )
 }
 
-const DEFAULT_CRM_SEGMENTS = [
-  { id:'all',       label:'All Contacts',  icon:'people'  },
-  { id:'VIP',       label:'VIP',           icon:'star'    },
-  { id:'Regular',   label:'Regulars',      icon:'check'   },
-  { id:'New',       label:'New',           icon:'bolt'    },
-  { id:'Lapsed',    label:'Lapsed',        icon:'clock'   },
-  { id:'Volunteer', label:'Volunteers',    icon:'people'  },
-]
-
 const ALL_TAGS = ['VIP','Regular','Volunteer','New','Lapsed','Climber','Hiker','Speaker']
 
 const CRM_FIELDS = [
@@ -660,32 +651,65 @@ export default function AdminCRM({ events }) {
     try { return JSON.parse(localStorage.getItem('lpla_crm_imported') || '[]') } catch { return [] }
   })
   const [klaviyoContacts, setKlaviyoContacts] = useState([])
-  const [klaviyoLoading, setKlaviyoLoading] = useState(false)
+  const [klaviyoLoading, setKlaviyoLoading] = useState(true)
+  const [klaviyoRefreshing, setKlaviyoRefreshing] = useState(false)
+  const [cachedAt, setCachedAt] = useState(null)
+
+  function getToken() {
+    return typeof window !== 'undefined' ? localStorage.getItem('lpla_admin_token') : ''
+  }
+
+  function loadProfiles(token) {
+    return fetch(`${API}/api/klaviyo/profiles`, { headers: { Authorization: `Bearer ${token}` } })
+      .then(r => { if (!r.ok) throw new Error(`${r.status}`); return r.json() })
+      .then(data => {
+        const profiles = data.profiles || data
+        if (Array.isArray(profiles)) {
+          setKlaviyoContacts(profiles.map(klaviyoProfileToContact))
+        }
+        if (data.cachedAt) setCachedAt(data.cachedAt)
+        return profiles
+      })
+  }
+
+  function refreshFromKlaviyo() {
+    const token = getToken()
+    if (!token) return
+    setKlaviyoRefreshing(true)
+    fetch(`${API}/api/klaviyo/profiles`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    })
+      .then(r => { if (!r.ok) throw new Error(`${r.status}`); return r.json() })
+      .then(data => {
+        const profiles = data.profiles || []
+        if (Array.isArray(profiles)) {
+          setKlaviyoContacts(profiles.map(klaviyoProfileToContact))
+        }
+        if (data.cachedAt) setCachedAt(data.cachedAt)
+      })
+      .catch(err => console.error('Klaviyo refresh error:', err))
+      .finally(() => setKlaviyoRefreshing(false))
+  }
 
   useEffect(() => {
-    const token = typeof window !== 'undefined' ? localStorage.getItem('lpla_admin_token') : ''
-    if (!token) {
-      console.log('No auth token found')
-      return
-    }
-    setKlaviyoLoading(true)
-    fetch(`${API}/api/klaviyo/profiles`, { headers: { Authorization: `Bearer ${token}` } })
-      .then(r => {
-        if (!r.ok) {
-          console.error('Klaviyo profiles fetch failed:', r.status, r.statusText)
-          return []
-        }
-        return r.json()
-      })
-      .then(data => {
-        console.log('Klaviyo profiles response:', data)
-        if (Array.isArray(data)) {
-          setKlaviyoContacts(data.map(klaviyoProfileToContact))
+    const token = getToken()
+    if (!token) { setKlaviyoLoading(false); return }
+    loadProfiles(token)
+      .then(profiles => {
+        if (!profiles || profiles.length === 0) {
+          setKlaviyoRefreshing(true)
+          return fetch(`${API}/api/klaviyo/profiles`, {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+          }).then(r => r.json()).then(data => {
+            const p = data.profiles || []
+            if (Array.isArray(p)) setKlaviyoContacts(p.map(klaviyoProfileToContact))
+            if (data.cachedAt) setCachedAt(data.cachedAt)
+          }).finally(() => setKlaviyoRefreshing(false))
         }
       })
-      .catch(err => {
-        console.error('Klaviyo profiles error:', err)
-      })
+      .catch(err => console.error('Klaviyo profiles error:', err))
       .finally(() => setKlaviyoLoading(false))
   }, [])
 
@@ -717,16 +741,14 @@ export default function AdminCRM({ events }) {
         c.lists.forEach(l => listNames.add(l.name))
       }
     })
-    const segments = [
+    return [
       { id:'all', label:'All Contacts', icon:'people' },
       ...Array.from(listNames).map(name => ({
         id: `list_${name}`,
         label: name,
         icon: 'mail',
-        isKlaviyoList: true,
       })),
     ]
-    return segments.length > 1 ? segments : DEFAULT_CRM_SEGMENTS
   }, [klaviyoContacts])
 
   const segCount = id => {
@@ -735,7 +757,6 @@ export default function AdminCRM({ events }) {
       const listName = id.replace('list_', '')
       return allContacts.filter(c=>c.lists && c.lists.some(l=>l.name===listName)).length
     }
-    if (id==='Volunteer') return allContacts.filter(c=>c.tags.includes('Volunteer')).length
     return allContacts.filter(c=>c.segment===id).length
   }
 
@@ -779,8 +800,17 @@ export default function AdminCRM({ events }) {
 
       <div style={{ width:200, flexShrink:0, background:ADM.card, borderRight:`1px solid ${ADM.border}`, display:'flex', flexDirection:'column', overflow:'auto' }}>
         <div style={{ padding:'20px 16px 12px' }}>
-          <div style={{ fontFamily:'Barlow Condensed,system-ui', fontSize:11, fontWeight:800, color:ADM.light, textTransform:'uppercase', letterSpacing:1, marginBottom:12 }}>Segments</div>
-          {klaviyoLoading && <div style={{ fontFamily:'Nunito,system-ui', fontSize:12, color:ADM.muted, marginBottom:12, textAlign:'center' }}>Loading Klaviyo…</div>}
+          <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:12 }}>
+            <div style={{ fontFamily:'Barlow Condensed,system-ui', fontSize:11, fontWeight:800, color:ADM.light, textTransform:'uppercase', letterSpacing:1 }}>Lists</div>
+            <button onClick={refreshFromKlaviyo} disabled={klaviyoRefreshing}
+              title="Refresh from Klaviyo"
+              style={{ width:26, height:26, borderRadius:8, border:`1px solid ${ADM.border}`, background:'transparent', cursor:klaviyoRefreshing?'not-allowed':'pointer', display:'flex', alignItems:'center', justifyContent:'center', opacity:klaviyoRefreshing?.5:1, transition:'all .15s' }}
+              onMouseOver={e=>{if(!klaviyoRefreshing){e.currentTarget.style.background=`${ADM.primary}14`;e.currentTarget.style.borderColor=ADM.primary}}}
+              onMouseOut={e=>{e.currentTarget.style.background='transparent';e.currentTarget.style.borderColor=ADM.border}}>
+              <AdmIcon name="reset" size={13} color={klaviyoRefreshing?ADM.muted:ADM.primary} />
+            </button>
+          </div>
+          {(klaviyoLoading || klaviyoRefreshing) && <div style={{ fontFamily:'Nunito,system-ui', fontSize:12, color:ADM.blue, marginBottom:12, textAlign:'center', padding:'6px 0' }}>{klaviyoRefreshing ? 'Syncing from Klaviyo…' : 'Loading contacts…'}</div>}
           {dynamicSegments.map(s=>{
             const cnt = segCount(s.id)
             const active = segment===s.id
@@ -788,31 +818,20 @@ export default function AdminCRM({ events }) {
               <button key={s.id} onClick={()=>setSegment(s.id)}
                 style={{ width:'100%', display:'flex', alignItems:'center', gap:9, padding:'9px 10px', borderRadius:9, border:'none', cursor:'pointer', background:active?`${ADM.navAccent}1e`:'transparent', color:active?ADM.navAccent:ADM.muted, marginBottom:2, transition:'all .15s', textAlign:'left' }}>
                 <AdmIcon name={s.icon} size={15} color={active?ADM.navAccent:ADM.light} />
-                <span style={{ flex:1, fontFamily:'Nunito,system-ui', fontSize:13, fontWeight:active?700:500 }}>{s.label}</span>
+                <span style={{ flex:1, fontFamily:'Nunito,system-ui', fontSize:13, fontWeight:active?700:500, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{s.label}</span>
                 <span style={{ fontFamily:'Barlow Condensed,system-ui', fontSize:12, fontWeight:800, color:active?ADM.navAccent:ADM.light }}>{cnt}</span>
               </button>
             )
           })}
         </div>
 
-        <div style={{ padding:'16px 16px 12px', borderTop:`1px solid ${ADM.border}`, marginTop:'auto' }}>
-          <div style={{ fontFamily:'Barlow Condensed,system-ui', fontSize:11, fontWeight:800, color:ADM.light, textTransform:'uppercase', letterSpacing:1, marginBottom:12 }}>Tags</div>
-          <div style={{ display:'flex', flexDirection:'column', gap:5 }}>
-            {ALL_TAGS.map(t=>{
-              const cnt = allContacts.filter(c=>c.tags.includes(t)).length
-              if (!cnt) return null
-              const s = crmTagStyle(t)
-              return (
-                <div key={t} style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
-                  <span style={{ display:'inline-flex', alignItems:'center', gap:5, fontFamily:'Barlow Condensed,system-ui', fontSize:11, fontWeight:800, color:s.color, textTransform:'uppercase', letterSpacing:.4 }}>
-                    <span style={{ width:6,height:6,borderRadius:'50%',background:s.color,flexShrink:0 }} />{t}
-                  </span>
-                  <span style={{ fontFamily:'Barlow Condensed,system-ui', fontSize:11, fontWeight:800, color:ADM.light }}>{cnt}</span>
-                </div>
-              )
-            })}
+        {cachedAt && (
+          <div style={{ padding:'12px 16px', borderTop:`1px solid ${ADM.border}`, marginTop:'auto' }}>
+            <div style={{ fontFamily:'Nunito,system-ui', fontSize:11, color:ADM.light, textAlign:'center' }}>
+              Last synced {admTimeAgo(new Date(cachedAt).getTime())}
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       <div style={{ flex:1, overflow:'auto', display:'flex', flexDirection:'column', minWidth:0 }}>

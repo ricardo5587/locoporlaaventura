@@ -86,3 +86,10 @@ create or replace function increment_spots(event_id bigint, qty integer)
 returns void language sql as $$
   update events set spots_left = least(total_spots, spots_left + qty) where id = event_id;
 $$;
+
+-- Klaviyo profiles cache (avoids repeated API calls)
+create table if not exists klaviyo_cache (
+  id           text primary key default 'profiles',
+  data         jsonb not null default '[]',
+  updated_at   timestamptz default now()
+);
