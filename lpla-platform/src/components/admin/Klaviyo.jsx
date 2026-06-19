@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react'
 import AdmIcon from '@/components/admin/AdmIcon'
 import { ADM } from '@/lib/tokens'
+import EmailBuilder from '@/components/admin/EmailBuilder'
 
 const API = 'https://locoporlaaventura.vercel.app'
 
@@ -25,8 +26,10 @@ export default function AdminKlaviyo() {
   const [segments, setSegments] = useState([])
   const [loading, setLoading] = useState(true)
   const [toast, setToast] = useState(null)
+  const [activeTab, setActiveTab] = useState('overview')
   const [campaignForm, setCampaignForm] = useState({ name: '', subject: '', listId: '', content: '' })
   const [creatingCampaign, setCreatingCampaign] = useState(false)
+  const [builderData, setBuilderData] = useState(null)
   const token = typeof window !== 'undefined' ? localStorage.getItem('lpla_admin_token') : ''
 
   useEffect(() => {
@@ -67,11 +70,35 @@ export default function AdminKlaviyo() {
       } else {
         setToast('Campaign created successfully')
         setCampaignForm({ name: '', subject: '', listId: '', content: '' })
+        setActiveTab('overview')
       }
     } catch (err) {
       setToast(err.message)
     }
     setCreatingCampaign(false)
+  }
+
+  async function handleEmailBuilderSave(data) {
+    setCampaignForm({
+      ...campaignForm,
+      content: data.html,
+      name: data.name || campaignForm.name,
+    })
+    setBuilderData(data)
+    setActiveTab('details')
+    setToast('Template ready! Now fill in subject and select a list.')
+  }
+
+  if (activeTab === 'builder') {
+    return (
+      <div style={{ display: 'flex', height: '100%', flexDirection: 'column' }}>
+        <div style={{ padding: '16px 28px', borderBottom: `1px solid ${ADM.border}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <button onClick={() => setActiveTab('overview')} style={{ background: 'transparent', border: 'none', color: ADM.muted, cursor: 'pointer', fontSize: 13, fontWeight: 600, marginRight: 16 }}>← Back to Overview</button>
+          <h2 style={{ fontFamily: 'Barlow Condensed,system-ui', fontSize: 18, fontWeight: 800, color: ADM.text, margin: 0, textTransform: 'uppercase', flex: 1 }}>Design Email</h2>
+        </div>
+        <EmailBuilder onSave={handleEmailBuilderSave} campaignName={campaignForm.name} campaignListId={campaignForm.listId} />
+      </div>
+    )
   }
 
   return (
@@ -151,12 +178,11 @@ export default function AdminKlaviyo() {
                 </select>
               </div>
               <div style={{ display: 'flex', gap: 8, alignItems: 'flex-end' }}>
-                <button type="button" onClick={loadData} style={{ flex: 1, height: 40, borderRadius: 10, border: `1px solid ${ADM.border}`, background: 'transparent', color: ADM.muted, fontFamily: 'Nunito,system-ui', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}>Refresh</button>
+                <button type="button" onClick={() => setActiveTab('builder')} style={{ flex: 1, height: 40, borderRadius: 10, border: `1px solid ${ADM.border}`, background: 'transparent', color: ADM.muted, fontFamily: 'Nunito,system-ui', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}>Design Email</button>
                 <button type="submit" disabled={creatingCampaign} style={{ flex: 1, height: 40, borderRadius: 10, border: 'none', background: ADM.primary, color: '#fff', fontFamily: 'Barlow Condensed,system-ui', fontSize: 14, fontWeight: 800, letterSpacing: .4, cursor: creatingCampaign ? 'default' : 'pointer', opacity: creatingCampaign ? .7 : 1 }}>
-                  {creatingCampaign ? 'Creating...' : 'Create Campaign'}
+                  {creatingCampaign ? 'Creating...' : 'Send Campaign'}
                 </button>
               </div>
-              <textarea value={campaignForm.content} onChange={e => setCampaignForm(f => ({ ...f, content: e.target.value }))} placeholder="Email content (HTML)" style={{ gridColumn: '1 / -1', borderRadius: 10, border: `1px solid ${ADM.border}`, padding: 12, fontFamily: 'Nunito,system-ui', fontSize: 13, color: ADM.text, background: '#fff', outline: 'none', boxSizing: 'border-box', minHeight: 180, resize: 'vertical' }} />
             </form>
           </div>
         </>
