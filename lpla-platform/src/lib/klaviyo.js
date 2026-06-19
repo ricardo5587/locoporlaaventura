@@ -46,7 +46,7 @@ export async function subscribeToList(listId, email, firstName = '', lastName = 
 
 export async function getProfiles(cursor = null) {
   const params = new URLSearchParams({
-    'fields[profile]': 'email,first_name,last_name,phone_number,created,updated,location',
+    'fields[profile]': 'email,first_name,last_name,phone_number,created,updated,location,title,organization,region,country,timezone,properties',
     'page[size]': '100',
   });
   if (cursor) params.set('page[cursor]', cursor);

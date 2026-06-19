@@ -627,6 +627,12 @@ function klaviyoProfileToContact(p) {
     initials: (firstName.charAt(0) + lastName.charAt(0)).toUpperCase() || email.charAt(0).toUpperCase(),
     email,
     phone: attr.phone_number || '',
+    title: attr.title || '',
+    organization: attr.organization || '',
+    location: attr.location || '',
+    region: attr.region || '',
+    country: attr.country || '',
+    timezone: attr.timezone || '',
     orders: [],
     totalSpend: 0,
     bookingCount: 0,
@@ -798,41 +804,43 @@ export default function AdminCRM({ events }) {
   return (
     <div style={{ display:'flex', flex:1, overflow:'hidden', background:ADM.bg }}>
 
-      <div style={{ width:200, flexShrink:0, background:ADM.card, borderRight:`1px solid ${ADM.border}`, display:'flex', flexDirection:'column', overflow:'auto' }}>
-        <div style={{ padding:'20px 16px 12px' }}>
-          <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:12 }}>
-            <div style={{ fontFamily:'Barlow Condensed,system-ui', fontSize:11, fontWeight:800, color:ADM.light, textTransform:'uppercase', letterSpacing:1 }}>Lists</div>
-            <button onClick={refreshFromKlaviyo} disabled={klaviyoRefreshing}
-              title="Refresh from Klaviyo"
-              style={{ width:26, height:26, borderRadius:8, border:`1px solid ${ADM.border}`, background:'transparent', cursor:klaviyoRefreshing?'not-allowed':'pointer', display:'flex', alignItems:'center', justifyContent:'center', opacity:klaviyoRefreshing?.5:1, transition:'all .15s' }}
-              onMouseOver={e=>{if(!klaviyoRefreshing){e.currentTarget.style.background=`${ADM.primary}14`;e.currentTarget.style.borderColor=ADM.primary}}}
-              onMouseOut={e=>{e.currentTarget.style.background='transparent';e.currentTarget.style.borderColor=ADM.border}}>
-              <AdmIcon name="reset" size={13} color={klaviyoRefreshing?ADM.muted:ADM.primary} />
-            </button>
-          </div>
-          {(klaviyoLoading || klaviyoRefreshing) && <div style={{ fontFamily:'Nunito,system-ui', fontSize:12, color:ADM.blue, marginBottom:12, textAlign:'center', padding:'6px 0' }}>{klaviyoRefreshing ? 'Syncing from Klaviyo…' : 'Loading contacts…'}</div>}
-          {dynamicSegments.map(s=>{
-            const cnt = segCount(s.id)
-            const active = segment===s.id
-            return (
-              <button key={s.id} onClick={()=>setSegment(s.id)}
-                style={{ width:'100%', display:'flex', alignItems:'center', gap:9, padding:'9px 10px', borderRadius:9, border:'none', cursor:'pointer', background:active?`${ADM.navAccent}1e`:'transparent', color:active?ADM.navAccent:ADM.muted, marginBottom:2, transition:'all .15s', textAlign:'left' }}>
-                <AdmIcon name={s.icon} size={15} color={active?ADM.navAccent:ADM.light} />
-                <span style={{ flex:1, fontFamily:'Nunito,system-ui', fontSize:13, fontWeight:active?700:500, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{s.label}</span>
-                <span style={{ fontFamily:'Barlow Condensed,system-ui', fontSize:12, fontWeight:800, color:active?ADM.navAccent:ADM.light }}>{cnt}</span>
+      {(klaviyoLoading || klaviyoRefreshing) && klaviyoContacts.length === 0 ? null : (
+        <div style={{ width:200, flexShrink:0, background:ADM.card, borderRight:`1px solid ${ADM.border}`, display:'flex', flexDirection:'column', overflow:'auto' }}>
+          <div style={{ padding:'20px 16px 12px' }}>
+            <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:12 }}>
+              <div style={{ fontFamily:'Barlow Condensed,system-ui', fontSize:11, fontWeight:800, color:ADM.light, textTransform:'uppercase', letterSpacing:1 }}>Lists</div>
+              <button onClick={refreshFromKlaviyo} disabled={klaviyoRefreshing}
+                title="Refresh from Klaviyo"
+                style={{ width:26, height:26, borderRadius:8, border:`1px solid ${ADM.border}`, background:'transparent', cursor:klaviyoRefreshing?'not-allowed':'pointer', display:'flex', alignItems:'center', justifyContent:'center', opacity:klaviyoRefreshing?.5:1, transition:'all .15s' }}
+                onMouseOver={e=>{if(!klaviyoRefreshing){e.currentTarget.style.background=`${ADM.primary}14`;e.currentTarget.style.borderColor=ADM.primary}}}
+                onMouseOut={e=>{e.currentTarget.style.background='transparent';e.currentTarget.style.borderColor=ADM.border}}>
+                <AdmIcon name="reset" size={13} color={klaviyoRefreshing?ADM.muted:ADM.primary} />
               </button>
-            )
-          })}
-        </div>
-
-        {cachedAt && (
-          <div style={{ padding:'12px 16px', borderTop:`1px solid ${ADM.border}`, marginTop:'auto' }}>
-            <div style={{ fontFamily:'Nunito,system-ui', fontSize:11, color:ADM.light, textAlign:'center' }}>
-              Last synced {admTimeAgo(new Date(cachedAt).getTime())}
             </div>
+            {(klaviyoLoading || klaviyoRefreshing) && <div style={{ fontFamily:'Nunito,system-ui', fontSize:12, color:ADM.blue, marginBottom:12, textAlign:'center', padding:'6px 0' }}>{klaviyoRefreshing ? 'Syncing from Klaviyo…' : 'Loading contacts…'}</div>}
+            {dynamicSegments.map(s=>{
+              const cnt = segCount(s.id)
+              const active = segment===s.id
+              return (
+                <button key={s.id} onClick={()=>setSegment(s.id)}
+                  style={{ width:'100%', display:'flex', alignItems:'center', gap:9, padding:'9px 10px', borderRadius:9, border:'none', cursor:'pointer', background:active?`${ADM.navAccent}1e`:'transparent', color:active?ADM.navAccent:ADM.muted, marginBottom:2, transition:'all .15s', textAlign:'left' }}>
+                  <AdmIcon name={s.icon} size={15} color={active?ADM.navAccent:ADM.light} />
+                  <span style={{ flex:1, fontFamily:'Nunito,system-ui', fontSize:13, fontWeight:active?700:500, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{s.label}</span>
+                  <span style={{ fontFamily:'Barlow Condensed,system-ui', fontSize:12, fontWeight:800, color:active?ADM.navAccent:ADM.light }}>{cnt}</span>
+                </button>
+              )
+            })}
           </div>
-        )}
-      </div>
+
+          {cachedAt && (
+            <div style={{ padding:'12px 16px', borderTop:`1px solid ${ADM.border}`, marginTop:'auto' }}>
+              <div style={{ fontFamily:'Nunito,system-ui', fontSize:11, color:ADM.light, textAlign:'center' }}>
+                Last synced {admTimeAgo(new Date(cachedAt).getTime())}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       <div style={{ flex:1, overflow:'auto', display:'flex', flexDirection:'column', minWidth:0 }}>
         {(klaviyoLoading || klaviyoRefreshing) && klaviyoContacts.length === 0 ? (
@@ -925,6 +933,7 @@ export default function AdminCRM({ events }) {
                                 <div style={{ minWidth:0 }}>
                                   <div style={{ fontFamily:'Nunito,system-ui', fontSize:13.5, fontWeight:700, color:ADM.text }}>{c.name}</div>
                                   <div style={{ fontFamily:'Nunito,system-ui', fontSize:11.5, color:ADM.light, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis', maxWidth:180 }}>{c.email}</div>
+                                  {c.phone && <div style={{ fontFamily:'Nunito,system-ui', fontSize:11, color:ADM.light, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis', maxWidth:180 }}>{c.phone}</div>}
                                 </div>
                               </div>
                             </td>
