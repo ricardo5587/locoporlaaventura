@@ -9,6 +9,7 @@ const CORS = {
 };
 
 let profilesCache = null;
+let listsMemberMapCache = null;
 let cacheTime = 0;
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
@@ -28,29 +29,27 @@ export async function GET(request) {
       return NextResponse.json(profilesCache, { headers: CORS });
     }
 
-    // Fetch profiles and lists in parallel
-    const [profiles, lists] = await Promise.all([
-      getAllProfiles(),
-      getLists(),
-    ]);
+    // Fetch all profiles
+    const profiles = await getAllProfiles();
 
-    // Build a map: profileId -> [{ id, name }] by fetching members per list
+    // Fetch all lists once
+    const lists = await getLists();
+
+    // Build list member map sequentially (avoids Klaviyo rate limits)
     const profileListMap = {};
-    await Promise.all(
-      lists.map(async (list) => {
-        const listName = list.attributes?.name || 'Unnamed';
-        const listId = list.id;
-        try {
-          const memberIds = await getListMembers(listId);
-          memberIds.forEach((pid) => {
-            if (!profileListMap[pid]) profileListMap[pid] = [];
-            profileListMap[pid].push({ id: listId, name: listName });
-          });
-        } catch (err) {
-          console.error(`Error fetching members for list ${listName}:`, err);
-        }
-      })
-    );
+    for (const list of lists) {
+      const listName = list.attributes?.name || 'Unnamed';
+      const listId = list.id;
+      try {
+        const memberIds = await getListMembers(listId);
+        memberIds.forEach((pid) => {
+          if (!profileListMap[pid]) profileListMap[pid] = [];
+          profileListMap[pid].push({ id: listId, name: listName });
+        });
+      } catch (err) {
+        console.error(`Error fetching members for list ${listName}:`, err);
+      }
+    }
 
     // Enrich profiles with their list memberships
     const enriched = profiles.map((p) => ({
@@ -59,6 +58,7 @@ export async function GET(request) {
     }));
 
     profilesCache = enriched;
+    listsMemberMapCache = profileListMap;
     cacheTime = now;
 
     return NextResponse.json(enriched, { headers: CORS });
@@ -73,7 +73,9 @@ export async function POST(request) {
   if (auth.error) return auth.error;
 
   profilesCache = null;
+  listsMemberMapCache = null;
   cacheTime = 0;
 
   return NextResponse.json({ success: true, message: 'Cache cleared' }, { headers: CORS });
 }
+

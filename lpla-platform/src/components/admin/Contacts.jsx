@@ -780,6 +780,7 @@ export default function AdminCRM({ events }) {
       <div style={{ width:200, flexShrink:0, background:ADM.card, borderRight:`1px solid ${ADM.border}`, display:'flex', flexDirection:'column', overflow:'auto' }}>
         <div style={{ padding:'20px 16px 12px' }}>
           <div style={{ fontFamily:'Barlow Condensed,system-ui', fontSize:11, fontWeight:800, color:ADM.light, textTransform:'uppercase', letterSpacing:1, marginBottom:12 }}>Segments</div>
+          {klaviyoLoading && <div style={{ fontFamily:'Nunito,system-ui', fontSize:12, color:ADM.muted, marginBottom:12, textAlign:'center' }}>Loading Klaviyo…</div>}
           {dynamicSegments.map(s=>{
             const cnt = segCount(s.id)
             const active = segment===s.id
