@@ -133,7 +133,7 @@ export function WebHero({ lang, onScroll, onVolunteer }) {
   const timerRef = useRef(null);
 
   useEffect(() => {
-    fetch(`${HERO_API}/api/admin/hero-slides`)
+    fetch(`${HERO_API}/api/hero-slides`)
       .then(r => r.ok ? r.json() : [])
       .then(data => {
         if (Array.isArray(data) && data.length === 4) {

@@ -79,6 +79,7 @@ function HeroSlotCard({ slide, accent, hint, onUpload, onRemove, uploading }) {
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
               <AdmIcon name="camera" size={28} color="#D1D5DB" />
               <span style={{ fontFamily: 'Nunito,system-ui', fontSize: 13, color: ADM.muted }}>Drop a Slide {n} photo</span>
+              <span style={{ fontFamily: 'Nunito,system-ui', fontSize: 12, color: ADM.light }}>or <span style={{ textDecoration: 'underline', cursor: 'pointer' }}>browse files</span></span>
             </div>
           )}
 
@@ -135,11 +136,13 @@ export default function AdminHomepage() {
         method: 'POST', headers: { Authorization: `Bearer ${token}` }, body: fd,
       })
       const data = await r.json()
-      if (data.imageUrl) {
+      if (!r.ok) {
+        setToast(data.error || 'Upload failed')
+      } else if (data.imageUrl) {
         setSlides(s => s.map(sl => sl.id === slideId ? { ...sl, image_url: data.imageUrl } : sl))
         setToast(`Slide ${slideId} updated`)
       }
-    } catch { setToast('Upload failed') }
+    } catch (err) { setToast('Upload failed: ' + err.message) }
     setUploading(u => ({ ...u, [slideId]: false }))
   }, [])
 
@@ -161,7 +164,7 @@ export default function AdminHomepage() {
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 24 }}>
         <div>
           <h1 style={{ fontFamily: 'Barlow Condensed,system-ui', fontSize: 28, fontWeight: 800, color: '#1E2A35', textTransform: 'uppercase', letterSpacing: .5, margin: 0 }}>Homepage</h1>
-          <p style={{ fontFamily: 'Nunito,system-ui', fontSize: 14, color: ADM.muted, margin: '4px 0 0' }}>Customize the photos in your hero carousel.</p>
+          <p style={{ fontFamily: 'Nunito,system-ui', fontSize: 14, color: ADM.muted, margin: '4px 0 0' }}>Customize the photos in your public booking-page hero carousel.</p>
         </div>
         <button onClick={() => window.open('https://locoporlaaventura-k1oz3.vercel.app', '_blank')}
           style={{ padding: '9px 18px', borderRadius: 10, border: `1px solid ${ADM.border}`, background: ADM.card, color: ADM.text, fontFamily: 'Nunito,system-ui', fontSize: 13, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 7 }}>
