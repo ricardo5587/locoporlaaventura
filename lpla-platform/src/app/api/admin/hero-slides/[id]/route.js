@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/auth';
-import supabase from '@/lib/supabase';
+import { supabase } from '@/lib/supabase';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
