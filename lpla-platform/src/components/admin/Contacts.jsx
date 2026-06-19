@@ -616,6 +616,39 @@ function importedToContact(raw) {
   }
 }
 
+const API = 'https://locoporlaaventura.vercel.app'
+
+function klaviyoProfileToContact(p) {
+  const attr = p.attributes || {}
+  const email = attr.email || ''
+  const firstName = attr.first_name || ''
+  const lastName = attr.last_name || ''
+  const name = [firstName, lastName].filter(Boolean).join(' ') || email
+  const created = attr.created ? new Date(attr.created).getTime() : Date.now()
+  const updated = attr.updated ? new Date(attr.updated).getTime() : created
+  return {
+    id: email || p.id,
+    name,
+    firstName,
+    lastName,
+    initials: (firstName.charAt(0) + lastName.charAt(0)).toUpperCase() || email.charAt(0).toUpperCase(),
+    email,
+    phone: attr.phone_number || '',
+    orders: [],
+    totalSpend: 0,
+    bookingCount: 0,
+    checkedIn: 0,
+    firstActivity: created,
+    lastActivity: updated,
+    categories: [],
+    events: [],
+    engagementScore: 20,
+    segment: 'New',
+    tags: ['New'],
+    source: 'klaviyo',
+  }
+}
+
 export default function AdminCRM({ events }) {
   const orders = admBuildOrders(events)
   const orderContacts = crmBuildContacts(orders)
@@ -623,6 +656,23 @@ export default function AdminCRM({ events }) {
   const [imported, setImported] = useState(() => {
     try { return JSON.parse(localStorage.getItem('lpla_crm_imported') || '[]') } catch { return [] }
   })
+  const [klaviyoContacts, setKlaviyoContacts] = useState([])
+  const [klaviyoLoading, setKlaviyoLoading] = useState(false)
+
+  useEffect(() => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('lpla_admin_token') : ''
+    if (!token) return
+    setKlaviyoLoading(true)
+    fetch(`${API}/api/klaviyo/profiles`, { headers: { Authorization: `Bearer ${token}` } })
+      .then(r => r.ok ? r.json() : [])
+      .then(data => {
+        if (Array.isArray(data)) {
+          setKlaviyoContacts(data.map(klaviyoProfileToContact))
+        }
+      })
+      .catch(() => {})
+      .finally(() => setKlaviyoLoading(false))
+  }, [])
 
   const allContacts = useMemo(() => {
     const map = {}
@@ -630,8 +680,11 @@ export default function AdminCRM({ events }) {
     imported.forEach(c => {
       if (!map[c.id]) map[c.id] = c
     })
+    klaviyoContacts.forEach(c => {
+      if (!map[c.id]) map[c.id] = c
+    })
     return Object.values(map).sort((a, b) => b.lastActivity - a.lastActivity)
-  }, [orderContacts, imported])
+  }, [orderContacts, imported, klaviyoContacts])
 
   const [segment, setSegment] = useState('all')
   const [showImport, setShowImport] = useState(false)
