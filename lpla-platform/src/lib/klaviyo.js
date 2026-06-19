@@ -44,6 +44,27 @@ export async function subscribeToList(listId, email, firstName = '', lastName = 
   });
 }
 
+export async function getProfiles(cursor = null) {
+  const params = new URLSearchParams({
+    'fields[profile]': 'email,first_name,last_name,phone_number,created,updated,location',
+    'page[size]': '100',
+  });
+  if (cursor) params.set('page[cursor]', cursor);
+  const data = await klaviyoRequest(`/profiles?${params}`);
+  return data;
+}
+
+export async function getAllProfiles() {
+  const all = [];
+  let cursor = null;
+  do {
+    const data = await getProfiles(cursor);
+    if (data.data) all.push(...data.data);
+    cursor = data.links?.next ? new URL(data.links.next).searchParams.get('page[cursor]') : null;
+  } while (cursor);
+  return all;
+}
+
 export async function createCampaign(name, subject, listId, content) {
   return klaviyoRequest('/campaigns', 'POST', {
     data: {
