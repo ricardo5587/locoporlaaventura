@@ -57,11 +57,25 @@ export async function getProfiles(cursor = null) {
 export async function getAllProfiles() {
   const all = [];
   let cursor = null;
-  do {
-    const data = await getProfiles(cursor);
-    if (data.data) all.push(...data.data);
-    cursor = data.links?.next ? new URL(data.links.next).searchParams.get('page[cursor]') : null;
-  } while (cursor);
+  try {
+    do {
+      const data = await getProfiles(cursor);
+      if (data.data && Array.isArray(data.data)) {
+        all.push(...data.data);
+      }
+      // Check for next cursor in links
+      const nextLink = data.links?.next;
+      if (nextLink) {
+        const url = new URL(nextLink);
+        cursor = url.searchParams.get('page[cursor]');
+      } else {
+        cursor = null;
+      }
+    } while (cursor);
+  } catch (err) {
+    console.error('Error fetching Klaviyo profiles:', err);
+    throw err;
+  }
   return all;
 }
 
