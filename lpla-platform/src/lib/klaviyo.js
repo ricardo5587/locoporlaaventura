@@ -79,6 +79,11 @@ export async function getAllProfiles() {
   return all;
 }
 
+export async function getProfileLists(profileId) {
+  const data = await klaviyoRequest(`/profiles/${profileId}/relationships/lists`);
+  return data.data || [];
+}
+
 export async function createCampaign(name, subject, listId, content) {
   return klaviyoRequest('/campaigns', 'POST', {
     data: {
