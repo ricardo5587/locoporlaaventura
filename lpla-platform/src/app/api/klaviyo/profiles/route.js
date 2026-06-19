@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { requireRole } from '@/lib/auth';
 import { supabase } from '@/lib/supabase';
-import { getAllProfiles, getLists, getListMembers } from '@/lib/klaviyo';
+import { getAllProfiles, getLists, getListMembers, getProfileSubscriptions } from '@/lib/klaviyo';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -68,11 +68,28 @@ export async function POST(request) {
       }
     }
 
-    // Enrich profiles with list memberships
-    const enriched = profiles.map((p) => ({
-      ...p,
-      lists: profileListMap[p.id] || [],
-    }));
+    // Enrich profiles with list memberships and subscriptions
+    const enriched = await Promise.all(
+      profiles.map(async (p) => {
+        let subscriptions = {};
+        try {
+          const subs = await getProfileSubscriptions(p.id);
+          subs.forEach((sub) => {
+            const type = sub.relationships?.channel?.data?.id;
+            const status = sub.attributes?.status || 'unknown';
+            if (type === 'email') subscriptions.emailStatus = status;
+            if (type === 'sms') subscriptions.smsStatus = status;
+          });
+        } catch (err) {
+          console.error(`Error fetching subscriptions for profile ${p.id}:`, err);
+        }
+        return {
+          ...p,
+          lists: profileListMap[p.id] || [],
+          ...subscriptions,
+        };
+      })
+    );
 
     // Save to Supabase cache
     const { error: upsertErr } = await supabase

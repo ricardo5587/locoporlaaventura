@@ -84,6 +84,11 @@ export async function getProfileLists(profileId) {
   return data.data || [];
 }
 
+export async function getProfileSubscriptions(profileId) {
+  const data = await klaviyoRequest(`/profiles/${profileId}/relationships/subscriptions`);
+  return data.data || [];
+}
+
 export async function getListMembers(listId) {
   const all = [];
   let cursor = null;

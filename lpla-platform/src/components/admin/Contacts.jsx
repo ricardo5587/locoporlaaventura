@@ -245,6 +245,29 @@ function CrmDrawer({ contact: base, allTags, onClose }) {
                 </>
               )}
 
+              <div style={{ fontFamily:'Barlow Condensed,system-ui', fontSize:11, fontWeight:800, color:ADM.light, textTransform:'uppercase', letterSpacing:1, marginBottom:10 }}>Consent & Subscriptions</div>
+              <div style={{ display:'flex', flexDirection:'column', gap:8, marginBottom:20 }}>
+                {[
+                  { icon:'mail',  label:'Email',  status:c.emailStatus },
+                  { icon:'chat',  label:'SMS',    status:c.smsStatus },
+                ].map(r => {
+                  const statusColor = r.status === 'opted_in' ? ADM.success : r.status === 'opted_out' ? '#E74C3C' : r.status === 'unconfirmed' ? ADM.warning : ADM.light
+                  const statusLabel = r.status === 'opted_in' ? 'Opted In' : r.status === 'opted_out' ? 'Opted Out' : r.status === 'unconfirmed' ? 'Unconfirmed' : 'Unknown'
+                  return (
+                    <div key={r.label} style={{ display:'flex', alignItems:'center', gap:10, padding:'10px 14px', background:ADM.bg, borderRadius:ADM.radius, border:`1px solid ${ADM.border}` }}>
+                      <AdmIcon name={r.icon} size={15} color={statusColor} />
+                      <div style={{ flex:1, minWidth:0 }}>
+                        <div style={{ fontFamily:'Nunito,system-ui', fontSize:11, color:ADM.light, textTransform:'uppercase', letterSpacing:.5 }}>{r.label}</div>
+                        <div style={{ fontFamily:'Nunito,system-ui', fontSize:13.5, color:statusColor, fontWeight:600 }}>{statusLabel}</div>
+                      </div>
+                      <span style={{ display:'inline-flex', alignItems:'center', justifyContent:'center', width:16, height:16, borderRadius:'50%', background:statusColor, fontSize:10, fontWeight:800, color:'#fff' }}>
+                        {r.status === 'opted_in' ? '✓' : r.status === 'opted_out' ? '✕' : '–'}
+                      </span>
+                    </div>
+                  )
+                })}
+              </div>
+
               <div style={{ fontFamily:'Barlow Condensed,system-ui', fontSize:11, fontWeight:800, color:ADM.light, textTransform:'uppercase', letterSpacing:1, marginBottom:10 }}>Activity</div>
               <div style={{ display:'grid', gridTemplateColumns:'repeat(2,1fr)', gap:8, marginBottom:20 }}>
                 {[
@@ -712,6 +735,8 @@ function klaviyoProfileToContact(p) {
     region: attr.region || '',
     country: attr.country || '',
     timezone: attr.timezone || '',
+    emailStatus: p.emailStatus || 'unknown',
+    smsStatus: p.smsStatus || 'unknown',
     orders: [],
     totalSpend: 0,
     bookingCount: 0,
@@ -979,6 +1004,7 @@ export default function AdminCRM({ events }) {
                     <thead>
                       <tr style={{ background:'#FAFAF7', borderBottom:`1px solid ${ADM.border}` }}>
                         <th style={thStyle}>Contact</th>
+                        <th style={thStyle}>Consent</th>
                         <th style={{...thStyle}} onClick={()=>thSort('totalSpend')}>
                           <div style={{display:'flex',alignItems:'center',gap:5}}>Spend <ThArr k="totalSpend"/></div>
                         </th>
@@ -997,7 +1023,7 @@ export default function AdminCRM({ events }) {
                     </thead>
                     <tbody>
                       {rows.length===0 ? (
-                        <tr><td colSpan={7} style={{ padding:48, textAlign:'center', fontFamily:'Nunito,system-ui', fontSize:15, color:ADM.light }}>No contacts found.</td></tr>
+                        <tr><td colSpan={8} style={{ padding:48, textAlign:'center', fontFamily:'Nunito,system-ui', fontSize:15, color:ADM.light }}>No contacts found.</td></tr>
                       ) : rows.map(c=>{
                         const cat = c.categories[0]
                         const catColor = {Escalada:'#294154',Senderismo:'#546207',Taller:'#A54399',Keynote:'#5E8BBD',Social:'#D9831F','Expedición':'#B32317',Voluntario:'#00897A'}[cat]||ADM.primary
@@ -1013,6 +1039,20 @@ export default function AdminCRM({ events }) {
                                   <div style={{ fontFamily:'Nunito,system-ui', fontSize:13.5, fontWeight:700, color:ADM.text }}>{c.name}</div>
                                   <div style={{ fontFamily:'Nunito,system-ui', fontSize:11.5, color:ADM.light, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis', maxWidth:180 }}>{c.email}</div>
                                   {c.phone && <div style={{ fontFamily:'Nunito,system-ui', fontSize:11, color:ADM.light, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis', maxWidth:180 }}>{c.phone}</div>}
+                                </div>
+                              </div>
+                            </td>
+                            <td style={{ padding:'12px 16px' }}>
+                              <div style={{ display:'flex', gap:8, alignItems:'center' }}>
+                                <div style={{ display:'flex', flexDirection:'column', gap:4 }}>
+                                  <div style={{ display:'flex', alignItems:'center', gap:4 }}>
+                                    <AdmIcon name="mail" size={12} color={c.emailStatus === 'opted_in' ? ADM.success : c.emailStatus === 'opted_out' ? '#E74C3C' : ADM.light} />
+                                    <span style={{ fontFamily:'Nunito,system-ui', fontSize:10.5, fontWeight:700, color:ADM.text }}>Email</span>
+                                  </div>
+                                  <div style={{ display:'flex', alignItems:'center', gap:4 }}>
+                                    <AdmIcon name="chat" size={12} color={c.smsStatus === 'opted_in' ? ADM.success : c.smsStatus === 'opted_out' ? '#E74C3C' : ADM.light} />
+                                    <span style={{ fontFamily:'Nunito,system-ui', fontSize:10.5, fontWeight:700, color:ADM.text }}>SMS</span>
+                                  </div>
                                 </div>
                               </div>
                             </td>
