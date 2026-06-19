@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { WEB, useBreakpoint, fmtDate, CAT_ICONS } from '../lib/tokens';
 import { WebBadge, WebMountains, WebImgPlaceholder, WebStarRow, MAX_W } from './shared';
 
@@ -90,51 +90,157 @@ export function WebNavbar({ lang, setLang, onHome, onBook }) {
   );
 }
 
-// ── Hero ──────────────────────────────────────────────────────────────────────
+// ── Hero Slide Fallback Art ──────────────────────────────────────────────────
+const SLIDE_GRADIENTS = [
+  ['#0B1E2B', '#1B5E7F', '#0D3820'],
+  ['#12291A', '#2D7A4F', '#1B3A2E'],
+  ['#1A1510', '#5C3B1E', '#2E1F0E'],
+  ['#0E1A22', '#1B5E7F', '#16262F'],
+];
+
+function HeroSlideArt({ index }) {
+  const g = SLIDE_GRADIENTS[index] || SLIDE_GRADIENTS[0];
+  const ridgeY = 320 + index * 20;
+  return (
+    <svg viewBox="0 0 1440 560" preserveAspectRatio="xMidYMid slice" style={{ position:'absolute', inset:0, width:'100%', height:'100%' }}>
+      <defs>
+        <linearGradient id={`hg${index}`} x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor={g[0]} />
+          <stop offset="50%" stopColor={g[1]} />
+          <stop offset="100%" stopColor={g[2]} />
+        </linearGradient>
+      </defs>
+      <rect width="1440" height="560" fill={`url(#hg${index})`} />
+      {[.2,.35,.5,.65,.8].map((t,i) => {
+        const y = 560*t, amp = 25+i*8;
+        return <path key={i} d={`M0 ${y} Q360 ${y-amp} 720 ${y} Q1080 ${y+amp} 1440 ${y}`} fill="none" stroke="rgba(255,255,255,.04)" strokeWidth="1.5" />;
+      })}
+      <path d={`M0 560 L300 ${ridgeY} L600 ${ridgeY+40} L900 ${ridgeY-10} L1200 ${ridgeY+30} L1440 ${ridgeY+50} L1440 560Z`} fill="rgba(255,255,255,.03)" />
+      <path d={`M0 560 L200 ${ridgeY+60} L500 ${ridgeY+20} L800 ${ridgeY+70} L1100 ${ridgeY+30} L1440 ${ridgeY+80} L1440 560Z`} fill="rgba(0,0,0,.08)" />
+    </svg>
+  );
+}
+
+// ── Hero Carousel ────────────────────────────────────────────────────────────
+const HERO_API = import.meta.env.VITE_API_URL || 'https://locoporlaaventura.vercel.app';
+
 export function WebHero({ lang, onScroll, onVolunteer }) {
   const L = (es, en) => lang === 'es' ? es : en;
   const { isMobile } = useBreakpoint();
-  return (
-    <div style={{ position:'relative', background:`linear-gradient(160deg,${WEB.tealDark} 0%,${WEB.teal} 60%,#0D3820 100%)`, overflow:'hidden', minHeight: isMobile ? 520 : 620 }}>
-      {/* Topo lines */}
-      <svg style={{ position:'absolute', top:0, left:0, width:'100%', height:'100%', pointerEvents:'none' }} viewBox="0 0 1440 620" preserveAspectRatio="none">
-        {[.18,.31,.44,.57,.70,.83].map((t,i) => { const y=620*t, amp=30+i*5; return <path key={i} d={`M0 ${y} Q360 ${y-amp} 720 ${y} Q1080 ${y+amp} 1440 ${y}`} fill="none" stroke="rgba(255,255,255,.04)" strokeWidth="1.5" />; })}
-      </svg>
-      {/* Radial glow */}
-      <div style={{ position:'absolute', top:'20%', left:'50%', transform:'translateX(-50%)', width:600, height:400, borderRadius:'50%', background:'radial-gradient(ellipse,rgba(74,158,199,.15) 0%,transparent 70%)', pointerEvents:'none' }} />
+  const [active, setActive] = useState(0);
+  const [paused, setPaused] = useState(false);
+  const [slides, setSlides] = useState([null, null, null, null]);
+  const timerRef = useRef(null);
 
-      <div style={{ ...MAX_W, position:'relative', zIndex:5, paddingTop: isMobile ? 40 : 70, paddingBottom:60, textAlign:'center' }}>
-        <img src={LOGO} style={{ height: isMobile ? 110 : 140, width:'auto', filter:'drop-shadow(0 8px 32px rgba(0,0,0,.5))', marginBottom:28 }} />
-        <div style={{ fontFamily:'Barlow Condensed,system-ui', fontSize: isMobile ? 14 : 16, fontWeight:600, letterSpacing:4, textTransform:'uppercase', color:'rgba(255,255,255,.55)', marginBottom:8 }}>
-          {L('BIENVENIDOS A', 'WELCOME TO')}
+  useEffect(() => {
+    fetch(`${HERO_API}/api/admin/hero-slides`)
+      .then(r => r.ok ? r.json() : [])
+      .then(data => {
+        if (Array.isArray(data) && data.length === 4) {
+          setSlides(data.map(s => s.image_url));
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  const advance = useCallback(() => {
+    setActive(a => (a + 1) % 4);
+  }, []);
+
+  useEffect(() => {
+    if (paused) return;
+    timerRef.current = setInterval(advance, 5000);
+    return () => clearInterval(timerRef.current);
+  }, [paused, advance]);
+
+  useEffect(() => {
+    const handler = () => setPaused(document.hidden);
+    document.addEventListener('visibilitychange', handler);
+    return () => document.removeEventListener('visibilitychange', handler);
+  }, []);
+
+  const goTo = (i) => {
+    setActive(i);
+    clearInterval(timerRef.current);
+    if (!paused) timerRef.current = setInterval(advance, 5000);
+  };
+
+  const heroH = isMobile ? 380 : 560;
+
+  return (
+    <div
+      style={{ position:'relative', width:'100%', height: heroH, overflow:'hidden' }}
+      onMouseEnter={() => setPaused(true)}
+      onMouseLeave={() => setPaused(false)}
+    >
+      {/* Slides */}
+      {[0,1,2,3].map(i => (
+        <div key={i} style={{ position:'absolute', inset:0, opacity: active === i ? 1 : 0, zIndex: active === i ? 2 : 1, transition:'opacity 1.1s ease' }}>
+          {slides[i] ? (
+            <img src={slides[i]} alt={`Slide ${i+1}`} style={{ width:'100%', height:'100%', objectFit:'cover' }} />
+          ) : (
+            <HeroSlideArt index={i} />
+          )}
         </div>
-        <h1 style={{ fontFamily:'Barlow Condensed,system-ui', fontSize: isMobile ? 44 : 68, fontWeight:800, textTransform:'uppercase', color:'#fff', letterSpacing:.5, lineHeight:1.02, margin:'0 0 16px', textShadow:'0 4px 24px rgba(0,0,0,.3)' }}>
-          LOCO POR<br />LA AVENTURA
-        </h1>
-        <p style={{ fontFamily:'Nunito,system-ui', fontSize: isMobile ? 16 : 18, color:'rgba(255,255,255,.72)', margin:'0 auto 32px', maxWidth:520, lineHeight:1.6 }}>
-          {L('Eventos de aventura al aire libre para la comunidad latina · Portland, OR & el Noroeste del Pacífico', 'Outdoor adventure events for the Latino community · Portland, OR & the Pacific Northwest')}
-        </p>
-        <div style={{ display:'flex', gap:12, justifyContent:'center', flexWrap:'wrap' }}>
-          <button onClick={onScroll} style={{ padding:'14px 32px', borderRadius:14, border:'none', cursor:'pointer', background:WEB.green, color:'#fff', fontFamily:'Barlow Condensed,system-ui', fontSize:20, fontWeight:800, letterSpacing:.5, boxShadow:'0 8px 28px rgba(126,191,46,.4)', transition:'transform .15s, box-shadow .15s' }}
-            onMouseOver={e => { e.currentTarget.style.transform='translateY(-2px)'; e.currentTarget.style.boxShadow='0 12px 36px rgba(126,191,46,.5)'; }}
-            onMouseOut={e => { e.currentTarget.style.transform=''; e.currentTarget.style.boxShadow='0 8px 28px rgba(126,191,46,.4)'; }}>
-            {L('Ver Próximos Eventos', 'View Upcoming Events')} →
-          </button>
-          <button onClick={onVolunteer} style={{ padding:'14px 24px', borderRadius:14, border:'1.5px solid rgba(255,255,255,.25)', cursor:'pointer', background:'transparent', color:'rgba(255,255,255,.85)', fontFamily:'Nunito,system-ui', fontSize:16, fontWeight:600 }}>
-            🤝 {L('Ser Voluntario', 'Become a Volunteer')}
-          </button>
+      ))}
+
+      {/* Overlay gradient */}
+      <div style={{ position:'absolute', inset:0, zIndex:3, background:'linear-gradient(180deg, rgba(11,30,43,.55) 0%, transparent 50%, rgba(11,30,43,.35) 100%)', pointerEvents:'none' }} />
+
+      {/* Content overlay */}
+      <div style={{ position:'absolute', inset:0, zIndex:4, display:'flex', flexDirection:'column' }}>
+        {/* Logo */}
+        <div style={{ textAlign:'center', paddingTop: isMobile ? 24 : 40 }}>
+          <img src={LOGO} alt="LPLA" style={{ height:68, width:'auto', filter:'drop-shadow(0 3px 12px rgba(0,0,0,.5))' }} />
         </div>
-        {/* Stats row */}
-        <div style={{ display:'flex', gap: isMobile ? 24 : 48, justifyContent:'center', marginTop:40, flexWrap:'wrap' }}>
-          {[['500+', L('Aventureros', 'Adventurers')], ['20+', L('Eventos/año', 'Events/year')], ['PNW', L('Región', 'Region')]].map(([n, l]) => (
-            <div key={n} style={{ textAlign:'center' }}>
-              <div style={{ fontFamily:'Barlow Condensed,system-ui', fontSize:32, fontWeight:800, color:'#fff', lineHeight:1 }}>{n}</div>
-              <div style={{ fontFamily:'Nunito,system-ui', fontSize:13, color:'rgba(255,255,255,.55)', marginTop:3 }}>{l}</div>
-            </div>
-          ))}
+
+        {/* Text block */}
+        <div style={{ position:'absolute', bottom: isMobile ? 140 : 180, left: isMobile ? 24 : 48, maxWidth:680 }}>
+          <div style={{ fontFamily:'Barlow Condensed,system-ui', fontSize:14, fontWeight:800, letterSpacing:3, color:'#A8B84A', textTransform:'uppercase', marginBottom:10 }}>
+            {L("COMUNIDAD LATINA DE AVENTURA DE PORTLAND", "PORTLAND'S LATINX ADVENTURE COMMUNITY")}
+          </div>
+          <h1 style={{ fontFamily:'Barlow Condensed,system-ui', fontSize: isMobile ? 38 : 64, fontWeight:800, textTransform:'uppercase', color:'#fff', lineHeight:1.02, margin:'0 0 8px', textShadow:'0 2px 20px rgba(0,0,0,.4)' }}>
+            {L('Tu próxima aventura empieza aquí', 'Your next adventure starts here')}
+          </h1>
+          <p style={{ fontFamily:'Nunito,system-ui', fontSize: isMobile ? 15 : 18, color:'rgba(255,255,255,.88)', lineHeight:1.55, margin:'0 0 28px', maxWidth:560 }}>
+            {L('Eventos al aire libre para la comunidad latina de Portland, OR y el Noroeste del Pacífico.', 'Outdoor events for the Latino community in Portland, OR and the Pacific Northwest.')}
+          </p>
+          <div style={{ display:'flex', gap:14, flexWrap:'wrap' }}>
+            <button onClick={onScroll} style={{ height:54, padding:'0 32px', borderRadius:14, border:'none', cursor:'pointer', background:'#7EBF2E', color:'#fff', fontFamily:'Barlow Condensed,system-ui', fontSize:17, fontWeight:800, transition:'transform .15s, box-shadow .15s', boxShadow:'0 8px 28px rgba(126,191,46,.4)' }}
+              onMouseOver={e => { e.currentTarget.style.transform='translateY(-2px)'; e.currentTarget.style.boxShadow='0 8px 28px rgba(126,191,46,.4)'; }}
+              onMouseOut={e => { e.currentTarget.style.transform=''; e.currentTarget.style.boxShadow='0 8px 28px rgba(126,191,46,.4)'; }}>
+              {L('Reservar evento', 'Book an Event')}
+            </button>
+            <button onClick={onVolunteer} style={{ height:54, padding:'0 32px', borderRadius:14, border:'1.5px solid rgba(255,255,255,.4)', cursor:'pointer', background:'rgba(255,255,255,.15)', backdropFilter:'blur(8px)', color:'#fff', fontFamily:'Barlow Condensed,system-ui', fontSize:17, fontWeight:800 }}>
+              {L('Voluntariado', 'Volunteer')}
+            </button>
+          </div>
+        </div>
+
+        {/* Nav controls */}
+        <div style={{ position:'absolute', bottom:116, left:0, right:0, zIndex:5, display:'flex', alignItems:'center', justifyContent:'center', gap:8, pointerEvents:'none' }}>
+          {/* Prev arrow */}
+          {!isMobile && (
+            <button onClick={() => goTo((active + 3) % 4)} style={{ position:'absolute', left:24, width:44, height:44, borderRadius:'50%', border:'none', cursor:'pointer', background:'rgba(0,0,0,.35)', backdropFilter:'blur(8px)', color:'#fff', display:'flex', alignItems:'center', justifyContent:'center', pointerEvents:'auto' }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M15 18l-6-6 6-6" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+            </button>
+          )}
+
+          {/* Dots */}
+          <div style={{ display:'flex', gap:6, pointerEvents:'auto' }}>
+            {[0,1,2,3].map(i => (
+              <button key={i} onClick={() => goTo(i)} style={{ width: active === i ? 26 : 9, height:9, borderRadius:5, border:'none', cursor:'pointer', background: active === i ? '#7EBF2E' : 'rgba(255,255,255,.45)', transition:'width .3s ease, background .3s ease', padding:0 }} />
+            ))}
+          </div>
+
+          {/* Next arrow */}
+          {!isMobile && (
+            <button onClick={() => goTo((active + 1) % 4)} style={{ position:'absolute', right:24, width:44, height:44, borderRadius:'50%', border:'none', cursor:'pointer', background:'rgba(0,0,0,.35)', backdropFilter:'blur(8px)', color:'#fff', display:'flex', alignItems:'center', justifyContent:'center', pointerEvents:'auto' }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M9 18l6-6-6-6" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+            </button>
+          )}
         </div>
       </div>
-      <WebMountains height={100} />
     </div>
   );
 }

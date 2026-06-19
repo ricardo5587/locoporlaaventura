@@ -66,6 +66,16 @@ create table if not exists admin_users (
 
 create index if not exists admin_users_email_idx on admin_users(email);
 
+-- Hero slides for public homepage carousel (max 4 slots)
+create table if not exists hero_slides (
+  id           integer primary key check (id between 1 and 4),
+  image_url    text,
+  updated_at   timestamptz default now()
+);
+
+-- Seed the 4 slide rows if they don't exist
+insert into hero_slides (id) values (1),(2),(3),(4) on conflict do nothing;
+
 -- Helper RPC functions for atomic spot management
 create or replace function decrement_spots(event_id bigint, qty integer)
 returns void language sql as $$

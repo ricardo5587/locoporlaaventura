@@ -12,6 +12,7 @@ import AdminInstall from '@/components/admin/Launch'
 import EventManager from '@/components/admin/Events'
 import EventDetailDashboard from '@/components/admin/EventDetail'
 import AdminSettings from '@/components/admin/Settings'
+import AdminHomepage from '@/components/admin/Homepage'
 
 const API = 'https://locoporlaaventura.vercel.app'
 const IDLE_TIMEOUT = 30 * 60 * 1000
@@ -125,6 +126,7 @@ export default function AdminPage() {
   }
 
   const navItems = [
+    { id: 'homepage',  icon: 'camera',   label: 'Homepage' },
     { id: 'overview',  icon: 'chart',    label: 'Overview' },
     { id: 'events',    icon: 'calendar', label: 'Events', badge: events.length },
     { id: 'attendees', icon: 'people',   label: 'Attendees' },
@@ -241,7 +243,8 @@ export default function AdminPage() {
           </div>
 
           {/* Content */}
-          <div style={{ flex: 1, overflow: ['crm', 'contacts'].includes(activePage) ? 'hidden' : 'auto', padding: ['crm', 'contacts', 'overview', 'attendees', 'apps', 'users', 'widget', 'settings'].includes(activePage) ? 0 : '28px 32px', background: ADM.bg, display: 'flex', flexDirection: 'column' }}>
+          <div style={{ flex: 1, overflow: ['crm', 'contacts'].includes(activePage) ? 'hidden' : 'auto', padding: ['crm', 'contacts', 'overview', 'attendees', 'apps', 'users', 'widget', 'settings', 'homepage'].includes(activePage) ? 0 : '28px 32px', background: ADM.bg, display: 'flex', flexDirection: 'column' }}>
+            {activePage === 'homepage' && <AdminHomepage />}
             {activePage === 'overview' && <DashboardOverview events={events} onSelectEvent={() => setActivePage('events')} onGoEvents={() => setActivePage('events')} />}
             {activePage === 'attendees' && <AttendeesBookings events={events} />}
             {(activePage === 'crm' || activePage === 'contacts') && <AdminCRM events={events} />}
