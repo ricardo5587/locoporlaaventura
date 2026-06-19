@@ -661,16 +661,28 @@ export default function AdminCRM({ events }) {
 
   useEffect(() => {
     const token = typeof window !== 'undefined' ? localStorage.getItem('lpla_admin_token') : ''
-    if (!token) return
+    if (!token) {
+      console.log('No auth token found')
+      return
+    }
     setKlaviyoLoading(true)
     fetch(`${API}/api/klaviyo/profiles`, { headers: { Authorization: `Bearer ${token}` } })
-      .then(r => r.ok ? r.json() : [])
+      .then(r => {
+        if (!r.ok) {
+          console.error('Klaviyo profiles fetch failed:', r.status, r.statusText)
+          return []
+        }
+        return r.json()
+      })
       .then(data => {
+        console.log('Klaviyo profiles response:', data)
         if (Array.isArray(data)) {
           setKlaviyoContacts(data.map(klaviyoProfileToContact))
         }
       })
-      .catch(() => {})
+      .catch(err => {
+        console.error('Klaviyo profiles error:', err)
+      })
       .finally(() => setKlaviyoLoading(false))
   }, [])
 
