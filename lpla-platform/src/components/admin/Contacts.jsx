@@ -835,7 +835,7 @@ export default function AdminCRM({ events }) {
       </div>
 
       <div style={{ flex:1, overflow:'auto', display:'flex', flexDirection:'column', minWidth:0 }}>
-        {klaviyoLoading && allContacts.length === 0 ? (
+        {(klaviyoLoading || klaviyoRefreshing) && klaviyoContacts.length === 0 ? (
           <div style={{ flex:1, display:'flex', alignItems:'center', justifyContent:'center' }}>
             <div style={{ textAlign:'center' }}>
               <div style={{ fontFamily:'Barlow Condensed,system-ui', fontSize:32, fontWeight:800, color:ADM.text, textTransform:'uppercase', letterSpacing:.5, marginBottom:8 }}>Loading contacts…</div>
