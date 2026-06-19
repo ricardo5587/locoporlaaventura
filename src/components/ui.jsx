@@ -404,8 +404,8 @@ export function WebFooter({ lang }) {
         <div style={{ display:'flex', gap:40, flexWrap:'wrap', marginBottom:40 }}>
           <div style={{ flex:'1 1 240px' }}>
             <img src={LOGO} style={{ height:64, marginBottom:14 }} />
-            <p style={{ fontFamily:'Nunito,system-ui', fontSize:14, color:'rgba(255,255,255,.55)', lineHeight:1.6, maxWidth:280 }}>
-              {L('Comunidad aventurera latina · Eventos, talleres y expediciones al aire libre en toda España.', 'Latino adventure community · Outdoor events, workshops and expeditions across Spain.')}
+            <p style={{ fontFamily:'Nunito,system-ui', fontSize:14, color:'rgba(255,255,255,.55)', lineHeight:1.6, maxWidth:320 }}>
+              {L('Loco por la Aventura es una organización sin fines de lucro 501(c)(3) con sede en Oregon, dedicada a promover la equidad educativa, el acceso al aire libre y la justicia ambiental para la comunidad latina — y más allá.', 'Loco por la Aventura is a 501(c)(3) nonprofit organization based in Oregon, dedicated to advancing educational equity, outdoor access, and environmental justice for the Latino community — and beyond.')}
             </p>
             <div style={{ display:'flex', gap:10, marginTop:16 }}>
               {['instagram', 'facebook', 'whatsapp'].map(s => (
@@ -418,11 +418,22 @@ export function WebFooter({ lang }) {
           {[
             { title: L('Eventos', 'Events'), items: ['Escalada', 'Senderismo', L('Talleres', 'Workshops'), L('Expediciones', 'Expeditions'), L('Keynotes', 'Keynotes')] },
             { title: L('Comunidad', 'Community'), items: [L('Voluntario', 'Volunteer'), L('Tienda', 'Shop'), L('Blog', 'Blog'), L('Sobre Nosotros', 'About Us'), L('Contacto', 'Contact')] },
-            { title: L('Legal', 'Legal'), items: [L('Política de Privacidad', 'Privacy Policy'), L('Términos de Uso', 'Terms of Use'), L('Política de Cookies', 'Cookie Policy'), L('RGPD / GDPR', 'GDPR')] },
+            { title: L('Legal', 'Legal'), items: [
+              { label: L('Política de Privacidad', 'Privacy Policy'), href: 'https://locoporlaaventura.com/pages/privacy-policy' },
+              { label: L('Términos de Servicio', 'Terms of Service'), href: 'https://locoporlaaventura.com/pages/terms-of-service' },
+            ] },
           ].map(col => (
             <div key={col.title} style={{ flex:'1 1 140px' }}>
               <div style={{ fontFamily:'Barlow Condensed,system-ui', fontSize:14, fontWeight:800, color:'rgba(255,255,255,.5)', letterSpacing:1.5, textTransform:'uppercase', marginBottom:12 }}>{col.title}</div>
-              {col.items.map(item => <div key={item} style={{ fontFamily:'Nunito,system-ui', fontSize:14, color:'rgba(255,255,255,.55)', marginBottom:8, cursor:'pointer' }}>{item}</div>)}
+              {col.items.map(item => {
+                const label = typeof item === 'string' ? item : item.label
+                const href = typeof item === 'string' ? null : item.href
+                return href ? (
+                  <a key={label} href={href} target="_blank" rel="noopener noreferrer" style={{ display:'block', fontFamily:'Nunito,system-ui', fontSize:14, color:'rgba(255,255,255,.55)', marginBottom:8, cursor:'pointer', textDecoration:'none' }}>{label}</a>
+                ) : (
+                  <div key={label} style={{ fontFamily:'Nunito,system-ui', fontSize:14, color:'rgba(255,255,255,.55)', marginBottom:8, cursor:'pointer' }}>{label}</div>
+                )
+              })}
             </div>
           ))}
         </div>
