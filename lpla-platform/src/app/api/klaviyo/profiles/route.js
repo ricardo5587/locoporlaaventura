@@ -1,13 +1,17 @@
 import { NextResponse } from 'next/server';
 import { requireRole } from '@/lib/auth';
-import { supabase } from '@/lib/supabase';
-import { getAllProfiles, getLists, getListMembers, getProfileSubscriptions } from '@/lib/klaviyo';
+import { getAllProfiles, getProfileLists } from '@/lib/klaviyo';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type, Authorization',
 };
+
+// Simple in-memory cache (resets on server restart)
+let profilesCache = null;
+let cacheTime = 0;
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
 export async function OPTIONS() {
   return new NextResponse(null, { status: 204, headers: CORS });
@@ -18,27 +22,40 @@ export async function GET(request) {
   if (auth.error) return auth.error;
 
   try {
-    // Return cached data from Supabase
-    const { data: cached } = await supabase
-      .from('klaviyo_cache')
-      .select('data, updated_at')
-      .eq('id', 'profiles')
-      .single();
+    const now = Date.now();
+    const forceRefresh = new URL(request.url).searchParams.get('refresh') === '1';
 
-    if (cached && cached.data && Array.isArray(cached.data) && cached.data.length > 0) {
-      return NextResponse.json({
-        profiles: cached.data,
-        cachedAt: cached.updated_at,
-      }, { headers: CORS });
+    // Return cached data if still fresh
+    if (profilesCache && !forceRefresh && (now - cacheTime) < CACHE_DURATION) {
+      return NextResponse.json(profilesCache, { headers: CORS });
     }
 
-    // No cache — return empty so frontend knows to trigger a refresh
-    return NextResponse.json({
-      profiles: [],
-      cachedAt: null,
-    }, { headers: CORS });
+    // Fetch fresh profiles
+    const profiles = await getAllProfiles();
+
+    // Enrich with list memberships
+    const enriched = await Promise.all(
+      profiles.map(async (p) => {
+        try {
+          const lists = await getProfileLists(p.id);
+          return {
+            ...p,
+            lists: lists.map(l => ({ id: l.id, name: l.attributes?.name || 'Unnamed' })),
+          };
+        } catch (err) {
+          console.error(`Error fetching lists for profile ${p.id}:`, err);
+          return { ...p, lists: [] };
+        }
+      })
+    );
+
+    // Cache it
+    profilesCache = enriched;
+    cacheTime = now;
+
+    return NextResponse.json(enriched, { headers: CORS });
   } catch (err) {
-    console.error('Error reading profiles cache:', err);
+    console.error('Error fetching profiles:', err);
     return NextResponse.json({ error: err.message }, { status: 500, headers: CORS });
   }
 }
@@ -47,70 +64,9 @@ export async function POST(request) {
   const auth = requireRole(request, ['owner']);
   if (auth.error) return auth.error;
 
-  try {
-    // Fetch all profiles from Klaviyo
-    const profiles = await getAllProfiles();
+  // Force refresh cache
+  profilesCache = null;
+  cacheTime = 0;
 
-    // Fetch all lists and their members
-    const lists = await getLists();
-    const profileListMap = {};
-    for (const list of lists) {
-      const listName = list.attributes?.name || 'Unnamed';
-      const listId = list.id;
-      try {
-        const memberIds = await getListMembers(listId);
-        memberIds.forEach((pid) => {
-          if (!profileListMap[pid]) profileListMap[pid] = [];
-          profileListMap[pid].push({ id: listId, name: listName });
-        });
-      } catch (err) {
-        console.error(`Error fetching members for list ${listName}:`, err);
-      }
-    }
-
-    // Enrich profiles with list memberships and subscriptions
-    const enriched = await Promise.all(
-      profiles.map(async (p) => {
-        let subscriptions = {};
-        try {
-          const subs = await getProfileSubscriptions(p.id);
-          subs.forEach((sub) => {
-            const type = sub.relationships?.channel?.data?.id;
-            const status = sub.attributes?.status || 'unknown';
-            if (type === 'email') subscriptions.emailStatus = status;
-            if (type === 'sms') subscriptions.smsStatus = status;
-          });
-        } catch (err) {
-          console.error(`Error fetching subscriptions for profile ${p.id}:`, err);
-        }
-        return {
-          ...p,
-          lists: profileListMap[p.id] || [],
-          ...subscriptions,
-        };
-      })
-    );
-
-    // Save to Supabase cache
-    const { error: upsertErr } = await supabase
-      .from('klaviyo_cache')
-      .upsert({
-        id: 'profiles',
-        data: enriched,
-        updated_at: new Date().toISOString(),
-      });
-
-    if (upsertErr) {
-      console.error('Error saving profiles cache:', upsertErr);
-    }
-
-    return NextResponse.json({
-      profiles: enriched,
-      cachedAt: new Date().toISOString(),
-      refreshed: true,
-    }, { headers: CORS });
-  } catch (err) {
-    console.error('Error refreshing Klaviyo profiles:', err);
-    return NextResponse.json({ error: err.message }, { status: 500, headers: CORS });
-  }
+  return NextResponse.json({ success: true, message: 'Cache cleared' }, { headers: CORS });
 }

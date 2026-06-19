@@ -115,7 +115,7 @@ function CrmTag({ tag, onRemove }) {
 
 function CrmDrawer({ contact: base, allTags, onClose }) {
   const [show, setShow] = useState(false)
-  const [tab, setTab] = useState('details')
+  const [tab, setTab] = useState('timeline')
   const [tags, setTags] = useState(base.tags)
   const [notes, setNotes] = useState(() => {
     try { return JSON.parse(localStorage.getItem('lpla_crm_notes_'+base.id)||'[]') } catch { return [] }
@@ -145,9 +145,9 @@ function CrmDrawer({ contact: base, allTags, onClose }) {
   const catColor = { Escalada:'#294154', Senderismo:'#546207', Taller:'#A54399', Keynote:'#5E8BBD', Social:'#D9831F', 'Expedición':'#B32317', Voluntario:'#00897A' }[cat] || ADM.primary
 
   const TABS = [
-    { id:'details',  label:'Details',  icon:'people' },
     { id:'timeline', label:'Timeline', icon:'clock' },
     { id:'notes',    label:'Notes',    icon:'note'  },
+    { id:'tags',     label:'Tags',     icon:'tag'   },
   ]
 
   const allOrders = c.orders.slice().sort((a,b)=>b.createdAt-a.createdAt)
@@ -164,33 +164,39 @@ function CrmDrawer({ contact: base, allTags, onClose }) {
             <div style={{ width:52, height:52, borderRadius:'50%', flexShrink:0, background:`${catColor}1a`, color:catColor, display:'flex', alignItems:'center', justifyContent:'center', fontFamily:'Barlow Condensed,system-ui', fontSize:20, fontWeight:800 }}>{c.initials}</div>
             <div style={{ flex:1, minWidth:0 }}>
               <div style={{ fontFamily:'Barlow Condensed,system-ui', fontSize:22, fontWeight:800, color:ADM.text, textTransform:'uppercase', letterSpacing:.3 }}>{c.name}</div>
-              {(c.title || c.organization) && (
-                <div style={{ fontFamily:'Nunito,system-ui', fontSize:13, color:ADM.text, marginTop:2, fontWeight:600 }}>
-                  {[c.title, c.organization].filter(Boolean).join(' · ')}
-                </div>
-              )}
               <div style={{ fontFamily:'Nunito,system-ui', fontSize:13, color:ADM.muted, marginTop:2 }}>{c.email}</div>
-              {c.phone && <div style={{ fontFamily:'Nunito,system-ui', fontSize:13, color:ADM.muted }}>{c.phone}</div>}
-              {(c.region || c.country) && (
-                <div style={{ fontFamily:'Nunito,system-ui', fontSize:12, color:ADM.light, marginTop:1 }}>
-                  {[c.region, c.country].filter(Boolean).join(', ')}
-                </div>
-              )}
+              <div style={{ fontFamily:'Nunito,system-ui', fontSize:13, color:ADM.muted }}>{c.phone}</div>
             </div>
             <button onClick={close} style={{ width:32, height:32, borderRadius:8, border:`1px solid ${ADM.border}`, background:'transparent', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
               <AdmIcon name="x" size={16} color={ADM.muted} />
             </button>
           </div>
 
-          {c.lists && c.lists.length > 0 && (
-            <div style={{ display:'flex', gap:6, flexWrap:'wrap', marginTop:12 }}>
-              {c.lists.map(l => (
-                <span key={l.id} style={{ display:'inline-flex', alignItems:'center', gap:4, padding:'3px 9px', borderRadius:12, background:`${ADM.blue}14`, border:`1px solid ${ADM.blue}33`, color:ADM.blue, fontFamily:'Barlow Condensed,system-ui', fontSize:11.5, fontWeight:800, letterSpacing:.4, textTransform:'uppercase' }}>
-                  <AdmIcon name="mail" size={11} color={ADM.blue} /> {l.name}
-                </span>
-              ))}
+          <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:10, marginTop:16 }}>
+            {[
+              { l:'Total Spend',   v: c.totalSpend ? admMoney(c.totalSpend) : 'Free' },
+              { l:'Bookings',      v: c.bookingCount },
+              { l:'Checked In',    v: c.checkedIn },
+              { l:'Events',        v: [...new Set(c.orders.map(o=>o.eventId))].length },
+            ].map(({l,v})=>(
+              <div key={l} style={{ textAlign:'center', background:ADM.bg, borderRadius:ADM.radius, padding:'10px 6px' }}>
+                <div style={{ fontFamily:'Barlow Condensed,system-ui', fontSize:22, fontWeight:800, color:ADM.text, lineHeight:1 }}>{v}</div>
+                <div style={{ fontFamily:'Nunito,system-ui', fontSize:10.5, color:ADM.light, marginTop:3 }}>{l}</div>
+              </div>
+            ))}
+          </div>
+
+          <div style={{ marginTop:14 }}>
+            <div style={{ display:'flex', justifyContent:'space-between', marginBottom:5 }}>
+              <span style={{ fontFamily:'Nunito,system-ui', fontSize:11.5, fontWeight:700, color:ADM.muted, textTransform:'uppercase', letterSpacing:.6 }}>Engagement</span>
+              <span style={{ fontFamily:'Barlow Condensed,system-ui', fontSize:12, fontWeight:800, color:ADM.light }}>{c.segment}</span>
             </div>
-          )}
+            <EngagementBar score={c.engagementScore} />
+          </div>
+
+          <div style={{ display:'flex', gap:6, flexWrap:'wrap', marginTop:12 }}>
+            {tags.map(t=><CrmTag key={t} tag={t} />)}
+          </div>
         </div>
 
         <div style={{ display:'flex', borderBottom:`1px solid ${ADM.border}`, flexShrink:0 }}>
@@ -204,114 +210,6 @@ function CrmDrawer({ contact: base, allTags, onClose }) {
         </div>
 
         <div style={{ flex:1, overflow:'auto', padding:'18px 22px' }}>
-
-          {tab==='details' && (
-            <div>
-              <div style={{ fontFamily:'Barlow Condensed,system-ui', fontSize:11, fontWeight:800, color:ADM.light, textTransform:'uppercase', letterSpacing:1, marginBottom:10 }}>Contact Info</div>
-              <div style={{ display:'flex', flexDirection:'column', gap:8, marginBottom:20 }}>
-                {[
-                  { icon:'mail',   label:'Email',        value:c.email },
-                  { icon:'chat',   label:'Phone',        value:c.phone },
-                  { icon:'globe',  label:'Location',     value:[c.region, c.country].filter(Boolean).join(', ') || (c.location && typeof c.location === 'object' ? [c.location.city, c.location.region, c.location.country].filter(Boolean).join(', ') : '') },
-                  { icon:'clock',  label:'Timezone',     value:c.timezone },
-                ].filter(r => r.value).map(r => (
-                  <div key={r.label} style={{ display:'flex', alignItems:'center', gap:10, padding:'10px 14px', background:ADM.bg, borderRadius:ADM.radius, border:`1px solid ${ADM.border}` }}>
-                    <AdmIcon name={r.icon} size={15} color={ADM.light} />
-                    <div style={{ flex:1, minWidth:0 }}>
-                      <div style={{ fontFamily:'Nunito,system-ui', fontSize:11, color:ADM.light, textTransform:'uppercase', letterSpacing:.5 }}>{r.label}</div>
-                      <div style={{ fontFamily:'Nunito,system-ui', fontSize:13.5, color:ADM.text, fontWeight:600, wordBreak:'break-word' }}>{r.value}</div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {(c.title || c.organization) && (
-                <>
-                  <div style={{ fontFamily:'Barlow Condensed,system-ui', fontSize:11, fontWeight:800, color:ADM.light, textTransform:'uppercase', letterSpacing:1, marginBottom:10 }}>Professional</div>
-                  <div style={{ display:'flex', flexDirection:'column', gap:8, marginBottom:20 }}>
-                    {[
-                      { icon:'people', label:'Title',        value:c.title },
-                      { icon:'globe',  label:'Organization', value:c.organization },
-                    ].filter(r => r.value).map(r => (
-                      <div key={r.label} style={{ display:'flex', alignItems:'center', gap:10, padding:'10px 14px', background:ADM.bg, borderRadius:ADM.radius, border:`1px solid ${ADM.border}` }}>
-                        <AdmIcon name={r.icon} size={15} color={ADM.light} />
-                        <div style={{ flex:1, minWidth:0 }}>
-                          <div style={{ fontFamily:'Nunito,system-ui', fontSize:11, color:ADM.light, textTransform:'uppercase', letterSpacing:.5 }}>{r.label}</div>
-                          <div style={{ fontFamily:'Nunito,system-ui', fontSize:13.5, color:ADM.text, fontWeight:600 }}>{r.value}</div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </>
-              )}
-
-              <div style={{ fontFamily:'Barlow Condensed,system-ui', fontSize:11, fontWeight:800, color:ADM.light, textTransform:'uppercase', letterSpacing:1, marginBottom:10 }}>Consent & Subscriptions</div>
-              <div style={{ display:'flex', flexDirection:'column', gap:8, marginBottom:20 }}>
-                {[
-                  { icon:'mail',  label:'Email',  status:c.emailStatus },
-                  { icon:'chat',  label:'SMS',    status:c.smsStatus },
-                ].map(r => {
-                  const statusColor = r.status === 'opted_in' ? ADM.success : r.status === 'opted_out' ? '#E74C3C' : r.status === 'unconfirmed' ? ADM.warning : ADM.light
-                  const statusLabel = r.status === 'opted_in' ? 'Opted In' : r.status === 'opted_out' ? 'Opted Out' : r.status === 'unconfirmed' ? 'Unconfirmed' : 'Unknown'
-                  return (
-                    <div key={r.label} style={{ display:'flex', alignItems:'center', gap:10, padding:'10px 14px', background:ADM.bg, borderRadius:ADM.radius, border:`1px solid ${ADM.border}` }}>
-                      <AdmIcon name={r.icon} size={15} color={statusColor} />
-                      <div style={{ flex:1, minWidth:0 }}>
-                        <div style={{ fontFamily:'Nunito,system-ui', fontSize:11, color:ADM.light, textTransform:'uppercase', letterSpacing:.5 }}>{r.label}</div>
-                        <div style={{ fontFamily:'Nunito,system-ui', fontSize:13.5, color:statusColor, fontWeight:600 }}>{statusLabel}</div>
-                      </div>
-                      <span style={{ display:'inline-flex', alignItems:'center', justifyContent:'center', width:16, height:16, borderRadius:'50%', background:statusColor, fontSize:10, fontWeight:800, color:'#fff' }}>
-                        {r.status === 'opted_in' ? '✓' : r.status === 'opted_out' ? '✕' : '–'}
-                      </span>
-                    </div>
-                  )
-                })}
-              </div>
-
-              <div style={{ fontFamily:'Barlow Condensed,system-ui', fontSize:11, fontWeight:800, color:ADM.light, textTransform:'uppercase', letterSpacing:1, marginBottom:10 }}>Activity</div>
-              <div style={{ display:'grid', gridTemplateColumns:'repeat(2,1fr)', gap:8, marginBottom:20 }}>
-                {[
-                  { l:'Total Spend',   v: c.totalSpend ? admMoney(c.totalSpend) : 'Free' },
-                  { l:'Bookings',      v: c.bookingCount },
-                  { l:'Checked In',    v: c.checkedIn },
-                  { l:'Events',        v: [...new Set(c.orders.map(o=>o.eventId))].length },
-                ].map(({l,v})=>(
-                  <div key={l} style={{ textAlign:'center', background:ADM.bg, borderRadius:ADM.radius, padding:'12px 8px', border:`1px solid ${ADM.border}` }}>
-                    <div style={{ fontFamily:'Barlow Condensed,system-ui', fontSize:22, fontWeight:800, color:ADM.text, lineHeight:1 }}>{v}</div>
-                    <div style={{ fontFamily:'Nunito,system-ui', fontSize:10.5, color:ADM.light, marginTop:4 }}>{l}</div>
-                  </div>
-                ))}
-              </div>
-
-              <div style={{ fontFamily:'Barlow Condensed,system-ui', fontSize:11, fontWeight:800, color:ADM.light, textTransform:'uppercase', letterSpacing:1, marginBottom:10 }}>Engagement</div>
-              <div style={{ background:ADM.bg, borderRadius:ADM.radius, padding:'14px 16px', border:`1px solid ${ADM.border}`, marginBottom:20 }}>
-                <div style={{ display:'flex', justifyContent:'space-between', marginBottom:6 }}>
-                  <span style={{ fontFamily:'Nunito,system-ui', fontSize:12, fontWeight:700, color:ADM.muted }}>Score</span>
-                  <span style={{ fontFamily:'Barlow Condensed,system-ui', fontSize:13, fontWeight:800, color:ADM.light }}>{c.segment}</span>
-                </div>
-                <EngagementBar score={c.engagementScore} />
-              </div>
-
-              {c.lists && c.lists.length > 0 && (
-                <>
-                  <div style={{ fontFamily:'Barlow Condensed,system-ui', fontSize:11, fontWeight:800, color:ADM.light, textTransform:'uppercase', letterSpacing:1, marginBottom:10 }}>Klaviyo Lists</div>
-                  <div style={{ display:'flex', gap:6, flexWrap:'wrap' }}>
-                    {c.lists.map(l => (
-                      <span key={l.id} style={{ display:'inline-flex', alignItems:'center', gap:4, padding:'5px 12px', borderRadius:12, background:`${ADM.blue}14`, border:`1px solid ${ADM.blue}33`, color:ADM.blue, fontFamily:'Barlow Condensed,system-ui', fontSize:12, fontWeight:800, letterSpacing:.4, textTransform:'uppercase' }}>
-                        <AdmIcon name="mail" size={12} color={ADM.blue} /> {l.name}
-                      </span>
-                    ))}
-                  </div>
-                </>
-              )}
-
-              {c.firstActivity && (
-                <div style={{ marginTop:20, fontFamily:'Nunito,system-ui', fontSize:12, color:ADM.light, textAlign:'center' }}>
-                  Contact since {new Date(c.firstActivity).toLocaleDateString('en-US', { month:'long', year:'numeric' })}
-                </div>
-              )}
-            </div>
-          )}
 
           {tab==='timeline' && (
             <div>
@@ -417,6 +315,15 @@ function CrmDrawer({ contact: base, allTags, onClose }) {
     </>
   )
 }
+
+const DEFAULT_CRM_SEGMENTS = [
+  { id:'all',       label:'All Contacts',  icon:'people'  },
+  { id:'VIP',       label:'VIP',           icon:'star'    },
+  { id:'Regular',   label:'Regulars',      icon:'check'   },
+  { id:'New',       label:'New',           icon:'bolt'    },
+  { id:'Lapsed',    label:'Lapsed',        icon:'clock'   },
+  { id:'Volunteer', label:'Volunteers',    icon:'people'  },
+]
 
 const ALL_TAGS = ['VIP','Regular','Volunteer','New','Lapsed','Climber','Hiker','Speaker']
 
@@ -729,14 +636,6 @@ function klaviyoProfileToContact(p) {
     initials: (firstName.charAt(0) + lastName.charAt(0)).toUpperCase() || email.charAt(0).toUpperCase(),
     email,
     phone: attr.phone_number || '',
-    title: attr.title || '',
-    organization: attr.organization || '',
-    location: attr.location || '',
-    region: attr.region || '',
-    country: attr.country || '',
-    timezone: attr.timezone || '',
-    emailStatus: p.emailStatus || 'unknown',
-    smsStatus: p.smsStatus || 'unknown',
     orders: [],
     totalSpend: 0,
     bookingCount: 0,
@@ -761,65 +660,32 @@ export default function AdminCRM({ events }) {
     try { return JSON.parse(localStorage.getItem('lpla_crm_imported') || '[]') } catch { return [] }
   })
   const [klaviyoContacts, setKlaviyoContacts] = useState([])
-  const [klaviyoLoading, setKlaviyoLoading] = useState(true)
-  const [klaviyoRefreshing, setKlaviyoRefreshing] = useState(false)
-  const [cachedAt, setCachedAt] = useState(null)
-
-  function getToken() {
-    return typeof window !== 'undefined' ? localStorage.getItem('lpla_admin_token') : ''
-  }
-
-  function loadProfiles(token) {
-    return fetch(`${API}/api/klaviyo/profiles`, { headers: { Authorization: `Bearer ${token}` } })
-      .then(r => { if (!r.ok) throw new Error(`${r.status}`); return r.json() })
-      .then(data => {
-        const profiles = data.profiles || data
-        if (Array.isArray(profiles)) {
-          setKlaviyoContacts(profiles.map(klaviyoProfileToContact))
-        }
-        if (data.cachedAt) setCachedAt(data.cachedAt)
-        return profiles
-      })
-  }
-
-  function refreshFromKlaviyo() {
-    const token = getToken()
-    if (!token) return
-    setKlaviyoRefreshing(true)
-    fetch(`${API}/api/klaviyo/profiles`, {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-    })
-      .then(r => { if (!r.ok) throw new Error(`${r.status}`); return r.json() })
-      .then(data => {
-        const profiles = data.profiles || []
-        if (Array.isArray(profiles)) {
-          setKlaviyoContacts(profiles.map(klaviyoProfileToContact))
-        }
-        if (data.cachedAt) setCachedAt(data.cachedAt)
-      })
-      .catch(err => console.error('Klaviyo refresh error:', err))
-      .finally(() => setKlaviyoRefreshing(false))
-  }
+  const [klaviyoLoading, setKlaviyoLoading] = useState(false)
 
   useEffect(() => {
-    const token = getToken()
-    if (!token) { setKlaviyoLoading(false); return }
-    loadProfiles(token)
-      .then(profiles => {
-        if (!profiles || profiles.length === 0) {
-          setKlaviyoRefreshing(true)
-          return fetch(`${API}/api/klaviyo/profiles`, {
-            method: 'POST',
-            headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-          }).then(r => r.json()).then(data => {
-            const p = data.profiles || []
-            if (Array.isArray(p)) setKlaviyoContacts(p.map(klaviyoProfileToContact))
-            if (data.cachedAt) setCachedAt(data.cachedAt)
-          }).finally(() => setKlaviyoRefreshing(false))
+    const token = typeof window !== 'undefined' ? localStorage.getItem('lpla_admin_token') : ''
+    if (!token) {
+      console.log('No auth token found')
+      return
+    }
+    setKlaviyoLoading(true)
+    fetch(`${API}/api/klaviyo/profiles`, { headers: { Authorization: `Bearer ${token}` } })
+      .then(r => {
+        if (!r.ok) {
+          console.error('Klaviyo profiles fetch failed:', r.status, r.statusText)
+          return []
+        }
+        return r.json()
+      })
+      .then(data => {
+        console.log('Klaviyo profiles response:', data)
+        if (Array.isArray(data)) {
+          setKlaviyoContacts(data.map(klaviyoProfileToContact))
         }
       })
-      .catch(err => console.error('Klaviyo profiles error:', err))
+      .catch(err => {
+        console.error('Klaviyo profiles error:', err)
+      })
       .finally(() => setKlaviyoLoading(false))
   }, [])
 
@@ -851,14 +717,16 @@ export default function AdminCRM({ events }) {
         c.lists.forEach(l => listNames.add(l.name))
       }
     })
-    return [
+    const segments = [
       { id:'all', label:'All Contacts', icon:'people' },
       ...Array.from(listNames).map(name => ({
         id: `list_${name}`,
         label: name,
         icon: 'mail',
+        isKlaviyoList: true,
       })),
     ]
+    return segments.length > 1 ? segments : DEFAULT_CRM_SEGMENTS
   }, [klaviyoContacts])
 
   const segCount = id => {
@@ -867,6 +735,7 @@ export default function AdminCRM({ events }) {
       const listName = id.replace('list_', '')
       return allContacts.filter(c=>c.lists && c.lists.some(l=>l.name===listName)).length
     }
+    if (id==='Volunteer') return allContacts.filter(c=>c.tags.includes('Volunteer')).length
     return allContacts.filter(c=>c.segment===id).length
   }
 
@@ -908,203 +777,176 @@ export default function AdminCRM({ events }) {
   return (
     <div style={{ display:'flex', flex:1, overflow:'hidden', background:ADM.bg }}>
 
-      {(klaviyoLoading || klaviyoRefreshing) && klaviyoContacts.length === 0 ? null : (
-        <div style={{ width:200, flexShrink:0, background:ADM.card, borderRight:`1px solid ${ADM.border}`, display:'flex', flexDirection:'column', overflow:'auto' }}>
-          <div style={{ padding:'20px 16px 12px' }}>
-            <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:12 }}>
-              <div style={{ fontFamily:'Barlow Condensed,system-ui', fontSize:11, fontWeight:800, color:ADM.light, textTransform:'uppercase', letterSpacing:1 }}>Lists</div>
-              <button onClick={refreshFromKlaviyo} disabled={klaviyoRefreshing}
-                title="Refresh from Klaviyo"
-                style={{ width:26, height:26, borderRadius:8, border:`1px solid ${ADM.border}`, background:'transparent', cursor:klaviyoRefreshing?'not-allowed':'pointer', display:'flex', alignItems:'center', justifyContent:'center', opacity:klaviyoRefreshing?.5:1, transition:'all .15s' }}
-                onMouseOver={e=>{if(!klaviyoRefreshing){e.currentTarget.style.background=`${ADM.primary}14`;e.currentTarget.style.borderColor=ADM.primary}}}
-                onMouseOut={e=>{e.currentTarget.style.background='transparent';e.currentTarget.style.borderColor=ADM.border}}>
-                <AdmIcon name="reset" size={13} color={klaviyoRefreshing?ADM.muted:ADM.primary} />
+      <div style={{ width:200, flexShrink:0, background:ADM.card, borderRight:`1px solid ${ADM.border}`, display:'flex', flexDirection:'column', overflow:'auto' }}>
+        <div style={{ padding:'20px 16px 12px' }}>
+          <div style={{ fontFamily:'Barlow Condensed,system-ui', fontSize:11, fontWeight:800, color:ADM.light, textTransform:'uppercase', letterSpacing:1, marginBottom:12 }}>Segments</div>
+          {dynamicSegments.map(s=>{
+            const cnt = segCount(s.id)
+            const active = segment===s.id
+            return (
+              <button key={s.id} onClick={()=>setSegment(s.id)}
+                style={{ width:'100%', display:'flex', alignItems:'center', gap:9, padding:'9px 10px', borderRadius:9, border:'none', cursor:'pointer', background:active?`${ADM.navAccent}1e`:'transparent', color:active?ADM.navAccent:ADM.muted, marginBottom:2, transition:'all .15s', textAlign:'left' }}>
+                <AdmIcon name={s.icon} size={15} color={active?ADM.navAccent:ADM.light} />
+                <span style={{ flex:1, fontFamily:'Nunito,system-ui', fontSize:13, fontWeight:active?700:500 }}>{s.label}</span>
+                <span style={{ fontFamily:'Barlow Condensed,system-ui', fontSize:12, fontWeight:800, color:active?ADM.navAccent:ADM.light }}>{cnt}</span>
               </button>
-            </div>
-            {(klaviyoLoading || klaviyoRefreshing) && <div style={{ fontFamily:'Nunito,system-ui', fontSize:12, color:ADM.blue, marginBottom:12, textAlign:'center', padding:'6px 0' }}>{klaviyoRefreshing ? 'Syncing from Klaviyo…' : 'Loading contacts…'}</div>}
-            {dynamicSegments.map(s=>{
-              const cnt = segCount(s.id)
-              const active = segment===s.id
+            )
+          })}
+        </div>
+
+        <div style={{ padding:'16px 16px 12px', borderTop:`1px solid ${ADM.border}`, marginTop:'auto' }}>
+          <div style={{ fontFamily:'Barlow Condensed,system-ui', fontSize:11, fontWeight:800, color:ADM.light, textTransform:'uppercase', letterSpacing:1, marginBottom:12 }}>Tags</div>
+          <div style={{ display:'flex', flexDirection:'column', gap:5 }}>
+            {ALL_TAGS.map(t=>{
+              const cnt = allContacts.filter(c=>c.tags.includes(t)).length
+              if (!cnt) return null
+              const s = crmTagStyle(t)
               return (
-                <button key={s.id} onClick={()=>setSegment(s.id)}
-                  style={{ width:'100%', display:'flex', alignItems:'center', gap:9, padding:'9px 10px', borderRadius:9, border:'none', cursor:'pointer', background:active?`${ADM.navAccent}1e`:'transparent', color:active?ADM.navAccent:ADM.muted, marginBottom:2, transition:'all .15s', textAlign:'left' }}>
-                  <AdmIcon name={s.icon} size={15} color={active?ADM.navAccent:ADM.light} />
-                  <span style={{ flex:1, fontFamily:'Nunito,system-ui', fontSize:13, fontWeight:active?700:500, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{s.label}</span>
-                  <span style={{ fontFamily:'Barlow Condensed,system-ui', fontSize:12, fontWeight:800, color:active?ADM.navAccent:ADM.light }}>{cnt}</span>
-                </button>
+                <div key={t} style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+                  <span style={{ display:'inline-flex', alignItems:'center', gap:5, fontFamily:'Barlow Condensed,system-ui', fontSize:11, fontWeight:800, color:s.color, textTransform:'uppercase', letterSpacing:.4 }}>
+                    <span style={{ width:6,height:6,borderRadius:'50%',background:s.color,flexShrink:0 }} />{t}
+                  </span>
+                  <span style={{ fontFamily:'Barlow Condensed,system-ui', fontSize:11, fontWeight:800, color:ADM.light }}>{cnt}</span>
+                </div>
               )
             })}
           </div>
-
-          {cachedAt && (
-            <div style={{ padding:'12px 16px', borderTop:`1px solid ${ADM.border}`, marginTop:'auto' }}>
-              <div style={{ fontFamily:'Nunito,system-ui', fontSize:11, color:ADM.light, textAlign:'center' }}>
-                Last synced {admTimeAgo(new Date(cachedAt).getTime())}
-              </div>
-            </div>
-          )}
         </div>
-      )}
+      </div>
 
       <div style={{ flex:1, overflow:'auto', display:'flex', flexDirection:'column', minWidth:0 }}>
-        {(klaviyoLoading || klaviyoRefreshing) && klaviyoContacts.length === 0 ? (
-          <div style={{ flex:1, display:'flex', alignItems:'center', justifyContent:'center' }}>
-            <div style={{ textAlign:'center' }}>
-              <div style={{ fontFamily:'Barlow Condensed,system-ui', fontSize:32, fontWeight:800, color:ADM.text, textTransform:'uppercase', letterSpacing:.5, marginBottom:8 }}>Loading contacts…</div>
-              <p style={{ fontFamily:'Nunito,system-ui', fontSize:14, color:ADM.muted }}>Syncing your Klaviyo contacts</p>
+        <div style={{ padding:'24px 28px 0', flexShrink:0 }}>
+
+          <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:18, flexWrap:'wrap', gap:12 }}>
+            <div>
+              <h1 style={{ fontFamily:'Barlow Condensed,system-ui', fontSize:28, fontWeight:800, color:ADM.text, margin:0, textTransform:'uppercase', letterSpacing:.5 }}>Contacts &amp; Profiles</h1>
+              <p style={{ fontFamily:'Nunito,system-ui', fontSize:14, color:ADM.muted, margin:'4px 0 0' }}>Every person who has booked, signed up, or attended an LPLA event.</p>
+            </div>
+            <div style={{ display:'flex', gap:10 }}>
+              <button onClick={() => setShowImport(true)} style={{ display:'inline-flex', alignItems:'center', gap:7, padding:'10px 18px', borderRadius:ADM.radius, border:`1px solid ${ADM.border}`, background:ADM.card, color:ADM.text, cursor:'pointer', fontFamily:'Barlow Condensed,system-ui', fontSize:15, fontWeight:800, letterSpacing:.4 }}>
+                <AdmIcon name="download" size={16} color={ADM.muted} style={{ transform:'rotate(180deg)' }} /> Import
+              </button>
+              <button style={{ display:'inline-flex', alignItems:'center', gap:7, padding:'10px 18px', borderRadius:ADM.radius, border:'none', background:ADM.primary, color:'#fff', cursor:'pointer', fontFamily:'Barlow Condensed,system-ui', fontSize:15, fontWeight:800, letterSpacing:.4, boxShadow:'0 4px 14px rgba(41,65,84,.22)' }}>
+                <AdmIcon name="download" size={16} color="#fff" /> Export contacts
+              </button>
             </div>
           </div>
-        ) : (
-          <>
-            <div style={{ padding:'24px 28px 0', flexShrink:0 }}>
-              <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:18, flexWrap:'wrap', gap:12 }}>
-                <div>
-                  <h1 style={{ fontFamily:'Barlow Condensed,system-ui', fontSize:28, fontWeight:800, color:ADM.text, margin:0, textTransform:'uppercase', letterSpacing:.5 }}>Contacts &amp; Profiles</h1>
-                  <p style={{ fontFamily:'Nunito,system-ui', fontSize:14, color:ADM.muted, margin:'4px 0 0' }}>Every person who has booked, signed up, or attended an LPLA event.</p>
-                </div>
-                <div style={{ display:'flex', gap:10 }}>
-                  <button onClick={() => setShowImport(true)} style={{ display:'inline-flex', alignItems:'center', gap:7, padding:'10px 18px', borderRadius:ADM.radius, border:`1px solid ${ADM.border}`, background:ADM.card, color:ADM.text, cursor:'pointer', fontFamily:'Barlow Condensed,system-ui', fontSize:15, fontWeight:800, letterSpacing:.4 }}>
-                    <AdmIcon name="download" size={16} color={ADM.muted} style={{ transform:'rotate(180deg)' }} /> Import
-                  </button>
-                  <button style={{ display:'inline-flex', alignItems:'center', gap:7, padding:'10px 18px', borderRadius:ADM.radius, border:'none', background:ADM.primary, color:'#fff', cursor:'pointer', fontFamily:'Barlow Condensed,system-ui', fontSize:15, fontWeight:800, letterSpacing:.4, boxShadow:'0 4px 14px rgba(41,65,84,.22)' }}>
-                    <AdmIcon name="download" size={16} color="#fff" /> Export contacts
-                  </button>
-                </div>
-              </div>
 
-              {importBanner && (
-                <div style={{ display:'flex', alignItems:'center', gap:10, background:`${ADM.success}12`, border:`1px solid ${ADM.success}44`, borderRadius:ADM.radius, padding:'10px 16px', marginBottom:14 }}>
-                  <AdmIcon name="check" size={16} color={ADM.success} />
-                  <span style={{ fontFamily:'Nunito,system-ui', fontSize:13.5, color:ADM.text, flex:1 }}><strong>{importBanner} contacts</strong> imported successfully.</span>
-                  <button onClick={()=>setImportBanner(null)} style={{ background:'none', border:'none', cursor:'pointer', display:'flex' }}><AdmIcon name="x" size={14} color={ADM.muted} /></button>
-                </div>
-              )}
-              <div style={{ display:'grid', gridTemplateColumns:'repeat(4,minmax(0,1fr))', gap:12, marginBottom:18 }}>
-                <OvKpi label="Total Contacts" value={totalContacts} icon="people" accent={ADM.primary} sub="Unique profiles" />
-                <OvKpi label="Avg. Lifetime Value" value={admMoney(avgLTV)} icon="dollar" accent={ADM.success} sub="Per contact" />
-                <OvKpi label="VIP Contacts" value={vipCount} icon="star" accent="#A07800" sub="Spent $80+" />
-                <OvKpi label="Avg. Engagement" value={avgEngage+'/100'} icon="trend" accent={ADM.blue} sub="Across all contacts" />
-              </div>
-
-              <div style={{ display:'flex', gap:10, marginBottom:14, alignItems:'center' }}>
-                <div style={{ flex:1, display:'flex', alignItems:'center', gap:8, background:'#fff', borderRadius:ADM.radius, padding:'0 12px', height:38, border:`1px solid ${ADM.border}` }}>
-                  <AdmIcon name="search" size={15} color="#94A3B8" />
-                  <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search name or email…"
-                    style={{ border:'none', outline:'none', fontFamily:'Nunito,system-ui', fontSize:13, color:ADM.text, flex:1, background:'transparent' }} />
-                  {search && <button onClick={()=>setSearch('')} style={{ background:'none',border:'none',cursor:'pointer',display:'flex',alignItems:'center' }}><AdmIcon name="x" size={14} color={ADM.light} /></button>}
-                </div>
-                <span style={{ fontFamily:'Nunito,system-ui', fontSize:12.5, color:ADM.light }}>{filtered.length} contact{filtered.length!==1?'s':''}</span>
-              </div>
+          {importBanner && (
+            <div style={{ display:'flex', alignItems:'center', gap:10, background:`${ADM.success}12`, border:`1px solid ${ADM.success}44`, borderRadius:ADM.radius, padding:'10px 16px', marginBottom:14 }}>
+              <AdmIcon name="check" size={16} color={ADM.success} />
+              <span style={{ fontFamily:'Nunito,system-ui', fontSize:13.5, color:ADM.text, flex:1 }}><strong>{importBanner} contacts</strong> imported successfully.</span>
+              <button onClick={()=>setImportBanner(null)} style={{ background:'none', border:'none', cursor:'pointer', display:'flex' }}><AdmIcon name="x" size={14} color={ADM.muted} /></button>
             </div>
+          )}
+          <div style={{ display:'grid', gridTemplateColumns:'repeat(4,minmax(0,1fr))', gap:12, marginBottom:18 }}>
+            <OvKpi label="Total Contacts" value={totalContacts} icon="people" accent={ADM.primary} sub="Unique profiles" />
+            <OvKpi label="Avg. Lifetime Value" value={admMoney(avgLTV)} icon="dollar" accent={ADM.success} sub="Per contact" />
+            <OvKpi label="VIP Contacts" value={vipCount} icon="star" accent="#A07800" sub="Spent $80+" />
+            <OvKpi label="Avg. Engagement" value={avgEngage+'/100'} icon="trend" accent={ADM.blue} sub="Across all contacts" />
+          </div>
 
-            <div style={{ flex:1, overflow:'auto', padding:'0 28px 24px' }}>
-              <div style={{ background:ADM.card, borderRadius:ADM.radiusMd, border:`1px solid ${ADM.border}`, overflow:'hidden' }}>
-                <div style={{ overflowX:'auto' }}>
-                  <table style={{ width:'100%', borderCollapse:'collapse', minWidth:780 }}>
-                    <thead>
-                      <tr style={{ background:'#FAFAF7', borderBottom:`1px solid ${ADM.border}` }}>
-                        <th style={thStyle}>Contact</th>
-                        <th style={thStyle}>Consent</th>
-                        <th style={{...thStyle}} onClick={()=>thSort('totalSpend')}>
-                          <div style={{display:'flex',alignItems:'center',gap:5}}>Spend <ThArr k="totalSpend"/></div>
-                        </th>
-                        <th style={{...thStyle}} onClick={()=>thSort('bookingCount')}>
-                          <div style={{display:'flex',alignItems:'center',gap:5}}>Bookings <ThArr k="bookingCount"/></div>
-                        </th>
-                        <th style={{...thStyle, minWidth:130}} onClick={()=>thSort('engagementScore')}>
-                          <div style={{display:'flex',alignItems:'center',gap:5}}>Engagement <ThArr k="engagementScore"/></div>
-                        </th>
-                        <th style={thStyle}>Tags</th>
-                        <th style={{...thStyle}} onClick={()=>thSort('lastActivity')}>
-                          <div style={{display:'flex',alignItems:'center',gap:5}}>Last Activity <ThArr k="lastActivity"/></div>
-                        </th>
-                        <th style={thStyle}></th>
+          <div style={{ display:'flex', gap:10, marginBottom:14, alignItems:'center' }}>
+            <div style={{ flex:1, display:'flex', alignItems:'center', gap:8, background:'#fff', borderRadius:ADM.radius, padding:'0 12px', height:38, border:`1px solid ${ADM.border}` }}>
+              <AdmIcon name="search" size={15} color="#94A3B8" />
+              <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search name or email…"
+                style={{ border:'none', outline:'none', fontFamily:'Nunito,system-ui', fontSize:13, color:ADM.text, flex:1, background:'transparent' }} />
+              {search && <button onClick={()=>setSearch('')} style={{ background:'none',border:'none',cursor:'pointer',display:'flex',alignItems:'center' }}><AdmIcon name="x" size={14} color={ADM.light} /></button>}
+            </div>
+            <span style={{ fontFamily:'Nunito,system-ui', fontSize:12.5, color:ADM.light }}>{filtered.length} contact{filtered.length!==1?'s':''}</span>
+          </div>
+        </div>
+
+        <div style={{ flex:1, overflow:'auto', padding:'0 28px 24px' }}>
+          <div style={{ background:ADM.card, borderRadius:ADM.radiusMd, border:`1px solid ${ADM.border}`, overflow:'hidden' }}>
+            <div style={{ overflowX:'auto' }}>
+              <table style={{ width:'100%', borderCollapse:'collapse', minWidth:780 }}>
+                <thead>
+                  <tr style={{ background:'#FAFAF7', borderBottom:`1px solid ${ADM.border}` }}>
+                    <th style={thStyle}>Contact</th>
+                    <th style={{...thStyle}} onClick={()=>thSort('totalSpend')}>
+                      <div style={{display:'flex',alignItems:'center',gap:5}}>Spend <ThArr k="totalSpend"/></div>
+                    </th>
+                    <th style={{...thStyle}} onClick={()=>thSort('bookingCount')}>
+                      <div style={{display:'flex',alignItems:'center',gap:5}}>Bookings <ThArr k="bookingCount"/></div>
+                    </th>
+                    <th style={{...thStyle, minWidth:130}} onClick={()=>thSort('engagementScore')}>
+                      <div style={{display:'flex',alignItems:'center',gap:5}}>Engagement <ThArr k="engagementScore"/></div>
+                    </th>
+                    <th style={thStyle}>Tags</th>
+                    <th style={{...thStyle}} onClick={()=>thSort('lastActivity')}>
+                      <div style={{display:'flex',alignItems:'center',gap:5}}>Last Activity <ThArr k="lastActivity"/></div>
+                    </th>
+                    <th style={thStyle}></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {rows.length===0 ? (
+                    <tr><td colSpan={7} style={{ padding:48, textAlign:'center', fontFamily:'Nunito,system-ui', fontSize:15, color:ADM.light }}>No contacts found.</td></tr>
+                  ) : rows.map(c=>{
+                    const cat = c.categories[0]
+                    const catColor = {Escalada:'#294154',Senderismo:'#546207',Taller:'#A54399',Keynote:'#5E8BBD',Social:'#D9831F','Expedición':'#B32317',Voluntario:'#00897A'}[cat]||ADM.primary
+                    return (
+                      <tr key={c.id} onClick={()=>setSelected(c)}
+                        style={{ borderBottom:`1px solid ${ADM.border}`, cursor:'pointer', transition:'background .12s' }}
+                        onMouseOver={e=>e.currentTarget.style.background='#FAFAF7'}
+                        onMouseOut={e=>e.currentTarget.style.background='transparent'}>
+                        <td style={{ padding:'12px 16px' }}>
+                          <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+                            <div style={{ width:34, height:34, borderRadius:'50%', flexShrink:0, background:`${catColor}1a`, color:catColor, display:'flex', alignItems:'center', justifyContent:'center', fontFamily:'Barlow Condensed,system-ui', fontSize:13, fontWeight:800 }}>{c.initials}</div>
+                            <div style={{ minWidth:0 }}>
+                              <div style={{ fontFamily:'Nunito,system-ui', fontSize:13.5, fontWeight:700, color:ADM.text }}>{c.name}</div>
+                              <div style={{ fontFamily:'Nunito,system-ui', fontSize:11.5, color:ADM.light, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis', maxWidth:180 }}>{c.email}</div>
+                            </div>
+                          </div>
+                        </td>
+                        <td style={{ padding:'12px 16px' }}>
+                          <span style={{ fontFamily:'Barlow Condensed,system-ui', fontSize:16, fontWeight:800, color:c.totalSpend?ADM.text:ADM.light }}>{c.totalSpend?admMoney(c.totalSpend):'Free'}</span>
+                        </td>
+                        <td style={{ padding:'12px 16px' }}>
+                          <span style={{ fontFamily:'Barlow Condensed,system-ui', fontSize:17, fontWeight:800, color:ADM.text }}>{c.bookingCount}</span>
+                        </td>
+                        <td style={{ padding:'12px 16px', minWidth:130 }}>
+                          <EngagementBar score={c.engagementScore} size="sm" />
+                          <span style={{ fontFamily:'Nunito,system-ui', fontSize:11, color:ADM.light }}>{c.engagementScore}/100</span>
+                        </td>
+                        <td style={{ padding:'12px 16px' }}>
+                          <div style={{ display:'flex', gap:5, flexWrap:'wrap', maxWidth:180 }}>
+                            {c.tags.slice(0,3).map(t=><CrmTag key={t} tag={t} />)}
+                            {c.tags.length>3 && <span style={{ fontFamily:'Nunito,system-ui', fontSize:11.5, color:ADM.light, alignSelf:'center' }}>+{c.tags.length-3}</span>}
+                          </div>
+                        </td>
+                        <td style={{ padding:'12px 16px', fontFamily:'Nunito,system-ui', fontSize:12.5, color:ADM.muted, whiteSpace:'nowrap' }}>
+                          {admTimeAgo(c.lastActivity)}
+                        </td>
+                        <td style={{ padding:'12px 12px', textAlign:'right' }}>
+                          <AdmIcon name="chevronRight" size={16} color={ADM.light} />
+                        </td>
                       </tr>
-                    </thead>
-                    <tbody>
-                      {rows.length===0 ? (
-                        <tr><td colSpan={8} style={{ padding:48, textAlign:'center', fontFamily:'Nunito,system-ui', fontSize:15, color:ADM.light }}>No contacts found.</td></tr>
-                      ) : rows.map(c=>{
-                        const cat = c.categories[0]
-                        const catColor = {Escalada:'#294154',Senderismo:'#546207',Taller:'#A54399',Keynote:'#5E8BBD',Social:'#D9831F','Expedición':'#B32317',Voluntario:'#00897A'}[cat]||ADM.primary
-                        return (
-                          <tr key={c.id} onClick={()=>setSelected(c)}
-                            style={{ borderBottom:`1px solid ${ADM.border}`, cursor:'pointer', transition:'background .12s' }}
-                            onMouseOver={e=>e.currentTarget.style.background='#FAFAF7'}
-                            onMouseOut={e=>e.currentTarget.style.background='transparent'}>
-                            <td style={{ padding:'12px 16px' }}>
-                              <div style={{ display:'flex', alignItems:'center', gap:10 }}>
-                                <div style={{ width:34, height:34, borderRadius:'50%', flexShrink:0, background:`${catColor}1a`, color:catColor, display:'flex', alignItems:'center', justifyContent:'center', fontFamily:'Barlow Condensed,system-ui', fontSize:13, fontWeight:800 }}>{c.initials}</div>
-                                <div style={{ minWidth:0 }}>
-                                  <div style={{ fontFamily:'Nunito,system-ui', fontSize:13.5, fontWeight:700, color:ADM.text }}>{c.name}</div>
-                                  <div style={{ fontFamily:'Nunito,system-ui', fontSize:11.5, color:ADM.light, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis', maxWidth:180 }}>{c.email}</div>
-                                  {c.phone && <div style={{ fontFamily:'Nunito,system-ui', fontSize:11, color:ADM.light, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis', maxWidth:180 }}>{c.phone}</div>}
-                                </div>
-                              </div>
-                            </td>
-                            <td style={{ padding:'12px 16px' }}>
-                              <div style={{ display:'flex', gap:8, alignItems:'center' }}>
-                                <div style={{ display:'flex', flexDirection:'column', gap:4 }}>
-                                  <div style={{ display:'flex', alignItems:'center', gap:4 }}>
-                                    <AdmIcon name="mail" size={12} color={c.emailStatus === 'opted_in' ? ADM.success : c.emailStatus === 'opted_out' ? '#E74C3C' : ADM.light} />
-                                    <span style={{ fontFamily:'Nunito,system-ui', fontSize:10.5, fontWeight:700, color:ADM.text }}>Email</span>
-                                  </div>
-                                  <div style={{ display:'flex', alignItems:'center', gap:4 }}>
-                                    <AdmIcon name="chat" size={12} color={c.smsStatus === 'opted_in' ? ADM.success : c.smsStatus === 'opted_out' ? '#E74C3C' : ADM.light} />
-                                    <span style={{ fontFamily:'Nunito,system-ui', fontSize:10.5, fontWeight:700, color:ADM.text }}>SMS</span>
-                                  </div>
-                                </div>
-                              </div>
-                            </td>
-                            <td style={{ padding:'12px 16px' }}>
-                              <span style={{ fontFamily:'Barlow Condensed,system-ui', fontSize:16, fontWeight:800, color:c.totalSpend?ADM.text:ADM.light }}>{c.totalSpend?admMoney(c.totalSpend):'Free'}</span>
-                            </td>
-                            <td style={{ padding:'12px 16px' }}>
-                              <span style={{ fontFamily:'Barlow Condensed,system-ui', fontSize:17, fontWeight:800, color:ADM.text }}>{c.bookingCount}</span>
-                            </td>
-                            <td style={{ padding:'12px 16px', minWidth:130 }}>
-                              <EngagementBar score={c.engagementScore} size="sm" />
-                              <span style={{ fontFamily:'Nunito,system-ui', fontSize:11, color:ADM.light }}>{c.engagementScore}/100</span>
-                            </td>
-                            <td style={{ padding:'12px 16px' }}>
-                              <div style={{ display:'flex', gap:5, flexWrap:'wrap', maxWidth:180 }}>
-                                {c.tags.slice(0,3).map(t=><CrmTag key={t} tag={t} />)}
-                                {c.tags.length>3 && <span style={{ fontFamily:'Nunito,system-ui', fontSize:11.5, color:ADM.light, alignSelf:'center' }}>+{c.tags.length-3}</span>}
-                              </div>
-                            </td>
-                            <td style={{ padding:'12px 16px', fontFamily:'Nunito,system-ui', fontSize:12.5, color:ADM.muted, whiteSpace:'nowrap' }}>
-                              {admTimeAgo(c.lastActivity)}
-                            </td>
-                            <td style={{ padding:'12px 12px', textAlign:'right' }}>
-                              <AdmIcon name="chevronRight" size={16} color={ADM.light} />
-                            </td>
-                          </tr>
-                        )
-                      })}
-                    </tbody>
-                  </table>
-                </div>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
 
-                <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'12px 18px', borderTop:`1px solid ${ADM.border}`, flexWrap:'wrap', gap:10 }}>
-                  <span style={{ fontFamily:'Nunito,system-ui', fontSize:12.5, color:ADM.muted }}>
-                    {filtered.length ? `${pg*PER+1}–${Math.min(filtered.length,pg*PER+PER)} of ${filtered.length}` : '0'}
-                  </span>
-                  <div style={{ display:'flex', gap:6 }}>
-                    <button onClick={()=>setPage(Math.max(0,pg-1))} disabled={pg===0}
-                      style={{ width:32, height:32, borderRadius:8, border:`1px solid ${ADM.border}`, background:'#fff', cursor:pg===0?'not-allowed':'pointer', opacity:pg===0?.45:1, display:'flex', alignItems:'center', justifyContent:'center' }}>
-                      <AdmIcon name="chevronLeft" size={15} color={ADM.muted} />
-                    </button>
-                    <span style={{ fontFamily:'Barlow Condensed,system-ui', fontSize:14, fontWeight:800, color:ADM.text, minWidth:64, textAlign:'center', lineHeight:'32px' }}>{pg+1} / {pages}</span>
-                    <button onClick={()=>setPage(Math.min(pages-1,pg+1))} disabled={pg>=pages-1}
-                      style={{ width:32, height:32, borderRadius:8, border:`1px solid ${ADM.border}`, background:'#fff', cursor:pg>=pages-1?'not-allowed':'pointer', opacity:pg>=pages-1?.45:1, display:'flex', alignItems:'center', justifyContent:'center' }}>
-                      <AdmIcon name="chevronRight" size={15} color={ADM.muted} />
-                    </button>
-                  </div>
-                </div>
+            <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'12px 18px', borderTop:`1px solid ${ADM.border}`, flexWrap:'wrap', gap:10 }}>
+              <span style={{ fontFamily:'Nunito,system-ui', fontSize:12.5, color:ADM.muted }}>
+                {filtered.length ? `${pg*PER+1}–${Math.min(filtered.length,pg*PER+PER)} of ${filtered.length}` : '0'}
+              </span>
+              <div style={{ display:'flex', gap:6 }}>
+                <button onClick={()=>setPage(Math.max(0,pg-1))} disabled={pg===0}
+                  style={{ width:32, height:32, borderRadius:8, border:`1px solid ${ADM.border}`, background:'#fff', cursor:pg===0?'not-allowed':'pointer', opacity:pg===0?.45:1, display:'flex', alignItems:'center', justifyContent:'center' }}>
+                  <AdmIcon name="chevronLeft" size={15} color={ADM.muted} />
+                </button>
+                <span style={{ fontFamily:'Barlow Condensed,system-ui', fontSize:14, fontWeight:800, color:ADM.text, minWidth:64, textAlign:'center', lineHeight:'32px' }}>{pg+1} / {pages}</span>
+                <button onClick={()=>setPage(Math.min(pages-1,pg+1))} disabled={pg>=pages-1}
+                  style={{ width:32, height:32, borderRadius:8, border:`1px solid ${ADM.border}`, background:'#fff', cursor:pg>=pages-1?'not-allowed':'pointer', opacity:pg>=pages-1?.45:1, display:'flex', alignItems:'center', justifyContent:'center' }}>
+                  <AdmIcon name="chevronRight" size={15} color={ADM.muted} />
+                </button>
               </div>
             </div>
-          </>
-        )}
+          </div>
+        </div>
       </div>
 
       {selected && <CrmDrawer contact={selected} allTags={ALL_TAGS} onClose={()=>setSelected(null)} />}
