@@ -7,13 +7,38 @@ import { ADM } from '@/lib/tokens'
 const API = 'https://locoporlaaventura.vercel.app'
 
 const ROLE_LABELS = { owner: 'Owner', editor: 'Editor', viewer: 'Viewer' }
-const ROLE_COLORS = { owner: '#B32317', editor: '#294154', viewer: '#6B7280' }
+const ROLE_COLORS = {
+  owner:  { color: '#B32317', bg: 'rgba(179,35,23,.1)',   border: 'rgba(179,35,23,.28)' },
+  editor: { color: '#3F6CA8', bg: 'rgba(94,139,189,.13)', border: 'rgba(94,139,189,.3)' },
+  viewer: { color: '#6B7280', bg: 'rgba(107,114,128,.12)', border: 'rgba(107,114,128,.28)' },
+}
+const STATUS_COLORS = {
+  active:    { color: '#5E7A0C', bg: 'rgba(94,122,12,.13)' },
+  suspended: { color: '#8A8578', bg: 'rgba(138,133,120,.16)' },
+}
+const AVATAR_COLORS = ['#294154','#546207','#5E8BBD','#A54399','#00897A','#695136','#B32317']
 
-function RoleBadge({ role, ADM }) {
+function RoleBadge({ role }) {
+  const c = ROLE_COLORS[role] || ROLE_COLORS.viewer;
   return (
-    <span style={{ display: 'inline-block', padding: '3px 10px', borderRadius: 16, background: `${ROLE_COLORS[role]}18`, color: ROLE_COLORS[role], fontFamily: 'Barlow Condensed,system-ui', fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: .4 }}>
+    <span style={{ display: 'inline-block', padding: '3px 10px', borderRadius: 16, background: c.bg, border: `1px solid ${c.border}`, color: c.color, fontFamily: 'Barlow Condensed,system-ui', fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: .4 }}>
       {ROLE_LABELS[role]}
     </span>
+  )
+}
+
+function Toast({ message, onDone }) {
+  const [vis, setVis] = useState(false)
+  useEffect(() => {
+    requestAnimationFrame(() => setVis(true))
+    const t = setTimeout(() => { setVis(false); setTimeout(onDone, 200) }, 2600)
+    return () => clearTimeout(t)
+  }, [onDone])
+  return (
+    <div style={{ position: 'fixed', bottom: 24, left: '50%', transform: `translateX(-50%) translateY(${vis ? 0 : 8}px)`, opacity: vis ? 1 : 0, background: '#1E2A35', color: '#fff', fontFamily: 'Nunito,system-ui', fontSize: 13.5, fontWeight: 600, padding: '11px 20px', borderRadius: 24, boxShadow: '0 8px 28px rgba(0,0,0,.24)', display: 'flex', alignItems: 'center', gap: 8, zIndex: 9999, transition: 'opacity .2s ease, transform .2s ease', whiteSpace: 'nowrap' }}>
+      <AdmIcon name="check" size={15} color="#7EBF2E" />
+      {message}
+    </div>
   )
 }
 
@@ -141,6 +166,9 @@ export default function AdminUsers({ currentUser }) {
   const [loading, setLoading] = useState(true)
   const [showInvite, setShowInvite] = useState(false)
   const [resetTarget, setResetTarget] = useState(null)
+  const [search, setSearch] = useState('')
+  const [roleFilter, setRoleFilter] = useState('all')
+  const [toast, setToast] = useState(null)
   const token = typeof window !== 'undefined' ? localStorage.getItem('lpla_admin_token') : ''
 
   useEffect(() => { loadUsers() }, [])
@@ -155,22 +183,39 @@ export default function AdminUsers({ currentUser }) {
   }
 
   async function toggleActive(user) {
-    await fetch(`${API}/api/users/${user.id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ active: !user.active }),
-    })
-    loadUsers()
+    try {
+      const r = await fetch(`${API}/api/users/${user.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ active: !user.active }),
+      })
+      if (!r.ok) { const d = await r.json(); setToast(d.error || 'Failed'); return }
+      setToast(user.active ? `${user.name} suspended` : `${user.name} reactivated`)
+      loadUsers()
+    } catch { setToast('Action failed') }
   }
 
   async function deleteUser(user) {
     if (!confirm(`Remove ${user.name}? This cannot be undone.`)) return
-    await fetch(`${API}/api/users/${user.id}`, {
-      method: 'DELETE',
-      headers: { Authorization: `Bearer ${token}` },
-    })
-    loadUsers()
+    try {
+      const r = await fetch(`${API}/api/users/${user.id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      if (!r.ok) { const d = await r.json(); setToast(d.error || 'Failed'); return }
+      setToast(`${user.name} removed`)
+      loadUsers()
+    } catch { setToast('Action failed') }
   }
+
+  const filtered = users.filter(u => {
+    if (roleFilter !== 'all' && u.role !== roleFilter) return false
+    if (search) {
+      const q = search.toLowerCase()
+      return u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q)
+    }
+    return true
+  })
 
   return (
     <div style={{ flex: 1, overflow: 'auto', padding: '28px 32px' }}>
@@ -190,10 +235,11 @@ export default function AdminUsers({ currentUser }) {
         </button>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 14, marginBottom: 24 }}>
-        <OvKpi label="Total Users" value={users.length} ADM={ADM} />
-        <OvKpi label="Active" value={users.filter(u => u.active).length} color={ADM.success} ADM={ADM} />
-        <OvKpi label="Owners" value={users.filter(u => u.role === 'owner').length} color="#B32317" ADM={ADM} />
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 14, marginBottom: 24 }}>
+        <OvKpi label="Total Users" value={users.length} icon="team" accent="#294154" sub="Across the team" />
+        <OvKpi label="Active" value={users.filter(u => u.active).length} icon="check" accent="#5E7A0C" sub="Currently enabled" />
+        <OvKpi label="Owners" value={users.filter(u => u.role === 'owner').length} icon="key" accent="#B32317" sub="Full-access admins" />
+        <OvKpi label="Pending Invites" value={users.filter(u => !u.active && u.role).length} icon="mail" accent="#D9831F" sub="Awaiting sign-up" />
       </div>
 
       {/* Roles legend */}
@@ -213,6 +259,23 @@ export default function AdminUsers({ currentUser }) {
         </div>
       </div>
 
+      {/* Search + role filter */}
+      <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginBottom: 16, flexWrap: 'wrap' }}>
+        <div style={{ position: 'relative', flex: 1, minWidth: 200 }}>
+          <AdmIcon name="search" size={15} color={ADM.muted} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)' }} />
+          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search users…"
+            style={{ width: '100%', height: 38, borderRadius: 10, border: `1px solid ${ADM.border}`, padding: '0 12px 0 36px', fontFamily: 'Nunito,system-ui', fontSize: 13.5, color: ADM.text, background: ADM.card, outline: 'none', boxSizing: 'border-box' }} />
+        </div>
+        <div style={{ display: 'flex', gap: 4 }}>
+          {[['all', 'All'], ['owner', 'Owners'], ['editor', 'Editors'], ['viewer', 'Viewers']].map(([val, label]) => (
+            <button key={val} onClick={() => setRoleFilter(val)}
+              style={{ padding: '6px 14px', borderRadius: 20, border: `1px solid ${roleFilter === val ? ADM.primary : ADM.border}`, background: roleFilter === val ? `${ADM.primary}12` : 'transparent', color: roleFilter === val ? ADM.primary : ADM.muted, fontFamily: 'Nunito,system-ui', fontSize: 12.5, fontWeight: 700, cursor: 'pointer', transition: 'all .15s' }}>
+              {label}
+            </button>
+          ))}
+        </div>
+      </div>
+
       {loading ? (
         <div style={{ textAlign: 'center', padding: 60, color: ADM.muted }}>
           <span style={{ width: 24, height: 24, border: `3px solid ${ADM.border}`, borderTopColor: ADM.primary, borderRadius: '50%', display: 'inline-block', animation: 'spin 1s linear infinite' }} />
@@ -228,31 +291,38 @@ export default function AdminUsers({ currentUser }) {
               </tr>
             </thead>
             <tbody>
-              {users.length === 0 ? (
-                <tr><td colSpan={5} style={{ padding: 48, textAlign: 'center', fontFamily: 'Nunito,system-ui', fontSize: 15, color: ADM.light }}>No users found. Click "Invite User" to add the first admin.</td></tr>
-              ) : users.map(u => (
-                <tr key={u.id} style={{ background: '#fff', borderBottom: `1px solid ${ADM.border}` }}
-                  onMouseOver={e => e.currentTarget.style.background = '#F8FAFC'}
+              {filtered.length === 0 ? (
+                <tr><td colSpan={5} style={{ padding: 48, textAlign: 'center', fontFamily: 'Nunito,system-ui', fontSize: 15, color: ADM.light }}>{users.length === 0 ? 'No users found. Click "Invite User" to add the first admin.' : 'No users match your filters.'}</td></tr>
+              ) : filtered.map(u => {
+                const sc = u.active ? STATUS_COLORS.active : STATUS_COLORS.suspended;
+                const avColor = AVATAR_COLORS[(u.id || 0) % 7];
+                return (
+                <tr key={u.id} style={{ background: '#fff', borderBottom: `1px solid ${ADM.border}`, opacity: u.active ? 1 : .6 }}
+                  onMouseOver={e => e.currentTarget.style.background = '#FAFAF7'}
                   onMouseOut={e => e.currentTarget.style.background = '#fff'}>
                   <td style={{ padding: '14px 16px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                      <div style={{ width: 34, height: 34, borderRadius: '50%', background: `linear-gradient(135deg,${ROLE_COLORS[u.role]},${ADM.primary})`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                        <span style={{ fontFamily: 'Barlow Condensed,system-ui', fontSize: 14, fontWeight: 800, color: '#fff' }}>{u.name.charAt(0).toUpperCase()}</span>
+                      <div style={{ width: 38, height: 38, borderRadius: '50%', background: avColor, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        <span style={{ fontFamily: 'Barlow Condensed,system-ui', fontSize: 15, fontWeight: 800, color: '#fff' }}>{u.name.charAt(0).toUpperCase()}</span>
                       </div>
                       <div>
-                        <div style={{ fontFamily: 'Nunito,system-ui', fontSize: 14, fontWeight: 700, color: ADM.text }}>{u.name} {currentUser?.userId === u.id && <span style={{ fontSize: 11, color: ADM.muted }}>(you)</span>}</div>
+                        <div style={{ fontFamily: 'Nunito,system-ui', fontSize: 14, fontWeight: 700, color: ADM.text }}>
+                          {u.name}
+                          {currentUser?.userId === u.id && <span style={{ marginLeft: 6, fontSize: 11, color: ADM.muted, fontWeight: 600 }}>(you)</span>}
+                        </div>
                         <div style={{ fontFamily: 'Nunito,system-ui', fontSize: 12, color: ADM.muted }}>{u.email}</div>
                       </div>
                     </div>
                   </td>
-                  <td style={{ padding: '14px 16px' }}><RoleBadge role={u.role} ADM={ADM} /></td>
+                  <td style={{ padding: '14px 16px' }}><RoleBadge role={u.role} /></td>
                   <td style={{ padding: '14px 16px' }}>
-                    <span style={{ display: 'inline-block', padding: '3px 10px', borderRadius: 16, background: u.active ? `${ADM.success}18` : '#E5E7EB', color: u.active ? ADM.success : ADM.muted, fontFamily: 'Barlow Condensed,system-ui', fontSize: 12, fontWeight: 700, textTransform: 'uppercase' }}>
-                      {u.active ? 'Active' : 'Disabled'}
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '3px 10px', borderRadius: 16, background: sc.bg, color: sc.color, fontFamily: 'Barlow Condensed,system-ui', fontSize: 12, fontWeight: 700, textTransform: 'uppercase' }}>
+                      <span style={{ width: 6, height: 6, borderRadius: '50%', background: sc.color }} />
+                      {u.active ? 'Active' : 'Suspended'}
                     </span>
                   </td>
                   <td style={{ padding: '14px 16px', fontFamily: 'Nunito,system-ui', fontSize: 13, color: ADM.muted }}>
-                    {new Date(u.created_at).toLocaleDateString()}
+                    {new Date(u.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                   </td>
                   <td style={{ padding: '14px 16px' }}>
                     <div style={{ display: 'flex', gap: 6 }}>
@@ -262,9 +332,9 @@ export default function AdminUsers({ currentUser }) {
                       </button>
                       {currentUser?.userId !== u.id && (
                         <>
-                          <button onClick={() => toggleActive(u)} title={u.active ? 'Disable' : 'Enable'}
+                          <button onClick={() => toggleActive(u)} title={u.active ? 'Suspend' : 'Reactivate'}
                             style={{ padding: '5px 10px', borderRadius: 7, border: `1px solid ${ADM.warning}30`, background: `${ADM.warning}10`, color: ADM.warning, fontFamily: 'Nunito,system-ui', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
-                            {u.active ? 'Disable' : 'Enable'}
+                            {u.active ? 'Suspend' : 'Reactivate'}
                           </button>
                           <button onClick={() => deleteUser(u)} title="Remove user"
                             style={{ padding: '5px 10px', borderRadius: 7, border: `1px solid ${ADM.danger}30`, background: `${ADM.danger}10`, color: ADM.danger, fontFamily: 'Nunito,system-ui', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
@@ -275,14 +345,16 @@ export default function AdminUsers({ currentUser }) {
                     </div>
                   </td>
                 </tr>
-              ))}
+                )
+              })}
             </tbody>
           </table>
         </div>
       )}
 
-      {showInvite && <InviteModal ADM={ADM} token={token} onClose={() => setShowInvite(false)} onSaved={loadUsers} />}
-      {resetTarget && <ResetPwModal ADM={ADM} token={token} user={resetTarget} onClose={() => setResetTarget(null)} onDone={loadUsers} />}
+      {showInvite && <InviteModal ADM={ADM} token={token} onClose={() => setShowInvite(false)} onSaved={() => { loadUsers(); setToast('Invitation sent') }} />}
+      {resetTarget && <ResetPwModal ADM={ADM} token={token} user={resetTarget} onClose={() => setResetTarget(null)} onDone={() => { loadUsers(); setToast('Password reset') }} />}
+      {toast && <Toast message={toast} onDone={() => setToast(null)} />}
     </div>
   )
 }

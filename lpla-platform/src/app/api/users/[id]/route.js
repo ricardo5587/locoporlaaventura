@@ -24,8 +24,21 @@ export async function PATCH(request, { params }) {
 
     if (body.name) updates.name = body.name;
     if (body.phone) updates.phone = body.phone;
-    if (body.role && ['owner', 'editor', 'viewer'].includes(body.role)) updates.role = body.role;
-    if (typeof body.active === 'boolean') updates.active = body.active;
+    if (body.role && ['owner', 'editor', 'viewer'].includes(body.role)) {
+      if (String(auth.payload.userId) === String(id) && body.role !== 'owner') {
+        const { data: owners } = await supabase.from('admin_users').select('id').eq('role', 'owner').eq('active', true);
+        if (owners && owners.length <= 1) {
+          return NextResponse.json({ error: 'Cannot downgrade the last owner' }, { status: 400, headers: CORS });
+        }
+      }
+      updates.role = body.role;
+    }
+    if (typeof body.active === 'boolean') {
+      if (!body.active && String(auth.payload.userId) === String(id)) {
+        return NextResponse.json({ error: 'Cannot suspend yourself' }, { status: 400, headers: CORS });
+      }
+      updates.active = body.active;
+    }
     if (body.password && body.password.length >= 8) {
       updates.password_hash = await bcrypt.hash(body.password, 12);
     }
@@ -53,6 +66,14 @@ export async function DELETE(request, { params }) {
 
   if (String(auth.payload.userId) === String(id)) {
     return NextResponse.json({ error: 'Cannot delete yourself' }, { status: 400, headers: CORS });
+  }
+
+  const { data: target } = await supabase.from('admin_users').select('role').eq('id', id).single();
+  if (target?.role === 'owner') {
+    const { data: owners } = await supabase.from('admin_users').select('id').eq('role', 'owner').eq('active', true);
+    if (owners && owners.length <= 1) {
+      return NextResponse.json({ error: 'Cannot remove the last owner' }, { status: 400, headers: CORS });
+    }
   }
 
   const { error } = await supabase.from('admin_users').delete().eq('id', id);
