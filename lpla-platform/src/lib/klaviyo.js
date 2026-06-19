@@ -1,0 +1,63 @@
+const KLAVIYO_BASE = 'https://a.klaviyo.com/api';
+const API_KEY = process.env.KLAVIYO_API_KEY;
+
+async function klaviyoRequest(endpoint, method = 'GET', body = null) {
+  const options = {
+    method,
+    headers: {
+      'Authorization': `Klaviyo-API-Key ${API_KEY}`,
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      'revision': '2024-10-15',
+    },
+  };
+  if (body) options.body = JSON.stringify(body);
+
+  const res = await fetch(`${KLAVIYO_BASE}${endpoint}`, options);
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(`Klaviyo error: ${res.status} ${err}`);
+  }
+  return res.json();
+}
+
+export async function getLists() {
+  const data = await klaviyoRequest('/lists');
+  return data.data || [];
+}
+
+export async function getSegments() {
+  const data = await klaviyoRequest('/segments');
+  return data.data || [];
+}
+
+export async function subscribeToList(listId, email, firstName = '', lastName = '') {
+  return klaviyoRequest(`/lists/${listId}/relationships/members`, 'POST', {
+    data: [{
+      type: 'profile',
+      attributes: {
+        email,
+        first_name: firstName,
+        last_name: lastName,
+      },
+    }],
+  });
+}
+
+export async function createCampaign(name, subject, listId, content) {
+  return klaviyoRequest('/campaigns', 'POST', {
+    data: {
+      type: 'campaign',
+      attributes: {
+        name,
+        subject,
+        content,
+      },
+      relationships: {
+        lists: {
+          data: [{ type: 'list', id: listId }],
+        },
+      },
+    },
+  });
+}
