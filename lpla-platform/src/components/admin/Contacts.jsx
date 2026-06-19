@@ -316,7 +316,7 @@ function CrmDrawer({ contact: base, allTags, onClose }) {
   )
 }
 
-const CRM_SEGMENTS = [
+const DEFAULT_CRM_SEGMENTS = [
   { id:'all',       label:'All Contacts',  icon:'people'  },
   { id:'VIP',       label:'VIP',           icon:'star'    },
   { id:'Regular',   label:'Regulars',      icon:'check'   },
@@ -626,6 +626,8 @@ function klaviyoProfileToContact(p) {
   const name = [firstName, lastName].filter(Boolean).join(' ') || email
   const created = attr.created ? new Date(attr.created).getTime() : Date.now()
   const updated = attr.updated ? new Date(attr.updated).getTime() : created
+  const lists = p.lists || []
+  const firstListName = lists.length > 0 ? lists[0].name : 'Other'
   return {
     id: email || p.id,
     name,
@@ -643,8 +645,9 @@ function klaviyoProfileToContact(p) {
     categories: [],
     events: [],
     engagementScore: 20,
-    segment: 'New',
-    tags: ['New'],
+    segment: firstListName,
+    tags: [],
+    lists,
     source: 'klaviyo',
   }
 }
@@ -707,8 +710,31 @@ export default function AdminCRM({ events }) {
   const [selected, setSelected] = useState(null)
   const PER = 20
 
+  const dynamicSegments = useMemo(() => {
+    const listNames = new Set()
+    klaviyoContacts.forEach(c => {
+      if (c.lists) {
+        c.lists.forEach(l => listNames.add(l.name))
+      }
+    })
+    const segments = [
+      { id:'all', label:'All Contacts', icon:'people' },
+      ...Array.from(listNames).map(name => ({
+        id: `list_${name}`,
+        label: name,
+        icon: 'mail',
+        isKlaviyoList: true,
+      })),
+    ]
+    return segments.length > 1 ? segments : DEFAULT_CRM_SEGMENTS
+  }, [klaviyoContacts])
+
   const segCount = id => {
     if (id==='all') return allContacts.length
+    if (id.startsWith('list_')) {
+      const listName = id.replace('list_', '')
+      return allContacts.filter(c=>c.lists && c.lists.some(l=>l.name===listName)).length
+    }
     if (id==='Volunteer') return allContacts.filter(c=>c.tags.includes('Volunteer')).length
     return allContacts.filter(c=>c.segment===id).length
   }
@@ -716,8 +742,12 @@ export default function AdminCRM({ events }) {
   const q = search.trim().toLowerCase()
   const filtered = allContacts.filter(c => {
     if (segment !== 'all') {
-      if (segment === 'Volunteer') { if (!c.tags.includes('Volunteer')) return false }
-      else if (c.segment !== segment) return false
+      if (segment.startsWith('list_')) {
+        const listName = segment.replace('list_', '')
+        if (!c.lists || !c.lists.some(l=>l.name===listName)) return false
+      } else if (segment === 'Volunteer') {
+        if (!c.tags.includes('Volunteer')) return false
+      } else if (c.segment !== segment) return false
     }
     if (q && !(c.name.toLowerCase().includes(q) || c.email.toLowerCase().includes(q))) return false
     return true
@@ -750,7 +780,7 @@ export default function AdminCRM({ events }) {
       <div style={{ width:200, flexShrink:0, background:ADM.card, borderRight:`1px solid ${ADM.border}`, display:'flex', flexDirection:'column', overflow:'auto' }}>
         <div style={{ padding:'20px 16px 12px' }}>
           <div style={{ fontFamily:'Barlow Condensed,system-ui', fontSize:11, fontWeight:800, color:ADM.light, textTransform:'uppercase', letterSpacing:1, marginBottom:12 }}>Segments</div>
-          {CRM_SEGMENTS.map(s=>{
+          {dynamicSegments.map(s=>{
             const cnt = segCount(s.id)
             const active = segment===s.id
             return (
