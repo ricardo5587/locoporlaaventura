@@ -115,7 +115,7 @@ function CrmTag({ tag, onRemove }) {
 
 function CrmDrawer({ contact: base, allTags, onClose }) {
   const [show, setShow] = useState(false)
-  const [tab, setTab] = useState('timeline')
+  const [tab, setTab] = useState('details')
   const [tags, setTags] = useState(base.tags)
   const [notes, setNotes] = useState(() => {
     try { return JSON.parse(localStorage.getItem('lpla_crm_notes_'+base.id)||'[]') } catch { return [] }
@@ -145,9 +145,9 @@ function CrmDrawer({ contact: base, allTags, onClose }) {
   const catColor = { Escalada:'#294154', Senderismo:'#546207', Taller:'#A54399', Keynote:'#5E8BBD', Social:'#D9831F', 'Expedición':'#B32317', Voluntario:'#00897A' }[cat] || ADM.primary
 
   const TABS = [
+    { id:'details',  label:'Details',  icon:'people' },
     { id:'timeline', label:'Timeline', icon:'clock' },
     { id:'notes',    label:'Notes',    icon:'note'  },
-    { id:'tags',     label:'Tags',     icon:'tag'   },
   ]
 
   const allOrders = c.orders.slice().sort((a,b)=>b.createdAt-a.createdAt)
@@ -164,39 +164,33 @@ function CrmDrawer({ contact: base, allTags, onClose }) {
             <div style={{ width:52, height:52, borderRadius:'50%', flexShrink:0, background:`${catColor}1a`, color:catColor, display:'flex', alignItems:'center', justifyContent:'center', fontFamily:'Barlow Condensed,system-ui', fontSize:20, fontWeight:800 }}>{c.initials}</div>
             <div style={{ flex:1, minWidth:0 }}>
               <div style={{ fontFamily:'Barlow Condensed,system-ui', fontSize:22, fontWeight:800, color:ADM.text, textTransform:'uppercase', letterSpacing:.3 }}>{c.name}</div>
+              {(c.title || c.organization) && (
+                <div style={{ fontFamily:'Nunito,system-ui', fontSize:13, color:ADM.text, marginTop:2, fontWeight:600 }}>
+                  {[c.title, c.organization].filter(Boolean).join(' · ')}
+                </div>
+              )}
               <div style={{ fontFamily:'Nunito,system-ui', fontSize:13, color:ADM.muted, marginTop:2 }}>{c.email}</div>
-              <div style={{ fontFamily:'Nunito,system-ui', fontSize:13, color:ADM.muted }}>{c.phone}</div>
+              {c.phone && <div style={{ fontFamily:'Nunito,system-ui', fontSize:13, color:ADM.muted }}>{c.phone}</div>}
+              {(c.region || c.country) && (
+                <div style={{ fontFamily:'Nunito,system-ui', fontSize:12, color:ADM.light, marginTop:1 }}>
+                  {[c.region, c.country].filter(Boolean).join(', ')}
+                </div>
+              )}
             </div>
             <button onClick={close} style={{ width:32, height:32, borderRadius:8, border:`1px solid ${ADM.border}`, background:'transparent', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
               <AdmIcon name="x" size={16} color={ADM.muted} />
             </button>
           </div>
 
-          <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:10, marginTop:16 }}>
-            {[
-              { l:'Total Spend',   v: c.totalSpend ? admMoney(c.totalSpend) : 'Free' },
-              { l:'Bookings',      v: c.bookingCount },
-              { l:'Checked In',    v: c.checkedIn },
-              { l:'Events',        v: [...new Set(c.orders.map(o=>o.eventId))].length },
-            ].map(({l,v})=>(
-              <div key={l} style={{ textAlign:'center', background:ADM.bg, borderRadius:ADM.radius, padding:'10px 6px' }}>
-                <div style={{ fontFamily:'Barlow Condensed,system-ui', fontSize:22, fontWeight:800, color:ADM.text, lineHeight:1 }}>{v}</div>
-                <div style={{ fontFamily:'Nunito,system-ui', fontSize:10.5, color:ADM.light, marginTop:3 }}>{l}</div>
-              </div>
-            ))}
-          </div>
-
-          <div style={{ marginTop:14 }}>
-            <div style={{ display:'flex', justifyContent:'space-between', marginBottom:5 }}>
-              <span style={{ fontFamily:'Nunito,system-ui', fontSize:11.5, fontWeight:700, color:ADM.muted, textTransform:'uppercase', letterSpacing:.6 }}>Engagement</span>
-              <span style={{ fontFamily:'Barlow Condensed,system-ui', fontSize:12, fontWeight:800, color:ADM.light }}>{c.segment}</span>
+          {c.lists && c.lists.length > 0 && (
+            <div style={{ display:'flex', gap:6, flexWrap:'wrap', marginTop:12 }}>
+              {c.lists.map(l => (
+                <span key={l.id} style={{ display:'inline-flex', alignItems:'center', gap:4, padding:'3px 9px', borderRadius:12, background:`${ADM.blue}14`, border:`1px solid ${ADM.blue}33`, color:ADM.blue, fontFamily:'Barlow Condensed,system-ui', fontSize:11.5, fontWeight:800, letterSpacing:.4, textTransform:'uppercase' }}>
+                  <AdmIcon name="mail" size={11} color={ADM.blue} /> {l.name}
+                </span>
+              ))}
             </div>
-            <EngagementBar score={c.engagementScore} />
-          </div>
-
-          <div style={{ display:'flex', gap:6, flexWrap:'wrap', marginTop:12 }}>
-            {tags.map(t=><CrmTag key={t} tag={t} />)}
-          </div>
+          )}
         </div>
 
         <div style={{ display:'flex', borderBottom:`1px solid ${ADM.border}`, flexShrink:0 }}>
@@ -210,6 +204,91 @@ function CrmDrawer({ contact: base, allTags, onClose }) {
         </div>
 
         <div style={{ flex:1, overflow:'auto', padding:'18px 22px' }}>
+
+          {tab==='details' && (
+            <div>
+              <div style={{ fontFamily:'Barlow Condensed,system-ui', fontSize:11, fontWeight:800, color:ADM.light, textTransform:'uppercase', letterSpacing:1, marginBottom:10 }}>Contact Info</div>
+              <div style={{ display:'flex', flexDirection:'column', gap:8, marginBottom:20 }}>
+                {[
+                  { icon:'mail',   label:'Email',        value:c.email },
+                  { icon:'chat',   label:'Phone',        value:c.phone },
+                  { icon:'globe',  label:'Location',     value:[c.region, c.country].filter(Boolean).join(', ') || (c.location && typeof c.location === 'object' ? [c.location.city, c.location.region, c.location.country].filter(Boolean).join(', ') : '') },
+                  { icon:'clock',  label:'Timezone',     value:c.timezone },
+                ].filter(r => r.value).map(r => (
+                  <div key={r.label} style={{ display:'flex', alignItems:'center', gap:10, padding:'10px 14px', background:ADM.bg, borderRadius:ADM.radius, border:`1px solid ${ADM.border}` }}>
+                    <AdmIcon name={r.icon} size={15} color={ADM.light} />
+                    <div style={{ flex:1, minWidth:0 }}>
+                      <div style={{ fontFamily:'Nunito,system-ui', fontSize:11, color:ADM.light, textTransform:'uppercase', letterSpacing:.5 }}>{r.label}</div>
+                      <div style={{ fontFamily:'Nunito,system-ui', fontSize:13.5, color:ADM.text, fontWeight:600, wordBreak:'break-word' }}>{r.value}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {(c.title || c.organization) && (
+                <>
+                  <div style={{ fontFamily:'Barlow Condensed,system-ui', fontSize:11, fontWeight:800, color:ADM.light, textTransform:'uppercase', letterSpacing:1, marginBottom:10 }}>Professional</div>
+                  <div style={{ display:'flex', flexDirection:'column', gap:8, marginBottom:20 }}>
+                    {[
+                      { icon:'people', label:'Title',        value:c.title },
+                      { icon:'globe',  label:'Organization', value:c.organization },
+                    ].filter(r => r.value).map(r => (
+                      <div key={r.label} style={{ display:'flex', alignItems:'center', gap:10, padding:'10px 14px', background:ADM.bg, borderRadius:ADM.radius, border:`1px solid ${ADM.border}` }}>
+                        <AdmIcon name={r.icon} size={15} color={ADM.light} />
+                        <div style={{ flex:1, minWidth:0 }}>
+                          <div style={{ fontFamily:'Nunito,system-ui', fontSize:11, color:ADM.light, textTransform:'uppercase', letterSpacing:.5 }}>{r.label}</div>
+                          <div style={{ fontFamily:'Nunito,system-ui', fontSize:13.5, color:ADM.text, fontWeight:600 }}>{r.value}</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
+
+              <div style={{ fontFamily:'Barlow Condensed,system-ui', fontSize:11, fontWeight:800, color:ADM.light, textTransform:'uppercase', letterSpacing:1, marginBottom:10 }}>Activity</div>
+              <div style={{ display:'grid', gridTemplateColumns:'repeat(2,1fr)', gap:8, marginBottom:20 }}>
+                {[
+                  { l:'Total Spend',   v: c.totalSpend ? admMoney(c.totalSpend) : 'Free' },
+                  { l:'Bookings',      v: c.bookingCount },
+                  { l:'Checked In',    v: c.checkedIn },
+                  { l:'Events',        v: [...new Set(c.orders.map(o=>o.eventId))].length },
+                ].map(({l,v})=>(
+                  <div key={l} style={{ textAlign:'center', background:ADM.bg, borderRadius:ADM.radius, padding:'12px 8px', border:`1px solid ${ADM.border}` }}>
+                    <div style={{ fontFamily:'Barlow Condensed,system-ui', fontSize:22, fontWeight:800, color:ADM.text, lineHeight:1 }}>{v}</div>
+                    <div style={{ fontFamily:'Nunito,system-ui', fontSize:10.5, color:ADM.light, marginTop:4 }}>{l}</div>
+                  </div>
+                ))}
+              </div>
+
+              <div style={{ fontFamily:'Barlow Condensed,system-ui', fontSize:11, fontWeight:800, color:ADM.light, textTransform:'uppercase', letterSpacing:1, marginBottom:10 }}>Engagement</div>
+              <div style={{ background:ADM.bg, borderRadius:ADM.radius, padding:'14px 16px', border:`1px solid ${ADM.border}`, marginBottom:20 }}>
+                <div style={{ display:'flex', justifyContent:'space-between', marginBottom:6 }}>
+                  <span style={{ fontFamily:'Nunito,system-ui', fontSize:12, fontWeight:700, color:ADM.muted }}>Score</span>
+                  <span style={{ fontFamily:'Barlow Condensed,system-ui', fontSize:13, fontWeight:800, color:ADM.light }}>{c.segment}</span>
+                </div>
+                <EngagementBar score={c.engagementScore} />
+              </div>
+
+              {c.lists && c.lists.length > 0 && (
+                <>
+                  <div style={{ fontFamily:'Barlow Condensed,system-ui', fontSize:11, fontWeight:800, color:ADM.light, textTransform:'uppercase', letterSpacing:1, marginBottom:10 }}>Klaviyo Lists</div>
+                  <div style={{ display:'flex', gap:6, flexWrap:'wrap' }}>
+                    {c.lists.map(l => (
+                      <span key={l.id} style={{ display:'inline-flex', alignItems:'center', gap:4, padding:'5px 12px', borderRadius:12, background:`${ADM.blue}14`, border:`1px solid ${ADM.blue}33`, color:ADM.blue, fontFamily:'Barlow Condensed,system-ui', fontSize:12, fontWeight:800, letterSpacing:.4, textTransform:'uppercase' }}>
+                        <AdmIcon name="mail" size={12} color={ADM.blue} /> {l.name}
+                      </span>
+                    ))}
+                  </div>
+                </>
+              )}
+
+              {c.firstActivity && (
+                <div style={{ marginTop:20, fontFamily:'Nunito,system-ui', fontSize:12, color:ADM.light, textAlign:'center' }}>
+                  Contact since {new Date(c.firstActivity).toLocaleDateString('en-US', { month:'long', year:'numeric' })}
+                </div>
+              )}
+            </div>
+          )}
 
           {tab==='timeline' && (
             <div>
