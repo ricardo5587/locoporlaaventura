@@ -13,6 +13,7 @@ import EventManager from '@/components/admin/Events'
 import EventDetailDashboard from '@/components/admin/EventDetail'
 import AdminSettings from '@/components/admin/Settings'
 import AdminHomepage from '@/components/admin/Homepage'
+import AdminKlaviyo from '@/components/admin/Klaviyo'
 
 const API = 'https://locoporlaaventura.vercel.app'
 const IDLE_TIMEOUT = 30 * 60 * 1000
@@ -132,6 +133,7 @@ export default function AdminPage() {
     { id: 'attendees', icon: 'people',   label: 'Attendees' },
     { id: 'crm',       icon: 'user',     label: 'Contacts' },
     { id: 'apps',      icon: 'apps',     label: 'Apps' },
+    { id: 'klaviyo',   icon: 'mail',     label: 'Email' },
     { id: 'users',     icon: 'team',     label: 'Users' },
     { id: 'widget',    icon: 'launch',   label: 'Launch', featured: true },
   ]
@@ -243,12 +245,13 @@ export default function AdminPage() {
           </div>
 
           {/* Content */}
-          <div style={{ flex: 1, overflow: ['crm', 'contacts'].includes(activePage) ? 'hidden' : 'auto', padding: ['crm', 'contacts', 'overview', 'attendees', 'apps', 'users', 'widget', 'settings', 'homepage'].includes(activePage) ? 0 : '28px 32px', background: ADM.bg, display: 'flex', flexDirection: 'column' }}>
+          <div style={{ flex: 1, overflow: ['crm', 'contacts'].includes(activePage) ? 'hidden' : 'auto', padding: ['crm', 'contacts', 'overview', 'attendees', 'apps', 'users', 'widget', 'settings', 'homepage', 'klaviyo'].includes(activePage) ? 0 : '28px 32px', background: ADM.bg, display: 'flex', flexDirection: 'column' }}>
             {activePage === 'homepage' && <AdminHomepage />}
             {activePage === 'overview' && <DashboardOverview events={events} onSelectEvent={() => setActivePage('events')} onGoEvents={() => setActivePage('events')} />}
             {activePage === 'attendees' && <AttendeesBookings events={events} />}
             {(activePage === 'crm' || activePage === 'contacts') && <AdminCRM events={events} />}
             {activePage === 'apps' && <AdminApps />}
+            {activePage === 'klaviyo' && <AdminKlaviyo />}
             {activePage === 'users' && <AdminUsers currentUser={currentUser} />}
             {activePage === 'widget' && <AdminInstall onPreview={handlePreview} events={events} />}
             {activePage === 'settings' && <AdminSettings currentUser={currentUser} />}

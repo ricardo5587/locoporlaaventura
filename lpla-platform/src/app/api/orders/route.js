@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { requireAuth } from '@/lib/auth';
+import { subscribeToList } from '@/lib/klaviyo';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -79,6 +80,16 @@ export async function POST(request) {
 
     // decrement spots_left on the event
     await supabase.rpc('decrement_spots', { event_id: eventId, qty });
+
+    // Subscribe to Klaviyo list if configured
+    const klaviyoListId = process.env.KLAVIYO_DEFAULT_LIST_ID;
+    if (klaviyoListId && emailConsent) {
+      try {
+        await subscribeToList(klaviyoListId, email, firstName, lastName);
+      } catch (err) {
+        console.error('Klaviyo subscription failed:', err.message);
+      }
+    }
 
     return NextResponse.json(mapOrder(order), { status: 201, headers: CORS });
   } catch (err) {
