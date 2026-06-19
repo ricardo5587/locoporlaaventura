@@ -80,8 +80,29 @@ export async function getAllProfiles() {
 }
 
 export async function getProfileLists(profileId) {
-  const data = await klaviyoRequest(`/profiles/${profileId}/relationships/lists`);
+  const data = await klaviyoRequest(`/profiles/${profileId}/lists`);
   return data.data || [];
+}
+
+export async function getListMembers(listId) {
+  const all = [];
+  let cursor = null;
+  do {
+    const params = new URLSearchParams({ 'page[size]': '100' });
+    if (cursor) params.set('page[cursor]', cursor);
+    const data = await klaviyoRequest(`/lists/${listId}/profiles?${params}`);
+    if (data.data && Array.isArray(data.data)) {
+      all.push(...data.data.map(p => p.id));
+    }
+    const nextLink = data.links?.next;
+    if (nextLink) {
+      const url = new URL(nextLink);
+      cursor = url.searchParams.get('page[cursor]');
+    } else {
+      cursor = null;
+    }
+  } while (cursor);
+  return all;
 }
 
 export async function createCampaign(name, subject, listId, content) {
