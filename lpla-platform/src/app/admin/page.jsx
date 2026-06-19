@@ -2,8 +2,8 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import AdmIcon from '@/components/admin/AdmIcon'
-import { ADM, CAT_COLORS } from '@/lib/tokens'
-import DashboardOverview, { OvKpi } from '@/components/admin/Overview'
+import { ADM } from '@/lib/tokens'
+import DashboardOverview from '@/components/admin/Overview'
 import AttendeesBookings from '@/components/admin/Attendees'
 import AdminCRM from '@/components/admin/Contacts'
 import AdminApps from '@/components/admin/Apps'
@@ -11,6 +11,7 @@ import AdminUsers from '@/components/admin/Users'
 import AdminInstall from '@/components/admin/Launch'
 import EventManager from '@/components/admin/Events'
 import EventDetailDashboard from '@/components/admin/EventDetail'
+import AdminSettings from '@/components/admin/Settings'
 
 const API = 'https://locoporlaaventura.vercel.app'
 const IDLE_TIMEOUT = 30 * 60 * 1000
@@ -243,19 +244,11 @@ export default function AdminPage() {
           <div style={{ flex: 1, overflow: ['crm', 'contacts'].includes(activePage) ? 'hidden' : 'auto', padding: ['crm', 'contacts', 'overview', 'attendees', 'apps', 'users', 'widget', 'settings'].includes(activePage) ? 0 : '28px 32px', background: ADM.bg, display: 'flex', flexDirection: 'column' }}>
             {activePage === 'overview' && <DashboardOverview events={events} onSelectEvent={() => setActivePage('events')} onGoEvents={() => setActivePage('events')} />}
             {activePage === 'attendees' && <AttendeesBookings events={events} />}
-            {(activePage === 'crm' || activePage === 'contacts') && <AdminCRM events={events} ADM={ADM} OvKpi={OvKpi} />}
-            {activePage === 'apps' && <AdminApps ADM={ADM} />}
-            {activePage === 'users' && <AdminUsers ADM={ADM} OvKpi={OvKpi} currentUser={currentUser} />}
+            {(activePage === 'crm' || activePage === 'contacts') && <AdminCRM events={events} />}
+            {activePage === 'apps' && <AdminApps />}
+            {activePage === 'users' && <AdminUsers currentUser={currentUser} />}
             {activePage === 'widget' && <AdminInstall onPreview={handlePreview} events={events} />}
-            {activePage === 'settings' && (
-              <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 48 }}>
-                <div style={{ background: '#fff', borderRadius: 20, border: `1px solid ${ADM.border}`, padding: '48px 56px', textAlign: 'center', maxWidth: 460 }}>
-                  <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}><AdmIcon name="mountain" size={46} color="#94A3B8" strokeWidth={1.5} /></div>
-                  <h2 style={{ fontFamily: 'Barlow Condensed,system-ui', fontSize: 26, fontWeight: 800, color: ADM.text, textTransform: 'uppercase', letterSpacing: .5, margin: '0 0 10px' }}>Profile Settings</h2>
-                  <p style={{ fontFamily: 'Nunito,system-ui', fontSize: 14, color: ADM.muted, lineHeight: 1.6, margin: 0 }}>Personal info, security, and preferences — coming soon.</p>
-                </div>
-              </div>
-            )}
+            {activePage === 'settings' && <AdminSettings currentUser={currentUser} />}
 
             {activePage === 'events' && <EventManager events={events} token={token} loading={loading} onEventsChange={() => loadEvents(token)} onSelectEvent={ev => setCurrentEvent(ev)} openEditEvent={openEditEvent} onEditConsumed={() => setOpenEditEvent(null)} />}
           </div>

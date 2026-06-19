@@ -1,6 +1,8 @@
 'use client'
 import { useState, useEffect, useMemo, useRef } from 'react'
 import AdmIcon from '@/components/admin/AdmIcon'
+import { OvKpi } from '@/components/admin/Overview'
+import { ADM } from '@/lib/tokens'
 import { admBuildOrders, admMoney, admDateShort, admTimeAgo, _admMulberry } from '@/lib/admin-data'
 
 const CRM_AREA_CODES = ['503','971','360','541','206']
@@ -84,7 +86,7 @@ function crmBuildContacts(orders) {
   return contacts
 }
 
-function EngagementBar({ score, size = 'md', ADM }) {
+function EngagementBar({ score, size = 'md' }) {
   const color = score >= 70 ? ADM.success : score >= 40 ? ADM.warning : ADM.light
   const h = size === 'sm' ? 5 : 8
   const label = score >= 70 ? 'High' : score >= 40 ? 'Medium' : 'Low'
@@ -111,7 +113,7 @@ function CrmTag({ tag, onRemove }) {
   )
 }
 
-function CrmDrawer({ contact: base, allTags, onClose, ADM }) {
+function CrmDrawer({ contact: base, allTags, onClose }) {
   const [show, setShow] = useState(false)
   const [tab, setTab] = useState('timeline')
   const [tags, setTags] = useState(base.tags)
@@ -189,7 +191,7 @@ function CrmDrawer({ contact: base, allTags, onClose, ADM }) {
               <span style={{ fontFamily:'Nunito,system-ui', fontSize:11.5, fontWeight:700, color:ADM.muted, textTransform:'uppercase', letterSpacing:.6 }}>Engagement</span>
               <span style={{ fontFamily:'Barlow Condensed,system-ui', fontSize:12, fontWeight:800, color:ADM.light }}>{c.segment}</span>
             </div>
-            <EngagementBar score={c.engagementScore} ADM={ADM} />
+            <EngagementBar score={c.engagementScore} />
           </div>
 
           <div style={{ display:'flex', gap:6, flexWrap:'wrap', marginTop:12 }}>
@@ -216,7 +218,7 @@ function CrmDrawer({ contact: base, allTags, onClose, ADM }) {
                 <div style={{ position:'absolute', left:8, top:0, bottom:0, width:2, background:ADM.border }} />
                 {allOrders.map((o)=>{
                   const isActive = o.status!=='cancelled'&&o.status!=='refunded'
-                  const color = o.checkedIn ? '#5E8BBD' : isActive ? ADM.success : ADM.light
+                  const color = o.checkedIn ? ADM.blue : isActive ? ADM.success : ADM.light
                   return (
                     <div key={o.id} style={{ position:'relative', marginBottom:18 }}>
                       <div style={{ position:'absolute', left:-20, top:3, width:12, height:12, borderRadius:'50%', background:color, border:'2.5px solid #fff', zIndex:1 }} />
@@ -373,7 +375,7 @@ function autoMap(headers) {
   })
 }
 
-function CrmImportModal({ onClose, onImport, ADM }) {
+function CrmImportModal({ onClose, onImport }) {
   const [show, setShow] = useState(false)
   const [step, setStep] = useState('upload')
   const [drag, setDrag] = useState(false)
@@ -440,7 +442,7 @@ function CrmImportModal({ onClose, onImport, ADM }) {
       <div onClick={close} style={{ position:'fixed', inset:0, background:'rgba(11,26,40,.5)', zIndex:800, opacity:show?1:0, transition:'opacity .24s' }} />
       <div style={{ position:'fixed', left:'50%', top:'50%', transform:`translate(-50%,${show?'-50%':'-44%'})`, opacity:show?1:0, transition:'transform .26s cubic-bezier(.4,0,.2,1),opacity .24s', zIndex:801, width:'min(600px,94vw)', background:'#fff', borderRadius:ADM.radiusLg, boxShadow:'0 24px 60px rgba(0,0,0,.2)', overflow:'hidden', display:'flex', flexDirection:'column', maxHeight:'88vh' }}>
 
-        <div style={{ height:4, background:`linear-gradient(90deg,${ADM.primary},${'#5E8BBD'})`, flexShrink:0 }} />
+        <div style={{ height:4, background:`linear-gradient(90deg,${ADM.primary},${ADM.blue})`, flexShrink:0 }} />
 
         <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'18px 24px', borderBottom:`1px solid ${ADM.border}`, flexShrink:0 }}>
           <div>
@@ -515,8 +517,8 @@ function CrmImportModal({ onClose, onImport, ADM }) {
                   </div>
                 ))}
               </div>
-              <div style={{ display:'flex', gap:10, alignItems:'flex-start', background:`${'#5E8BBD'}12`, border:`1px solid ${'#5E8BBD'}44`, borderRadius:ADM.radius, padding:'12px 14px', marginTop:16 }}>
-                <AdmIcon name="bolt" size={16} color={'#5E8BBD'} style={{ flexShrink:0, marginTop:1 }} />
+              <div style={{ display:'flex', gap:10, alignItems:'flex-start', background:`${ADM.blue}12`, border:`1px solid ${ADM.blue}44`, borderRadius:ADM.radius, padding:'12px 14px', marginTop:16 }}>
+                <AdmIcon name="bolt" size={16} color={ADM.blue} style={{ flexShrink:0, marginTop:1 }} />
                 <div style={{ fontFamily:'Nunito,system-ui', fontSize:13, color:ADM.text, lineHeight:1.5 }}>Existing contacts with the same email will be updated, not duplicated.</div>
               </div>
             </div>
@@ -614,7 +616,7 @@ function importedToContact(raw) {
   }
 }
 
-export default function AdminCRM({ events, ADM, OvKpi }) {
+export default function AdminCRM({ events }) {
   const orders = admBuildOrders(events)
   const orderContacts = crmBuildContacts(orders)
 
@@ -743,10 +745,10 @@ export default function AdminCRM({ events, ADM, OvKpi }) {
             </div>
           )}
           <div style={{ display:'grid', gridTemplateColumns:'repeat(4,minmax(0,1fr))', gap:12, marginBottom:18 }}>
-            <OvKpi label="Total Contacts" value={totalContacts} icon="people" accent={ADM.primary} sub="Unique profiles" ADM={ADM} />
-            <OvKpi label="Avg. Lifetime Value" value={admMoney(avgLTV)} icon="dollar" accent={ADM.success} sub="Per contact" ADM={ADM} />
-            <OvKpi label="VIP Contacts" value={vipCount} icon="star" accent="#A07800" sub="Spent $80+" ADM={ADM} />
-            <OvKpi label="Avg. Engagement" value={avgEngage+'/100'} icon="trend" accent={'#5E8BBD'} sub="Across all contacts" ADM={ADM} />
+            <OvKpi label="Total Contacts" value={totalContacts} icon="people" accent={ADM.primary} sub="Unique profiles" />
+            <OvKpi label="Avg. Lifetime Value" value={admMoney(avgLTV)} icon="dollar" accent={ADM.success} sub="Per contact" />
+            <OvKpi label="VIP Contacts" value={vipCount} icon="star" accent="#A07800" sub="Spent $80+" />
+            <OvKpi label="Avg. Engagement" value={avgEngage+'/100'} icon="trend" accent={ADM.blue} sub="Across all contacts" />
           </div>
 
           <div style={{ display:'flex', gap:10, marginBottom:14, alignItems:'center' }}>
@@ -810,7 +812,7 @@ export default function AdminCRM({ events, ADM, OvKpi }) {
                           <span style={{ fontFamily:'Barlow Condensed,system-ui', fontSize:17, fontWeight:800, color:ADM.text }}>{c.bookingCount}</span>
                         </td>
                         <td style={{ padding:'12px 16px', minWidth:130 }}>
-                          <EngagementBar score={c.engagementScore} size="sm" ADM={ADM} />
+                          <EngagementBar score={c.engagementScore} size="sm" />
                           <span style={{ fontFamily:'Nunito,system-ui', fontSize:11, color:ADM.light }}>{c.engagementScore}/100</span>
                         </td>
                         <td style={{ padding:'12px 16px' }}>
@@ -852,7 +854,7 @@ export default function AdminCRM({ events, ADM, OvKpi }) {
         </div>
       </div>
 
-      {selected && <CrmDrawer contact={selected} allTags={ALL_TAGS} onClose={()=>setSelected(null)} ADM={ADM} />}
+      {selected && <CrmDrawer contact={selected} allTags={ALL_TAGS} onClose={()=>setSelected(null)} />}
       {showImport && <CrmImportModal onClose={()=>setShowImport(false)} onImport={contacts=>{
         const newContacts = contacts.map(importedToContact)
         const next = [...imported, ...newContacts]
@@ -860,7 +862,7 @@ export default function AdminCRM({ events, ADM, OvKpi }) {
         try { localStorage.setItem('lpla_crm_imported', JSON.stringify(next)) } catch {}
         setImportBanner(contacts.length)
         setShowImport(false)
-      }} ADM={ADM} />}
+      }} />}
     </div>
   )
 }

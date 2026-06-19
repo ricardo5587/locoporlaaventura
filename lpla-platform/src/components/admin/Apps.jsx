@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect, useRef } from 'react'
 import AdmIcon from '@/components/admin/AdmIcon'
+import { ADM } from '@/lib/tokens'
 
 function LogoClover({ size = 36 }) {
   return (
@@ -402,7 +403,7 @@ function AutomationRow({ flow, enabled, onToggle, ADM }) {
   )
 }
 
-export default function AdminApps({ ADM }) {
+export default function AdminApps() {
   const SK_CONN = 'lpla_apps_connected_v1'
   const SK_AUTO = 'lpla_apps_auto_v1'
   function loadConn() { try { return JSON.parse(localStorage.getItem(SK_CONN) || '{}') } catch { return {} } }

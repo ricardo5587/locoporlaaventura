@@ -1,6 +1,8 @@
 'use client'
 import { useState, useEffect } from 'react'
 import AdmIcon from '@/components/admin/AdmIcon'
+import { OvKpi } from '@/components/admin/Overview'
+import { ADM } from '@/lib/tokens'
 
 const API = 'https://locoporlaaventura.vercel.app'
 
@@ -134,7 +136,7 @@ function ResetPwModal({ ADM, token, user, onClose, onDone }) {
   )
 }
 
-export default function AdminUsers({ ADM, OvKpi, currentUser }) {
+export default function AdminUsers({ currentUser }) {
   const [users, setUsers] = useState([])
   const [loading, setLoading] = useState(true)
   const [showInvite, setShowInvite] = useState(false)
