@@ -1,6 +1,8 @@
 'use client'
 import { useState, useEffect, useMemo } from 'react'
 import AdmIcon from '@/components/admin/AdmIcon'
+import { OvKpi } from '@/components/admin/Overview'
+import { ADM } from '@/lib/tokens'
 import { admBuildOrders, admMoney, admDateShort, admTimeAgo } from '@/lib/admin-data'
 
 const ATT_STATUS = {
@@ -37,7 +39,7 @@ function attExportCSV(rows) {
   setTimeout(() => URL.revokeObjectURL(url), 1000)
 }
 
-function OrderDrawer({ order, onClose, onAction, ADM }) {
+function OrderDrawer({ order, onClose, onAction }) {
   const [show, setShow] = useState(false)
   useEffect(() => { const r = requestAnimationFrame(() => setShow(true)); return () => cancelAnimationFrame(r) }, [])
   function close() { setShow(false); setTimeout(onClose, 240) }
@@ -96,8 +98,8 @@ function OrderDrawer({ order, onClose, onAction, ADM }) {
             </button>
           }
           {isActive && o.checkedIn &&
-          <button onClick={() => onAction(o.id, 'undo-checkin')} style={{ flex: 1, minWidth: 130, height: 44, borderRadius: ADM.radius, border: '1px solid #5E8BBD', cursor: 'pointer', background: '#5E8BBD12', color: '#5E8BBD', fontFamily: 'Barlow Condensed,system-ui', fontSize: 16, fontWeight: 800, letterSpacing: .4, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 7 }}>
-              <AdmIcon name="check" size={16} color="#5E8BBD" /> Checked in · undo
+          <button onClick={() => onAction(o.id, 'undo-checkin')} style={{ flex: 1, minWidth: 130, height: 44, borderRadius: ADM.radius, border: `1px solid ${ADM.blue}`, cursor: 'pointer', background: `${ADM.blue}12`, color: ADM.blue, fontFamily: 'Barlow Condensed,system-ui', fontSize: 16, fontWeight: 800, letterSpacing: .4, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 7 }}>
+              <AdmIcon name="check" size={16} color={ADM.blue} /> Checked in · undo
             </button>
           }
           {isActive &&
@@ -116,7 +118,7 @@ function OrderDrawer({ order, onClose, onAction, ADM }) {
   )
 }
 
-export default function AttendeesBookings({ events, ADM, OvKpi }) {
+export default function AttendeesBookings({ events }) {
   const base = admBuildOrders(events)
   const [overrides, setOverrides] = useState({})
   const [search, setSearch] = useState('')
@@ -179,10 +181,10 @@ export default function AttendeesBookings({ events, ADM, OvKpi }) {
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,minmax(0,1fr))', gap: 14, marginBottom: 18 }}>
-        <OvKpi label="Total Attendees" value={attendees.toLocaleString()} icon="people" accent={ADM.primary} sub={`${activeOrders.length} active orders`} ADM={ADM} />
-        <OvKpi label="Checked In" value={checkedIn.toLocaleString()} icon="check" accent={'#5E8BBD'} sub={attendees ? `${Math.round(checkedIn / attendees * 100)}% of attendees` : '—'} ADM={ADM} />
-        <OvKpi label="Revenue Collected" value={admMoney(revenue)} icon="dollar" accent={ADM.success} sub="Net of refunds" ADM={ADM} />
-        <OvKpi label="Cancelled / Refunded" value={cancelled} icon="refund" accent={ADM.danger} sub="Across all events" ADM={ADM} />
+        <OvKpi label="Total Attendees" value={attendees.toLocaleString()} icon="people" accent={ADM.primary} sub={`${activeOrders.length} active orders`} />
+        <OvKpi label="Checked In" value={checkedIn.toLocaleString()} icon="check" accent={ADM.blue} sub={attendees ? `${Math.round(checkedIn / attendees * 100)}% of attendees` : '—'} />
+        <OvKpi label="Revenue Collected" value={admMoney(revenue)} icon="dollar" accent={ADM.success} sub="Net of refunds" />
+        <OvKpi label="Cancelled / Refunded" value={cancelled} icon="refund" accent={ADM.danger} sub="Across all events" />
       </div>
 
       <div style={{ display: 'flex', gap: 10, marginBottom: 14, flexWrap: 'wrap', alignItems: 'center' }}>
@@ -255,8 +257,8 @@ export default function AttendeesBookings({ events, ADM, OvKpi }) {
                         onMouseOut={e => { e.currentTarget.style.background = `${ADM.primary}0d`; e.currentTarget.style.color = ADM.primary }}>Check in</button>
                         }
                         {isActive && o.checkedIn &&
-                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '5px 10px', color: '#5E8BBD', fontFamily: 'Nunito,system-ui', fontSize: 12, fontWeight: 700 }}>
-                            <AdmIcon name="check" size={13} color="#5E8BBD" /> In
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '5px 10px', color: ADM.blue, fontFamily: 'Nunito,system-ui', fontSize: 12, fontWeight: 700 }}>
+                            <AdmIcon name="check" size={13} color={ADM.blue} /> In
                           </span>
                         }
                         <button onClick={() => setMenuId(menuId === o.id ? null : o.id)} title="More"
@@ -305,7 +307,7 @@ export default function AttendeesBookings({ events, ADM, OvKpi }) {
         </div>
       </div>
 
-      {selected && <OrderDrawer order={selected} onClose={() => setSelected(null)} onAction={act} ADM={ADM} />}
+      {selected && <OrderDrawer order={selected} onClose={() => setSelected(null)} onAction={act} />}
     </div>
   )
 }

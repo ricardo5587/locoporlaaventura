@@ -1,9 +1,10 @@
 'use client'
 import { useState } from 'react'
 import AdmIcon from '@/components/admin/AdmIcon'
+import { ADM, CAT_COLORS } from '@/lib/tokens'
 import { admBuildOrders, admWeekly, admGross, admSold, admMoney, admMoneyK, admDateShort, admTimeAgo } from '@/lib/admin-data'
 
-function OvKpi({ label, value, sub, icon, accent, delta, ADM }) {
+function OvKpi({ label, value, sub, icon, accent, delta }) {
   return (
     <div style={{ background: ADM.card, borderRadius: ADM.radiusMd, border: `1px solid ${ADM.border}`, padding: '18px 20px' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
@@ -82,7 +83,7 @@ function OvSalesChart({ buckets, metric, ADM }) {
 
 export { OvKpi }
 
-export default function DashboardOverview({ events, ADM, CAT_COLORS, onSelectEvent, onGoEvents }) {
+export default function DashboardOverview({ events, onSelectEvent, onGoEvents }) {
   const [metric, setMetric] = useState('revenue')
   const [range, setRange] = useState(90)
 

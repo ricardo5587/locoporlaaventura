@@ -241,8 +241,8 @@ export default function AdminPage() {
 
           {/* Content */}
           <div style={{ flex: 1, overflow: ['crm', 'contacts'].includes(activePage) ? 'hidden' : 'auto', padding: ['crm', 'contacts', 'overview', 'attendees', 'apps', 'users', 'widget', 'settings'].includes(activePage) ? 0 : '28px 32px', background: ADM.bg, display: 'flex', flexDirection: 'column' }}>
-            {activePage === 'overview' && <DashboardOverview events={events} ADM={ADM} CAT_COLORS={CAT_COLORS} onSelectEvent={() => setActivePage('events')} onGoEvents={() => setActivePage('events')} />}
-            {activePage === 'attendees' && <AttendeesBookings events={events} ADM={ADM} OvKpi={OvKpi} />}
+            {activePage === 'overview' && <DashboardOverview events={events} onSelectEvent={() => setActivePage('events')} onGoEvents={() => setActivePage('events')} />}
+            {activePage === 'attendees' && <AttendeesBookings events={events} />}
             {(activePage === 'crm' || activePage === 'contacts') && <AdminCRM events={events} ADM={ADM} OvKpi={OvKpi} />}
             {activePage === 'apps' && <AdminApps ADM={ADM} />}
             {activePage === 'users' && <AdminUsers ADM={ADM} OvKpi={OvKpi} currentUser={currentUser} />}
