@@ -835,138 +835,148 @@ export default function AdminCRM({ events }) {
       </div>
 
       <div style={{ flex:1, overflow:'auto', display:'flex', flexDirection:'column', minWidth:0 }}>
-        <div style={{ padding:'24px 28px 0', flexShrink:0 }}>
-
-          <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:18, flexWrap:'wrap', gap:12 }}>
-            <div>
-              <h1 style={{ fontFamily:'Barlow Condensed,system-ui', fontSize:28, fontWeight:800, color:ADM.text, margin:0, textTransform:'uppercase', letterSpacing:.5 }}>Contacts &amp; Profiles</h1>
-              <p style={{ fontFamily:'Nunito,system-ui', fontSize:14, color:ADM.muted, margin:'4px 0 0' }}>Every person who has booked, signed up, or attended an LPLA event.</p>
-            </div>
-            <div style={{ display:'flex', gap:10 }}>
-              <button onClick={() => setShowImport(true)} style={{ display:'inline-flex', alignItems:'center', gap:7, padding:'10px 18px', borderRadius:ADM.radius, border:`1px solid ${ADM.border}`, background:ADM.card, color:ADM.text, cursor:'pointer', fontFamily:'Barlow Condensed,system-ui', fontSize:15, fontWeight:800, letterSpacing:.4 }}>
-                <AdmIcon name="download" size={16} color={ADM.muted} style={{ transform:'rotate(180deg)' }} /> Import
-              </button>
-              <button style={{ display:'inline-flex', alignItems:'center', gap:7, padding:'10px 18px', borderRadius:ADM.radius, border:'none', background:ADM.primary, color:'#fff', cursor:'pointer', fontFamily:'Barlow Condensed,system-ui', fontSize:15, fontWeight:800, letterSpacing:.4, boxShadow:'0 4px 14px rgba(41,65,84,.22)' }}>
-                <AdmIcon name="download" size={16} color="#fff" /> Export contacts
-              </button>
+        {klaviyoLoading && allContacts.length === 0 ? (
+          <div style={{ flex:1, display:'flex', alignItems:'center', justifyContent:'center' }}>
+            <div style={{ textAlign:'center' }}>
+              <div style={{ fontFamily:'Barlow Condensed,system-ui', fontSize:32, fontWeight:800, color:ADM.text, textTransform:'uppercase', letterSpacing:.5, marginBottom:8 }}>Loading contacts…</div>
+              <p style={{ fontFamily:'Nunito,system-ui', fontSize:14, color:ADM.muted }}>Syncing your Klaviyo contacts</p>
             </div>
           </div>
+        ) : (
+          <>
+            <div style={{ padding:'24px 28px 0', flexShrink:0 }}>
+              <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:18, flexWrap:'wrap', gap:12 }}>
+                <div>
+                  <h1 style={{ fontFamily:'Barlow Condensed,system-ui', fontSize:28, fontWeight:800, color:ADM.text, margin:0, textTransform:'uppercase', letterSpacing:.5 }}>Contacts &amp; Profiles</h1>
+                  <p style={{ fontFamily:'Nunito,system-ui', fontSize:14, color:ADM.muted, margin:'4px 0 0' }}>Every person who has booked, signed up, or attended an LPLA event.</p>
+                </div>
+                <div style={{ display:'flex', gap:10 }}>
+                  <button onClick={() => setShowImport(true)} style={{ display:'inline-flex', alignItems:'center', gap:7, padding:'10px 18px', borderRadius:ADM.radius, border:`1px solid ${ADM.border}`, background:ADM.card, color:ADM.text, cursor:'pointer', fontFamily:'Barlow Condensed,system-ui', fontSize:15, fontWeight:800, letterSpacing:.4 }}>
+                    <AdmIcon name="download" size={16} color={ADM.muted} style={{ transform:'rotate(180deg)' }} /> Import
+                  </button>
+                  <button style={{ display:'inline-flex', alignItems:'center', gap:7, padding:'10px 18px', borderRadius:ADM.radius, border:'none', background:ADM.primary, color:'#fff', cursor:'pointer', fontFamily:'Barlow Condensed,system-ui', fontSize:15, fontWeight:800, letterSpacing:.4, boxShadow:'0 4px 14px rgba(41,65,84,.22)' }}>
+                    <AdmIcon name="download" size={16} color="#fff" /> Export contacts
+                  </button>
+                </div>
+              </div>
 
-          {importBanner && (
-            <div style={{ display:'flex', alignItems:'center', gap:10, background:`${ADM.success}12`, border:`1px solid ${ADM.success}44`, borderRadius:ADM.radius, padding:'10px 16px', marginBottom:14 }}>
-              <AdmIcon name="check" size={16} color={ADM.success} />
-              <span style={{ fontFamily:'Nunito,system-ui', fontSize:13.5, color:ADM.text, flex:1 }}><strong>{importBanner} contacts</strong> imported successfully.</span>
-              <button onClick={()=>setImportBanner(null)} style={{ background:'none', border:'none', cursor:'pointer', display:'flex' }}><AdmIcon name="x" size={14} color={ADM.muted} /></button>
-            </div>
-          )}
-          <div style={{ display:'grid', gridTemplateColumns:'repeat(4,minmax(0,1fr))', gap:12, marginBottom:18 }}>
-            <OvKpi label="Total Contacts" value={totalContacts} icon="people" accent={ADM.primary} sub="Unique profiles" />
-            <OvKpi label="Avg. Lifetime Value" value={admMoney(avgLTV)} icon="dollar" accent={ADM.success} sub="Per contact" />
-            <OvKpi label="VIP Contacts" value={vipCount} icon="star" accent="#A07800" sub="Spent $80+" />
-            <OvKpi label="Avg. Engagement" value={avgEngage+'/100'} icon="trend" accent={ADM.blue} sub="Across all contacts" />
-          </div>
+              {importBanner && (
+                <div style={{ display:'flex', alignItems:'center', gap:10, background:`${ADM.success}12`, border:`1px solid ${ADM.success}44`, borderRadius:ADM.radius, padding:'10px 16px', marginBottom:14 }}>
+                  <AdmIcon name="check" size={16} color={ADM.success} />
+                  <span style={{ fontFamily:'Nunito,system-ui', fontSize:13.5, color:ADM.text, flex:1 }}><strong>{importBanner} contacts</strong> imported successfully.</span>
+                  <button onClick={()=>setImportBanner(null)} style={{ background:'none', border:'none', cursor:'pointer', display:'flex' }}><AdmIcon name="x" size={14} color={ADM.muted} /></button>
+                </div>
+              )}
+              <div style={{ display:'grid', gridTemplateColumns:'repeat(4,minmax(0,1fr))', gap:12, marginBottom:18 }}>
+                <OvKpi label="Total Contacts" value={totalContacts} icon="people" accent={ADM.primary} sub="Unique profiles" />
+                <OvKpi label="Avg. Lifetime Value" value={admMoney(avgLTV)} icon="dollar" accent={ADM.success} sub="Per contact" />
+                <OvKpi label="VIP Contacts" value={vipCount} icon="star" accent="#A07800" sub="Spent $80+" />
+                <OvKpi label="Avg. Engagement" value={avgEngage+'/100'} icon="trend" accent={ADM.blue} sub="Across all contacts" />
+              </div>
 
-          <div style={{ display:'flex', gap:10, marginBottom:14, alignItems:'center' }}>
-            <div style={{ flex:1, display:'flex', alignItems:'center', gap:8, background:'#fff', borderRadius:ADM.radius, padding:'0 12px', height:38, border:`1px solid ${ADM.border}` }}>
-              <AdmIcon name="search" size={15} color="#94A3B8" />
-              <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search name or email…"
-                style={{ border:'none', outline:'none', fontFamily:'Nunito,system-ui', fontSize:13, color:ADM.text, flex:1, background:'transparent' }} />
-              {search && <button onClick={()=>setSearch('')} style={{ background:'none',border:'none',cursor:'pointer',display:'flex',alignItems:'center' }}><AdmIcon name="x" size={14} color={ADM.light} /></button>}
-            </div>
-            <span style={{ fontFamily:'Nunito,system-ui', fontSize:12.5, color:ADM.light }}>{filtered.length} contact{filtered.length!==1?'s':''}</span>
-          </div>
-        </div>
-
-        <div style={{ flex:1, overflow:'auto', padding:'0 28px 24px' }}>
-          <div style={{ background:ADM.card, borderRadius:ADM.radiusMd, border:`1px solid ${ADM.border}`, overflow:'hidden' }}>
-            <div style={{ overflowX:'auto' }}>
-              <table style={{ width:'100%', borderCollapse:'collapse', minWidth:780 }}>
-                <thead>
-                  <tr style={{ background:'#FAFAF7', borderBottom:`1px solid ${ADM.border}` }}>
-                    <th style={thStyle}>Contact</th>
-                    <th style={{...thStyle}} onClick={()=>thSort('totalSpend')}>
-                      <div style={{display:'flex',alignItems:'center',gap:5}}>Spend <ThArr k="totalSpend"/></div>
-                    </th>
-                    <th style={{...thStyle}} onClick={()=>thSort('bookingCount')}>
-                      <div style={{display:'flex',alignItems:'center',gap:5}}>Bookings <ThArr k="bookingCount"/></div>
-                    </th>
-                    <th style={{...thStyle, minWidth:130}} onClick={()=>thSort('engagementScore')}>
-                      <div style={{display:'flex',alignItems:'center',gap:5}}>Engagement <ThArr k="engagementScore"/></div>
-                    </th>
-                    <th style={thStyle}>Tags</th>
-                    <th style={{...thStyle}} onClick={()=>thSort('lastActivity')}>
-                      <div style={{display:'flex',alignItems:'center',gap:5}}>Last Activity <ThArr k="lastActivity"/></div>
-                    </th>
-                    <th style={thStyle}></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {rows.length===0 ? (
-                    <tr><td colSpan={7} style={{ padding:48, textAlign:'center', fontFamily:'Nunito,system-ui', fontSize:15, color:ADM.light }}>No contacts found.</td></tr>
-                  ) : rows.map(c=>{
-                    const cat = c.categories[0]
-                    const catColor = {Escalada:'#294154',Senderismo:'#546207',Taller:'#A54399',Keynote:'#5E8BBD',Social:'#D9831F','Expedición':'#B32317',Voluntario:'#00897A'}[cat]||ADM.primary
-                    return (
-                      <tr key={c.id} onClick={()=>setSelected(c)}
-                        style={{ borderBottom:`1px solid ${ADM.border}`, cursor:'pointer', transition:'background .12s' }}
-                        onMouseOver={e=>e.currentTarget.style.background='#FAFAF7'}
-                        onMouseOut={e=>e.currentTarget.style.background='transparent'}>
-                        <td style={{ padding:'12px 16px' }}>
-                          <div style={{ display:'flex', alignItems:'center', gap:10 }}>
-                            <div style={{ width:34, height:34, borderRadius:'50%', flexShrink:0, background:`${catColor}1a`, color:catColor, display:'flex', alignItems:'center', justifyContent:'center', fontFamily:'Barlow Condensed,system-ui', fontSize:13, fontWeight:800 }}>{c.initials}</div>
-                            <div style={{ minWidth:0 }}>
-                              <div style={{ fontFamily:'Nunito,system-ui', fontSize:13.5, fontWeight:700, color:ADM.text }}>{c.name}</div>
-                              <div style={{ fontFamily:'Nunito,system-ui', fontSize:11.5, color:ADM.light, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis', maxWidth:180 }}>{c.email}</div>
-                            </div>
-                          </div>
-                        </td>
-                        <td style={{ padding:'12px 16px' }}>
-                          <span style={{ fontFamily:'Barlow Condensed,system-ui', fontSize:16, fontWeight:800, color:c.totalSpend?ADM.text:ADM.light }}>{c.totalSpend?admMoney(c.totalSpend):'Free'}</span>
-                        </td>
-                        <td style={{ padding:'12px 16px' }}>
-                          <span style={{ fontFamily:'Barlow Condensed,system-ui', fontSize:17, fontWeight:800, color:ADM.text }}>{c.bookingCount}</span>
-                        </td>
-                        <td style={{ padding:'12px 16px', minWidth:130 }}>
-                          <EngagementBar score={c.engagementScore} size="sm" />
-                          <span style={{ fontFamily:'Nunito,system-ui', fontSize:11, color:ADM.light }}>{c.engagementScore}/100</span>
-                        </td>
-                        <td style={{ padding:'12px 16px' }}>
-                          <div style={{ display:'flex', gap:5, flexWrap:'wrap', maxWidth:180 }}>
-                            {c.tags.slice(0,3).map(t=><CrmTag key={t} tag={t} />)}
-                            {c.tags.length>3 && <span style={{ fontFamily:'Nunito,system-ui', fontSize:11.5, color:ADM.light, alignSelf:'center' }}>+{c.tags.length-3}</span>}
-                          </div>
-                        </td>
-                        <td style={{ padding:'12px 16px', fontFamily:'Nunito,system-ui', fontSize:12.5, color:ADM.muted, whiteSpace:'nowrap' }}>
-                          {admTimeAgo(c.lastActivity)}
-                        </td>
-                        <td style={{ padding:'12px 12px', textAlign:'right' }}>
-                          <AdmIcon name="chevronRight" size={16} color={ADM.light} />
-                        </td>
-                      </tr>
-                    )
-                  })}
-                </tbody>
-              </table>
-            </div>
-
-            <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'12px 18px', borderTop:`1px solid ${ADM.border}`, flexWrap:'wrap', gap:10 }}>
-              <span style={{ fontFamily:'Nunito,system-ui', fontSize:12.5, color:ADM.muted }}>
-                {filtered.length ? `${pg*PER+1}–${Math.min(filtered.length,pg*PER+PER)} of ${filtered.length}` : '0'}
-              </span>
-              <div style={{ display:'flex', gap:6 }}>
-                <button onClick={()=>setPage(Math.max(0,pg-1))} disabled={pg===0}
-                  style={{ width:32, height:32, borderRadius:8, border:`1px solid ${ADM.border}`, background:'#fff', cursor:pg===0?'not-allowed':'pointer', opacity:pg===0?.45:1, display:'flex', alignItems:'center', justifyContent:'center' }}>
-                  <AdmIcon name="chevronLeft" size={15} color={ADM.muted} />
-                </button>
-                <span style={{ fontFamily:'Barlow Condensed,system-ui', fontSize:14, fontWeight:800, color:ADM.text, minWidth:64, textAlign:'center', lineHeight:'32px' }}>{pg+1} / {pages}</span>
-                <button onClick={()=>setPage(Math.min(pages-1,pg+1))} disabled={pg>=pages-1}
-                  style={{ width:32, height:32, borderRadius:8, border:`1px solid ${ADM.border}`, background:'#fff', cursor:pg>=pages-1?'not-allowed':'pointer', opacity:pg>=pages-1?.45:1, display:'flex', alignItems:'center', justifyContent:'center' }}>
-                  <AdmIcon name="chevronRight" size={15} color={ADM.muted} />
-                </button>
+              <div style={{ display:'flex', gap:10, marginBottom:14, alignItems:'center' }}>
+                <div style={{ flex:1, display:'flex', alignItems:'center', gap:8, background:'#fff', borderRadius:ADM.radius, padding:'0 12px', height:38, border:`1px solid ${ADM.border}` }}>
+                  <AdmIcon name="search" size={15} color="#94A3B8" />
+                  <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search name or email…"
+                    style={{ border:'none', outline:'none', fontFamily:'Nunito,system-ui', fontSize:13, color:ADM.text, flex:1, background:'transparent' }} />
+                  {search && <button onClick={()=>setSearch('')} style={{ background:'none',border:'none',cursor:'pointer',display:'flex',alignItems:'center' }}><AdmIcon name="x" size={14} color={ADM.light} /></button>}
+                </div>
+                <span style={{ fontFamily:'Nunito,system-ui', fontSize:12.5, color:ADM.light }}>{filtered.length} contact{filtered.length!==1?'s':''}</span>
               </div>
             </div>
-          </div>
-        </div>
+
+            <div style={{ flex:1, overflow:'auto', padding:'0 28px 24px' }}>
+              <div style={{ background:ADM.card, borderRadius:ADM.radiusMd, border:`1px solid ${ADM.border}`, overflow:'hidden' }}>
+                <div style={{ overflowX:'auto' }}>
+                  <table style={{ width:'100%', borderCollapse:'collapse', minWidth:780 }}>
+                    <thead>
+                      <tr style={{ background:'#FAFAF7', borderBottom:`1px solid ${ADM.border}` }}>
+                        <th style={thStyle}>Contact</th>
+                        <th style={{...thStyle}} onClick={()=>thSort('totalSpend')}>
+                          <div style={{display:'flex',alignItems:'center',gap:5}}>Spend <ThArr k="totalSpend"/></div>
+                        </th>
+                        <th style={{...thStyle}} onClick={()=>thSort('bookingCount')}>
+                          <div style={{display:'flex',alignItems:'center',gap:5}}>Bookings <ThArr k="bookingCount"/></div>
+                        </th>
+                        <th style={{...thStyle, minWidth:130}} onClick={()=>thSort('engagementScore')}>
+                          <div style={{display:'flex',alignItems:'center',gap:5}}>Engagement <ThArr k="engagementScore"/></div>
+                        </th>
+                        <th style={thStyle}>Tags</th>
+                        <th style={{...thStyle}} onClick={()=>thSort('lastActivity')}>
+                          <div style={{display:'flex',alignItems:'center',gap:5}}>Last Activity <ThArr k="lastActivity"/></div>
+                        </th>
+                        <th style={thStyle}></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {rows.length===0 ? (
+                        <tr><td colSpan={7} style={{ padding:48, textAlign:'center', fontFamily:'Nunito,system-ui', fontSize:15, color:ADM.light }}>No contacts found.</td></tr>
+                      ) : rows.map(c=>{
+                        const cat = c.categories[0]
+                        const catColor = {Escalada:'#294154',Senderismo:'#546207',Taller:'#A54399',Keynote:'#5E8BBD',Social:'#D9831F','Expedición':'#B32317',Voluntario:'#00897A'}[cat]||ADM.primary
+                        return (
+                          <tr key={c.id} onClick={()=>setSelected(c)}
+                            style={{ borderBottom:`1px solid ${ADM.border}`, cursor:'pointer', transition:'background .12s' }}
+                            onMouseOver={e=>e.currentTarget.style.background='#FAFAF7'}
+                            onMouseOut={e=>e.currentTarget.style.background='transparent'}>
+                            <td style={{ padding:'12px 16px' }}>
+                              <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+                                <div style={{ width:34, height:34, borderRadius:'50%', flexShrink:0, background:`${catColor}1a`, color:catColor, display:'flex', alignItems:'center', justifyContent:'center', fontFamily:'Barlow Condensed,system-ui', fontSize:13, fontWeight:800 }}>{c.initials}</div>
+                                <div style={{ minWidth:0 }}>
+                                  <div style={{ fontFamily:'Nunito,system-ui', fontSize:13.5, fontWeight:700, color:ADM.text }}>{c.name}</div>
+                                  <div style={{ fontFamily:'Nunito,system-ui', fontSize:11.5, color:ADM.light, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis', maxWidth:180 }}>{c.email}</div>
+                                </div>
+                              </div>
+                            </td>
+                            <td style={{ padding:'12px 16px' }}>
+                              <span style={{ fontFamily:'Barlow Condensed,system-ui', fontSize:16, fontWeight:800, color:c.totalSpend?ADM.text:ADM.light }}>{c.totalSpend?admMoney(c.totalSpend):'Free'}</span>
+                            </td>
+                            <td style={{ padding:'12px 16px' }}>
+                              <span style={{ fontFamily:'Barlow Condensed,system-ui', fontSize:17, fontWeight:800, color:ADM.text }}>{c.bookingCount}</span>
+                            </td>
+                            <td style={{ padding:'12px 16px', minWidth:130 }}>
+                              <EngagementBar score={c.engagementScore} size="sm" />
+                              <span style={{ fontFamily:'Nunito,system-ui', fontSize:11, color:ADM.light }}>{c.engagementScore}/100</span>
+                            </td>
+                            <td style={{ padding:'12px 16px' }}>
+                              <div style={{ display:'flex', gap:5, flexWrap:'wrap', maxWidth:180 }}>
+                                {c.tags.slice(0,3).map(t=><CrmTag key={t} tag={t} />)}
+                                {c.tags.length>3 && <span style={{ fontFamily:'Nunito,system-ui', fontSize:11.5, color:ADM.light, alignSelf:'center' }}>+{c.tags.length-3}</span>}
+                              </div>
+                            </td>
+                            <td style={{ padding:'12px 16px', fontFamily:'Nunito,system-ui', fontSize:12.5, color:ADM.muted, whiteSpace:'nowrap' }}>
+                              {admTimeAgo(c.lastActivity)}
+                            </td>
+                            <td style={{ padding:'12px 12px', textAlign:'right' }}>
+                              <AdmIcon name="chevronRight" size={16} color={ADM.light} />
+                            </td>
+                          </tr>
+                        )
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+
+                <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'12px 18px', borderTop:`1px solid ${ADM.border}`, flexWrap:'wrap', gap:10 }}>
+                  <span style={{ fontFamily:'Nunito,system-ui', fontSize:12.5, color:ADM.muted }}>
+                    {filtered.length ? `${pg*PER+1}–${Math.min(filtered.length,pg*PER+PER)} of ${filtered.length}` : '0'}
+                  </span>
+                  <div style={{ display:'flex', gap:6 }}>
+                    <button onClick={()=>setPage(Math.max(0,pg-1))} disabled={pg===0}
+                      style={{ width:32, height:32, borderRadius:8, border:`1px solid ${ADM.border}`, background:'#fff', cursor:pg===0?'not-allowed':'pointer', opacity:pg===0?.45:1, display:'flex', alignItems:'center', justifyContent:'center' }}>
+                      <AdmIcon name="chevronLeft" size={15} color={ADM.muted} />
+                    </button>
+                    <span style={{ fontFamily:'Barlow Condensed,system-ui', fontSize:14, fontWeight:800, color:ADM.text, minWidth:64, textAlign:'center', lineHeight:'32px' }}>{pg+1} / {pages}</span>
+                    <button onClick={()=>setPage(Math.min(pages-1,pg+1))} disabled={pg>=pages-1}
+                      style={{ width:32, height:32, borderRadius:8, border:`1px solid ${ADM.border}`, background:'#fff', cursor:pg>=pages-1?'not-allowed':'pointer', opacity:pg>=pages-1?.45:1, display:'flex', alignItems:'center', justifyContent:'center' }}>
+                      <AdmIcon name="chevronRight" size={15} color={ADM.muted} />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </>
+        )}
       </div>
 
       {selected && <CrmDrawer contact={selected} allTags={ALL_TAGS} onClose={()=>setSelected(null)} />}
