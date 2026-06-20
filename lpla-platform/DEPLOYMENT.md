@@ -1,25 +1,40 @@
 # Deployment
 
-This repo is a monorepo with two Vercel projects:
+This repo is a monorepo with two Vercel projects, both connected to this
+GitHub repo and auto-deploying from `main`:
 
-- **Admin** (`lpla-platform/`, Next.js) — Vercel project `locoporlaaventura`
-- **Customer** (repo root, Vite) — Vercel project `locoporlaaventura-k1oz3`
+- **Admin** (`lpla-platform/`, Next.js) — Vercel project `locoporlaaventura`,
+  Root Directory = `lpla-platform`
+- **Customer** (repo root, Vite) — Vercel project `locoporlaaventura-k1oz3`,
+  Root Directory = repo root
 
-Each project uses an `ignoreCommand` in its `vercel.json` so it only rebuilds
-when its own files change, which conserves the Hobby-plan build budget:
+## How auto-deploy works
 
-- Admin builds only when files under `lpla-platform/` change.
-- Customer builds only when `src/`, `public/`, `index.html`, `package.json`,
-  `vite.config.js`, or `vercel.json` change.
+A push to `main` fires Vercel's webhook for both projects. Each project's
+`ignoreCommand` (in its `vercel.json`) then decides whether that project
+actually rebuilds, so a change to one app doesn't burn a build on the other.
 
-## Triggering a deploy
+A normal `git push origin main` is enough to trigger deploys.
 
-Vercel builds the **latest commit on `main`**, and the per-project
-`ignoreCommand` then decides which project(s) actually rebuild. If a push does
-not produce a new deployment, trigger one by pushing a commit through the
-GitHub API (which reliably fires the Vercel webhook) or by using a Vercel
-Deploy Hook.
+### ignoreCommand and the Root Directory (important)
 
-> Note: a commit that only changes files outside `lpla-platform/` will not
-> rebuild the admin app, and vice-versa. To force an admin rebuild, the commit
-> must touch something under `lpla-platform/`.
+Vercel runs the `ignoreCommand` **from the project's Root Directory**, and all
+paths are relative to it. For the admin project (Root Directory =
+`lpla-platform`) the command must reference the current directory, **not**
+`lpla-platform/`:
+
+    git diff --quiet HEAD^ HEAD -- .
+
+Using `-- lpla-platform/` here resolves to `lpla-platform/lpla-platform/`,
+which never changes, so `git diff --quiet` always exits 0 — which tells Vercel
+to skip the build. That silently CANCELED every admin deployment until it was
+fixed. If admin deploys ever start canceling again, check this first.
+
+## Manual deploy (CLI)
+
+Run from the **repo root** (not `lpla-platform/`) so the Root Directory is
+applied exactly once, with a Vercel token:
+
+    vercel pull --yes --environment=production --token=$TOKEN
+    vercel build --prod --token=$TOKEN
+    vercel deploy --prebuilt --prod --token=$TOKEN
