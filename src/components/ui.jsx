@@ -295,9 +295,11 @@ export function EventCard({ event, lang, onBook }) {
           <span style={{ fontFamily:'Nunito,system-ui', fontSize:13, color:WEB.textMuted, display:'flex', alignItems:'center', gap:5 }}>
             <span>📍</span> {event.location}
           </span>
-          <span style={{ fontFamily:'Nunito,system-ui', fontSize:12, color:WEB.textLight, display:'flex', alignItems:'center', gap:5 }}>
-            <span>⏱️</span> {event.duration}
-          </span>
+          {event.duration && (
+            <span style={{ fontFamily:'Nunito,system-ui', fontSize:12, color:WEB.textLight, display:'flex', alignItems:'center', gap:5 }}>
+              <span>⏱️</span> {event.duration}
+            </span>
+          )}
         </div>
         <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', paddingTop:12, borderTop:`1px solid ${WEB.border}` }}>
           <span style={{ fontFamily:'Barlow Condensed,system-ui', fontSize:24, fontWeight:800, color: event.isFree ? WEB.green : WEB.teal }}>
@@ -338,11 +340,17 @@ export function NewsletterSection({ lang }) {
   const [sms, setSms] = useState(false);
   const [mkt, setMkt] = useState(false);
   const [done, setDone] = useState(false);
+  const [error, setError] = useState('');
   const { isMobile } = useBreakpoint();
 
   function handleSubmit(e) {
     e.preventDefault();
-    if (email) setDone(true);
+    if (!email.trim() || !/^[^@]+@[^@]+\.[^@]+$/.test(email)) {
+      setError(L('Por favor ingresa un email válido', 'Please enter a valid email'));
+      return;
+    }
+    setError('');
+    setDone(true);
   }
 
   return (
@@ -368,7 +376,8 @@ export function NewsletterSection({ lang }) {
           </div>
         ) : (
           <form onSubmit={handleSubmit} style={{ maxWidth:500, margin:'0 auto', display:'flex', flexDirection:'column', gap:12 }}>
-            <input type="email" value={email} onChange={e => setEmail(e.target.value)} required placeholder={L('tu@correo.com', 'your@email.com')} style={{ height:50, borderRadius:12, border:'1.5px solid rgba(255,255,255,.2)', background:'rgba(255,255,255,.1)', color:'#fff', padding:'0 16px', fontFamily:'Nunito,system-ui', fontSize:16, outline:'none', backdropFilter:'blur(8px)' }} />
+            <input type="email" value={email} onChange={e => { setEmail(e.target.value); if (error) setError(''); }} placeholder={L('tu@correo.com', 'your@email.com')} style={{ height:50, borderRadius:12, border:`1.5px solid ${error ? '#E74C3C' : 'rgba(255,255,255,.2)'}`, background:'rgba(255,255,255,.1)', color:'#fff', padding:'0 16px', fontFamily:'Nunito,system-ui', fontSize:16, outline:'none', backdropFilter:'blur(8px)' }} />
+            {error && <div style={{ fontFamily:'Nunito,system-ui', fontSize:12, color:'#E74C3C', marginTop:4 }}>{error}</div>}
             <input type="tel" value={phone} onChange={e => setPhone(e.target.value)} placeholder={`📱 ${L('Teléfono para SMS (opcional)', 'Phone for SMS (optional)')}`} style={{ height:50, borderRadius:12, border:'1.5px solid rgba(255,255,255,.2)', background:'rgba(255,255,255,.1)', color:'#fff', padding:'0 16px', fontFamily:'Nunito,system-ui', fontSize:15, outline:'none', backdropFilter:'blur(8px)' }} />
             <label style={{ display:'flex', gap:10, alignItems:'flex-start', cursor:'pointer', textAlign:'left' }}>
               <input type="checkbox" checked={sms} onChange={e => setSms(e.target.checked)} style={{ marginTop:3, width:18, height:18, accentColor:WEB.green, flexShrink:0 }} />
@@ -408,16 +417,32 @@ export function WebFooter({ lang }) {
               {L('Loco por la Aventura es una organización sin fines de lucro 501(c)(3) con sede en Oregon, dedicada a promover la equidad educativa, el acceso al aire libre y la justicia ambiental para la comunidad latina — y más allá.', 'Loco por la Aventura is a 501(c)(3) nonprofit organization based in Oregon, dedicated to advancing educational equity, outdoor access, and environmental justice for the Latino community — and beyond.')}
             </p>
             <div style={{ display:'flex', gap:10, marginTop:16 }}>
-              {['instagram', 'facebook', 'whatsapp'].map(s => (
-                <div key={s} style={{ width:36, height:36, borderRadius:10, background:'rgba(255,255,255,.1)', display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer' }}>
-                  <span style={{ fontSize:16 }}>{s==='instagram'?'📸':s==='facebook'?'👤':'💬'}</span>
-                </div>
+              {[
+                { id:'instagram', icon:'📸', href:'https://www.instagram.com/locoporlaaventura/' },
+                { id:'facebook', icon:'👤', href:'https://www.facebook.com/locoporlaaventura/' },
+                { id:'whatsapp', icon:'💬', href:'https://wa.me/15035551234' },
+              ].map(s => (
+                <a key={s.id} href={s.href} target="_blank" rel="noopener noreferrer" style={{ width:36, height:36, borderRadius:10, background:'rgba(255,255,255,.1)', display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', textDecoration:'none' }}>
+                  <span style={{ fontSize:16 }}>{s.icon}</span>
+                </a>
               ))}
             </div>
           </div>
           {[
-            { title: L('Eventos', 'Events'), items: ['Escalada', 'Senderismo', L('Talleres', 'Workshops'), L('Expediciones', 'Expeditions'), L('Keynotes', 'Keynotes')] },
-            { title: L('Comunidad', 'Community'), items: [L('Voluntario', 'Volunteer'), L('Tienda', 'Shop'), L('Blog', 'Blog'), L('Sobre Nosotros', 'About Us'), L('Contacto', 'Contact')] },
+            { title: L('Eventos', 'Events'), items: [
+              { label: 'Escalada', href: '#' },
+              { label: 'Senderismo', href: '#' },
+              { label: L('Talleres', 'Workshops'), href: '#' },
+              { label: L('Expediciones', 'Expeditions'), href: '#' },
+              { label: L('Keynotes', 'Keynotes'), href: '#' },
+            ] },
+            { title: L('Comunidad', 'Community'), items: [
+              { label: L('Voluntario', 'Volunteer'), href: '#' },
+              { label: L('Tienda', 'Shop'), href: '#' },
+              { label: L('Blog', 'Blog'), href: '#' },
+              { label: L('Sobre Nosotros', 'About Us'), href: '#' },
+              { label: L('Contacto', 'Contact'), href: '#' },
+            ] },
             { title: L('Legal', 'Legal'), items: [
               { label: L('Política de Privacidad', 'Privacy Policy'), href: 'https://locoporlaaventura.com/pages/privacy-policy' },
               { label: L('Términos de Servicio', 'Terms of Service'), href: 'https://locoporlaaventura.com/pages/terms-of-service' },
@@ -428,10 +453,9 @@ export function WebFooter({ lang }) {
               {col.items.map(item => {
                 const label = typeof item === 'string' ? item : item.label
                 const href = typeof item === 'string' ? null : item.href
-                return href ? (
-                  <a key={label} href={href} target="_blank" rel="noopener noreferrer" style={{ display:'block', fontFamily:'Nunito,system-ui', fontSize:14, color:'rgba(255,255,255,.55)', marginBottom:8, cursor:'pointer', textDecoration:'none' }}>{label}</a>
-                ) : (
-                  <div key={label} style={{ fontFamily:'Nunito,system-ui', fontSize:14, color:'rgba(255,255,255,.55)', marginBottom:8, cursor:'pointer' }}>{label}</div>
+                const isExternal = href && href !== '#';
+                return (
+                  <a key={label} href={href || '#'} {...(isExternal ? { target:'_blank', rel:'noopener noreferrer' } : {})} style={{ display:'block', fontFamily:'Nunito,system-ui', fontSize:14, color:'rgba(255,255,255,.55)', marginBottom:8, cursor:'pointer', textDecoration:'none' }}>{label}</a>
                 )
               })}
             </div>

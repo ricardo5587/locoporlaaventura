@@ -17,7 +17,10 @@ export function EventDetailPage({ event, lang, onConfirm, onBack }) {
   const [payStep, setPayStep] = useState('form'); // 'form' | 'processing' | 'done'
   const [submitError, setSubmitError] = useState('');
 
-  const setF = (k, v) => setForm(f => ({ ...f, [k]:v }));
+  const setF = (k, v) => {
+    setForm(f => ({ ...f, [k]:v }));
+    if (errors[k]) setErrors(prev => { const { [k]: _, ...rest } = prev; return rest; });
+  };
 
   const selectedTicket = event.tickets.find(t => t.id === form.ticketId) || event.tickets[0];
   const total = (selectedTicket?.price || 0) * form.quantity;
@@ -86,6 +89,11 @@ export function EventDetailPage({ event, lang, onConfirm, onBack }) {
       </div>
 
       <div style={{ ...MAX_W, padding: isMobile ? '28px 20px' : '40px 24px' }}>
+        <button onClick={onBack} style={{ background:'none', border:'none', cursor:'pointer', padding:'0 0 16px', display:'flex', alignItems:'center', gap:6, fontFamily:'Nunito,system-ui', fontSize:14, fontWeight:600, color:WEB.teal }}
+          onMouseOver={e => e.currentTarget.style.color=WEB.green}
+          onMouseOut={e => e.currentTarget.style.color=WEB.teal}>
+          ← {L('Volver a Eventos', 'Back to Events')}
+        </button>
         <div style={{ display:'grid', gridTemplateColumns: isMobile || isTablet ? '1fr' : '1fr 420px', gap:40, alignItems:'start' }}>
 
           {/* LEFT -- Event info */}
@@ -98,7 +106,7 @@ export function EventDetailPage({ event, lang, onConfirm, onBack }) {
             <div style={{ display:'flex', gap:8, flexWrap:'wrap', marginBottom:20 }}>
               {[
                 `\u{1F4C5} ${fmtDate(event.date, lang)}`,
-                `\u{1F550} ${event.time} \u00b7 ${event.duration}`,
+                `\u{1F550} ${event.time}${event.duration ? ` \u00b7 ${event.duration}` : ''}`,
                 `\u{1F4CD} ${event.location}`,
                 `\u{1F465} ${event.spotsLeft}/${event.totalSpots} ${L('plazas', 'spots')}`,
               ].map(chip => (
@@ -198,11 +206,13 @@ export function EventDetailPage({ event, lang, onConfirm, onBack }) {
                     <label style={{ fontFamily:'Nunito,system-ui', fontSize:12, fontWeight:700, color:WEB.textMuted, textTransform:'uppercase', letterSpacing:.8, display:'block', marginBottom:8 }}>
                       {L('Personas', 'People')}
                     </label>
+                    {(() => { const maxQty = Math.min(event.spotsLeft || 10, 10); const atMax = form.quantity >= maxQty; return (
                     <div style={{ display:'flex', alignItems:'center', gap:0, background:WEB.bgAlt, borderRadius:12, width:'fit-content', border:`1.5px solid ${WEB.border}` }}>
-                      <button onClick={() => setF('quantity', Math.max(1, form.quantity-1))} style={{ width:44, height:44, border:'none', background:'transparent', cursor:'pointer', fontSize:20, color:WEB.teal, fontWeight:700 }}>{'\u2212'}</button>
+                      <button onClick={() => setF('quantity', Math.max(1, form.quantity-1))} style={{ width:44, height:44, border:'none', background:'transparent', cursor: form.quantity <= 1 ? 'not-allowed' : 'pointer', fontSize:20, color: form.quantity <= 1 ? WEB.textLight : WEB.teal, fontWeight:700 }}>{'\u2212'}</button>
                       <span style={{ minWidth:36, textAlign:'center', fontFamily:'Barlow Condensed,system-ui', fontSize:20, fontWeight:800, color:WEB.text }}>{form.quantity}</span>
-                      <button onClick={() => setF('quantity', Math.min(event.spotsLeft || 10, form.quantity+1))} style={{ width:44, height:44, border:'none', background:'transparent', cursor:'pointer', fontSize:20, color:WEB.green, fontWeight:700 }}>+</button>
+                      <button onClick={() => { if (!atMax) setF('quantity', form.quantity+1); }} disabled={atMax} style={{ width:44, height:44, border:'none', background:'transparent', cursor: atMax ? 'not-allowed' : 'pointer', fontSize:20, color: atMax ? WEB.textLight : WEB.green, fontWeight:700 }}>+</button>
                     </div>
+                    ); })()}
                   </div>
                   {total > 0 && (
                     <div style={{ textAlign:'right' }}>
@@ -267,7 +277,7 @@ export function EventDetailPage({ event, lang, onConfirm, onBack }) {
 
                 {/* Privacy acceptance (required) */}
                 <label style={{ display:'flex', gap:10, alignItems:'flex-start', cursor:'pointer', marginBottom:errors.privacy?4:18 }}>
-                  <input type="checkbox" checked={form.privacyAccepted} onChange={e => setF('privacyAccepted', e.target.checked)} style={{ marginTop:3, width:18, height:18, accentColor:WEB.teal, flexShrink:0 }} />
+                  <input type="checkbox" checked={form.privacyAccepted} onChange={e => { setF('privacyAccepted', e.target.checked); if (e.target.checked) setErrors(prev => { const { privacy, ...rest } = prev; return rest; }); }} style={{ marginTop:3, width:18, height:18, accentColor:WEB.teal, flexShrink:0 }} />
                   <span style={{ fontFamily:'Nunito,system-ui', fontSize:13, color:WEB.textMuted, lineHeight:1.5 }}>
                     {L('* He le\u00eddo y acepto la ', '* I have read and accept the ')}
                     <span style={{ color:WEB.teal, fontWeight:700, cursor:'pointer', textDecoration:'underline' }}>{L('Pol\u00edtica de Privacidad', 'Privacy Policy')}</span>
