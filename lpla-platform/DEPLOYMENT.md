@@ -16,6 +16,18 @@ actually rebuilds, so a change to one app doesn't burn a build on the other.
 
 A normal `git push origin main` is enough to trigger deploys.
 
+### Commit author must match a Git account (important)
+
+Vercel **blocks** a deployment if the triggering commit's *author* email does
+not map to a real Git account (e.g. `noreply@anthropic.com`). The commit's
+*committer* email is not checked by Vercel. So commits must be authored with a
+real account email:
+
+    git commit --author="Ricardo <ricardo8755@gmail.com>" -m "..."
+
+(The committer may remain whatever the tooling sets; only the author email
+needs to match a Git account for Vercel to accept the deploy.)
+
 ### ignoreCommand and the Root Directory (important)
 
 Vercel runs the `ignoreCommand` **from the project's Root Directory**, and all
