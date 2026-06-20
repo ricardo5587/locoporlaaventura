@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { WEB } from './lib/tokens';
-import { LangToggleWeb } from './components/ui';
+import { LangToggleWeb, WebFooter } from './components/ui';
 import { HomePage } from './pages/HomePage';
 import { EventDetailPage } from './pages/EventDetailPage';
 import { ConfirmationPage } from './pages/ConfirmationPage';
@@ -79,6 +79,8 @@ export default function App() {
           onBack={() => setPage('home')}
         />
       )}
+
+      <WebFooter lang={lang} />
 
     </div>
   );
