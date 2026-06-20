@@ -829,6 +829,19 @@ export default function AdminCRM({ events }) {
 
   const thStyle = { padding:'10px 16px', textAlign:'left', fontFamily:'Barlow Condensed,system-ui', fontSize:11, fontWeight:800, color:ADM.light, textTransform:'uppercase', letterSpacing:1.1, whiteSpace:'nowrap', cursor:'pointer', userSelect:'none' }
 
+  if (klaviyoLoading && klaviyoContacts.length === 0) {
+    return (
+      <div style={{ display:'flex', flex:1, overflow:'hidden', background:ADM.bg, alignItems:'center', justifyContent:'center' }}>
+        <div style={{ textAlign:'center' }}>
+          <div style={{ width:36, height:36, border:`3px solid ${ADM.border}`, borderTopColor:ADM.primary, borderRadius:'50%', animation:'lpla-spin 0.8s linear infinite', margin:'0 auto 16px' }} />
+          <div style={{ fontFamily:'Barlow Condensed,system-ui', fontSize:18, fontWeight:800, color:ADM.text, letterSpacing:.4, textTransform:'uppercase' }}>Loading contacts…</div>
+          <div style={{ fontFamily:'Nunito,system-ui', fontSize:13, color:ADM.muted, marginTop:6 }}>Fetching from cache</div>
+          <style>{`@keyframes lpla-spin { to { transform: rotate(360deg) } }`}</style>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div style={{ display:'flex', flex:1, overflow:'hidden', background:ADM.bg }}>
 
