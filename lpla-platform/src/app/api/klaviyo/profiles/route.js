@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { requireRole } from '@/lib/auth';
-import { getAllProfiles, getProfileLists } from '@/lib/klaviyo';
+import { getAllProfiles, getLists, getListMembers } from '@/lib/klaviyo';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -30,24 +30,32 @@ export async function GET(request) {
       return NextResponse.json(profilesCache, { headers: CORS });
     }
 
-    // Fetch fresh profiles
-    const profiles = await getAllProfiles();
+    // Fetch fresh profiles and all lists in parallel
+    const [profiles, lists] = await Promise.all([getAllProfiles(), getLists()]);
 
-    // Enrich with list memberships
-    const enriched = await Promise.all(
-      profiles.map(async (p) => {
+    // Build a profileId -> [{id, name}] map by fetching each list's members.
+    // This is O(#lists) API calls instead of O(#profiles), so it won't time out.
+    const profileListMap = {};
+    await Promise.all(
+      lists.map(async (list) => {
+        const listName = list.attributes?.name || 'Unnamed';
         try {
-          const lists = await getProfileLists(p.id);
-          return {
-            ...p,
-            lists: lists.map(l => ({ id: l.id, name: l.attributes?.name || 'Unnamed' })),
-          };
+          const memberIds = await getListMembers(list.id);
+          memberIds.forEach((pid) => {
+            if (!profileListMap[pid]) profileListMap[pid] = [];
+            profileListMap[pid].push({ id: list.id, name: listName });
+          });
         } catch (err) {
-          console.error(`Error fetching lists for profile ${p.id}:`, err);
-          return { ...p, lists: [] };
+          console.error(`Error fetching members for list ${listName}:`, err);
         }
       })
     );
+
+    // Enrich each profile from the map (no per-profile API call)
+    const enriched = profiles.map((p) => ({
+      ...p,
+      lists: profileListMap[p.id] || [],
+    }));
 
     // Cache it
     profilesCache = enriched;

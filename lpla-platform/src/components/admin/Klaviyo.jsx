@@ -103,12 +103,9 @@ export default function AdminKlaviyo() {
 
   return (
     <div style={{ flex: 1, overflow: 'auto', padding: '28px 32px' }}>
-      <div style={{ marginBottom: 28, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-        <div>
-          <h1 style={{ fontFamily: 'Barlow Condensed,system-ui', fontSize: 28, fontWeight: 800, color: ADM.text, margin: 0, textTransform: 'uppercase', letterSpacing: .5 }}>Email Marketing</h1>
-          <p style={{ fontFamily: 'Nunito,system-ui', fontSize: 14, color: ADM.muted, margin: '4px 0 0' }}>Manage Klaviyo lists, segments, and campaigns.</p>
-        </div>
-        <button onClick={loadData} style={{ padding: '8px 16px', borderRadius: 8, border: `1px solid ${ADM.border}`, background: ADM.primary, color: '#fff', fontFamily: 'Nunito,system-ui', fontSize: 13, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap', marginLeft: 16 }}>Refresh from Klaviyo</button>
+      <div style={{ marginBottom: 28 }}>
+        <h1 style={{ fontFamily: 'Barlow Condensed,system-ui', fontSize: 28, fontWeight: 800, color: ADM.text, margin: 0, textTransform: 'uppercase', letterSpacing: .5 }}>Email Marketing</h1>
+        <p style={{ fontFamily: 'Nunito,system-ui', fontSize: 14, color: ADM.muted, margin: '4px 0 0' }}>Manage Klaviyo lists, segments, and campaigns.</p>
       </div>
 
       {loading ? (

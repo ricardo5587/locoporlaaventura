@@ -84,6 +84,25 @@ export async function getProfileLists(profileId) {
   return data.data || [];
 }
 
+// Fetch all profile IDs that are members of a given list (paginated).
+// This lets us build a profile->lists map with O(#lists) calls instead of
+// O(#profiles) calls, avoiding serverless timeouts.
+export async function getListMembers(listId) {
+  const ids = [];
+  let cursor = null;
+  do {
+    const params = new URLSearchParams({ 'page[size]': '100' });
+    if (cursor) params.set('page[cursor]', cursor);
+    const data = await klaviyoRequest(`/lists/${listId}/relationships/profiles?${params}`);
+    if (Array.isArray(data.data)) {
+      ids.push(...data.data.map(d => d.id));
+    }
+    const nextLink = data.links?.next;
+    cursor = nextLink ? new URL(nextLink).searchParams.get('page[cursor]') : null;
+  } while (cursor);
+  return ids;
+}
+
 export async function createCampaign(name, subject, listId, content) {
   return klaviyoRequest('/campaigns', 'POST', {
     data: {

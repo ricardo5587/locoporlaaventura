@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect, useMemo, useRef } from 'react'
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import AdmIcon from '@/components/admin/AdmIcon'
 import { OvKpi } from '@/components/admin/Overview'
 import { ADM } from '@/lib/tokens'
@@ -662,32 +662,32 @@ export default function AdminCRM({ events }) {
   const [klaviyoContacts, setKlaviyoContacts] = useState([])
   const [klaviyoLoading, setKlaviyoLoading] = useState(false)
 
-  useEffect(() => {
+  const loadKlaviyo = useCallback(async (force = false) => {
     const token = typeof window !== 'undefined' ? localStorage.getItem('lpla_admin_token') : ''
     if (!token) {
       console.log('No auth token found')
       return
     }
     setKlaviyoLoading(true)
-    fetch(`${API}/api/klaviyo/profiles`, { headers: { Authorization: `Bearer ${token}` } })
-      .then(r => {
-        if (!r.ok) {
-          console.error('Klaviyo profiles fetch failed:', r.status, r.statusText)
-          return []
-        }
-        return r.json()
-      })
-      .then(data => {
-        console.log('Klaviyo profiles response:', data)
-        if (Array.isArray(data)) {
-          setKlaviyoContacts(data.map(klaviyoProfileToContact))
-        }
-      })
-      .catch(err => {
-        console.error('Klaviyo profiles error:', err)
-      })
-      .finally(() => setKlaviyoLoading(false))
+    try {
+      const url = `${API}/api/klaviyo/profiles${force ? '?refresh=1' : ''}`
+      const r = await fetch(url, { headers: { Authorization: `Bearer ${token}` } })
+      if (!r.ok) {
+        console.error('Klaviyo profiles fetch failed:', r.status, r.statusText)
+        return
+      }
+      const data = await r.json()
+      // Endpoint returns a bare array; tolerate { profiles: [...] } too
+      const list = Array.isArray(data) ? data : (Array.isArray(data?.profiles) ? data.profiles : [])
+      setKlaviyoContacts(list.map(klaviyoProfileToContact))
+    } catch (err) {
+      console.error('Klaviyo profiles error:', err)
+    } finally {
+      setKlaviyoLoading(false)
+    }
   }, [])
+
+  useEffect(() => { loadKlaviyo(false) }, [loadKlaviyo])
 
   const allContacts = useMemo(() => {
     const map = {}
@@ -823,6 +823,9 @@ export default function AdminCRM({ events }) {
               <p style={{ fontFamily:'Nunito,system-ui', fontSize:14, color:ADM.muted, margin:'4px 0 0' }}>Every person who has booked, signed up, or attended an LPLA event.</p>
             </div>
             <div style={{ display:'flex', gap:10 }}>
+              <button onClick={() => loadKlaviyo(true)} disabled={klaviyoLoading} style={{ display:'inline-flex', alignItems:'center', gap:7, padding:'10px 18px', borderRadius:ADM.radius, border:`1px solid ${ADM.border}`, background:ADM.card, color:ADM.text, cursor:klaviyoLoading?'default':'pointer', opacity:klaviyoLoading?.6:1, fontFamily:'Barlow Condensed,system-ui', fontSize:15, fontWeight:800, letterSpacing:.4 }}>
+                <AdmIcon name="mail" size={16} color={ADM.muted} /> {klaviyoLoading ? 'Syncing…' : 'Refresh from Klaviyo'}
+              </button>
               <button onClick={() => setShowImport(true)} style={{ display:'inline-flex', alignItems:'center', gap:7, padding:'10px 18px', borderRadius:ADM.radius, border:`1px solid ${ADM.border}`, background:ADM.card, color:ADM.text, cursor:'pointer', fontFamily:'Barlow Condensed,system-ui', fontSize:15, fontWeight:800, letterSpacing:.4 }}>
                 <AdmIcon name="download" size={16} color={ADM.muted} style={{ transform:'rotate(180deg)' }} /> Import
               </button>
