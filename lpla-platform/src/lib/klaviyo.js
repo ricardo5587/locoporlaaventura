@@ -103,6 +103,20 @@ export async function getListMembers(listId) {
   return ids;
 }
 
+export async function trackEvent(eventName, email, properties = {}, profile = {}) {
+  return klaviyoRequest('/events', 'POST', {
+    data: {
+      type: 'event',
+      attributes: {
+        metric: { data: { type: 'metric', attributes: { name: eventName } } },
+        profile: { data: { type: 'profile', attributes: { email, ...profile } } },
+        properties,
+        time: new Date().toISOString(),
+      },
+    },
+  });
+}
+
 export async function createCampaign(name, subject, listId, content) {
   return klaviyoRequest('/campaigns', 'POST', {
     data: {

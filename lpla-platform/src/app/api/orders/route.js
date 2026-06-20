@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { requireAuth } from '@/lib/auth';
-import { subscribeToList } from '@/lib/klaviyo';
+import { subscribeToList, trackEvent } from '@/lib/klaviyo';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -81,6 +81,10 @@ export async function POST(request) {
     // decrement spots_left on the event
     await supabase.rpc('decrement_spots', { event_id: eventId, qty });
 
+    // Fetch event details for confirmation email
+    const { data: event } = await supabase
+      .from('events').select('*').eq('id', eventId).single();
+
     // Subscribe to Klaviyo list if configured
     const klaviyoListId = process.env.KLAVIYO_DEFAULT_LIST_ID;
     if (klaviyoListId && emailConsent) {
@@ -89,6 +93,33 @@ export async function POST(request) {
       } catch (err) {
         console.error('Klaviyo subscription failed:', err.message);
       }
+    }
+
+    // Track "Booking Confirmed" event in Klaviyo to trigger confirmation email flow
+    try {
+      const confNum = `LPLA-${order.id.toString().slice(-6).toUpperCase()}`;
+      await trackEvent('Booking Confirmed', email, {
+        confirmation_number: confNum,
+        event_name_en: event?.title_en || '',
+        event_name_es: event?.title_es || '',
+        event_date: event?.date || '',
+        event_time: event?.time || '',
+        event_duration: event?.duration || '',
+        event_location: event?.location || '',
+        event_category: event?.category || '',
+        ticket_type: ticketLabel || '',
+        quantity: qty,
+        unit_price: amount / (qty || 1),
+        total_amount: amount,
+        is_free: amount === 0,
+        order_id: order.id,
+      }, {
+        first_name: firstName,
+        last_name: lastName,
+        phone_number: phone,
+      });
+    } catch (err) {
+      console.error('Klaviyo booking event tracking failed:', err.message);
     }
 
     return NextResponse.json(mapOrder(order), { status: 201, headers: CORS });

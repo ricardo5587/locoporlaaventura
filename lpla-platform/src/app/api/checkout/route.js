@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { chargeCard } from '@/lib/clover';
+import { trackEvent } from '@/lib/klaviyo';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -61,6 +62,33 @@ export async function POST(request) {
 
     // decrement spots
     await supabase.rpc('decrement_spots', { event_id: eventId, qty });
+
+    // Track "Booking Confirmed" event in Klaviyo to trigger confirmation email flow
+    try {
+      const confNum = `LPLA-${order.id.toString().slice(-6).toUpperCase()}`;
+      await trackEvent('Booking Confirmed', email, {
+        confirmation_number: confNum,
+        event_name_en: event.title_en || '',
+        event_name_es: event.title_es || '',
+        event_date: event.date || '',
+        event_time: event.time || '',
+        event_duration: event.duration || '',
+        event_location: event.location || '',
+        event_category: event.category || '',
+        ticket_type: ticketLabel || '',
+        quantity: qty,
+        unit_price: ticket.price,
+        total_amount: amount,
+        is_free: amount === 0,
+        order_id: order.id,
+      }, {
+        first_name: firstName,
+        last_name: lastName,
+        phone_number: phone,
+      });
+    } catch (err) {
+      console.error('Klaviyo booking event tracking failed:', err.message);
+    }
 
     return NextResponse.json({
       order: {
