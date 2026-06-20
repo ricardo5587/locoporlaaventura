@@ -115,7 +115,7 @@ function CrmTag({ tag, onRemove }) {
 
 function CrmDrawer({ contact: base, allTags, onClose }) {
   const [show, setShow] = useState(false)
-  const [tab, setTab] = useState('timeline')
+  const [tab, setTab] = useState('profile')
   const [tags, setTags] = useState(base.tags)
   const [notes, setNotes] = useState(() => {
     try { return JSON.parse(localStorage.getItem('lpla_crm_notes_'+base.id)||'[]') } catch { return [] }
@@ -144,7 +144,9 @@ function CrmDrawer({ contact: base, allTags, onClose }) {
   const cat = c.categories[0]
   const catColor = { Escalada:'#294154', Senderismo:'#546207', Taller:'#A54399', Keynote:'#5E8BBD', Social:'#D9831F', 'Expedición':'#B32317', Voluntario:'#00897A' }[cat] || ADM.primary
 
+  const isKlaviyo = base.source === 'klaviyo'
   const TABS = [
+    { id:'profile',  label:'Profile',  icon:'people' },
     { id:'timeline', label:'Timeline', icon:'clock' },
     { id:'notes',    label:'Notes',    icon:'note'  },
     { id:'tags',     label:'Tags',     icon:'tag'   },
@@ -210,6 +212,50 @@ function CrmDrawer({ contact: base, allTags, onClose }) {
         </div>
 
         <div style={{ flex:1, overflow:'auto', padding:'18px 22px' }}>
+
+          {tab==='profile' && (
+            <div style={{ display:'flex', flexDirection:'column', gap:14 }}>
+              {[
+                { label:'Email', value:c.email, icon:'mail' },
+                { label:'Phone', value:c.phone, icon:'chat' },
+                { label:'Location', value:c.locationStr, icon:'pin' },
+                { label:'Timezone', value:c.timezone, icon:'clock' },
+                { label:'Klaviyo ID', value:c.klaviyoId, icon:'bolt' },
+                { label:'Created', value:c.klaviyoCreated ? new Date(c.klaviyoCreated).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : null, icon:'calendar' },
+                { label:'Last Updated', value:c.klaviyoUpdated ? new Date(c.klaviyoUpdated).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'}) : null, icon:'clock' },
+              ].filter(r=>r.value).map(r=>(
+                <div key={r.label} style={{ display:'flex', alignItems:'center', gap:12, padding:'10px 14px', background:ADM.bg, borderRadius:ADM.radius, border:`1px solid ${ADM.border}` }}>
+                  <AdmIcon name={r.icon} size={15} color={ADM.light} />
+                  <div style={{ flex:1, minWidth:0 }}>
+                    <div style={{ fontFamily:'Nunito,system-ui', fontSize:11, color:ADM.light, textTransform:'uppercase', letterSpacing:.6, fontWeight:700 }}>{r.label}</div>
+                    <div style={{ fontFamily:'Nunito,system-ui', fontSize:14, color:ADM.text, marginTop:2, wordBreak:'break-all' }}>{r.value}</div>
+                  </div>
+                </div>
+              ))}
+              {c.lists && c.lists.length > 0 && (
+                <div style={{ padding:'10px 14px', background:ADM.bg, borderRadius:ADM.radius, border:`1px solid ${ADM.border}` }}>
+                  <div style={{ fontFamily:'Nunito,system-ui', fontSize:11, color:ADM.light, textTransform:'uppercase', letterSpacing:.6, fontWeight:700, marginBottom:8 }}>
+                    <AdmIcon name="mail" size={13} color={ADM.light} style={{ marginRight:6, verticalAlign:'middle' }} />
+                    Klaviyo Lists
+                  </div>
+                  <div style={{ display:'flex', gap:6, flexWrap:'wrap' }}>
+                    {c.lists.map(l=>(
+                      <span key={l.id} style={{ display:'inline-flex', alignItems:'center', gap:5, padding:'4px 11px', borderRadius:12, background:`${ADM.primary}14`, border:`1px solid ${ADM.primary}33`, color:ADM.primary, fontFamily:'Barlow Condensed,system-ui', fontSize:12, fontWeight:800, letterSpacing:.3, textTransform:'uppercase' }}>
+                        {l.name}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {!isKlaviyo && (
+                <div style={{ padding:'14px', background:'#FFF8E1', borderRadius:ADM.radius, border:'1px solid #FFE082' }}>
+                  <div style={{ fontFamily:'Nunito,system-ui', fontSize:13, color:'#6D4C00', lineHeight:1.5 }}>
+                    This contact was created from a booking order. Sync with Klaviyo to see full profile data.
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
 
           {tab==='timeline' && (
             <div>
@@ -628,14 +674,23 @@ function klaviyoProfileToContact(p) {
   const updated = attr.updated ? new Date(attr.updated).getTime() : created
   const lists = p.lists || []
   const firstListName = lists.length > 0 ? lists[0].name : 'Other'
+  const loc = attr.location || {}
   return {
     id: email || p.id,
+    klaviyoId: p.id,
     name,
     firstName,
     lastName,
     initials: (firstName.charAt(0) + lastName.charAt(0)).toUpperCase() || email.charAt(0).toUpperCase(),
     email,
     phone: attr.phone_number || '',
+    city: loc.city || '',
+    region: loc.region || '',
+    country: loc.country || '',
+    timezone: loc.timezone || '',
+    locationStr: [loc.city, loc.region, loc.country].filter(Boolean).join(', '),
+    klaviyoCreated: attr.created || null,
+    klaviyoUpdated: attr.updated || null,
     orders: [],
     totalSpend: 0,
     bookingCount: 0,
@@ -660,14 +715,12 @@ export default function AdminCRM({ events }) {
     try { return JSON.parse(localStorage.getItem('lpla_crm_imported') || '[]') } catch { return [] }
   })
   const [klaviyoContacts, setKlaviyoContacts] = useState([])
-  const [klaviyoLoading, setKlaviyoLoading] = useState(false)
+  const [klaviyoLoading, setKlaviyoLoading] = useState(true)
+  const [lastSynced, setLastSynced] = useState(null)
 
   const loadKlaviyo = useCallback(async (force = false) => {
     const token = typeof window !== 'undefined' ? localStorage.getItem('lpla_admin_token') : ''
-    if (!token) {
-      console.log('No auth token found')
-      return
-    }
+    if (!token) return
     setKlaviyoLoading(true)
     try {
       const url = `${API}/api/klaviyo/profiles${force ? '?refresh=1' : ''}`
@@ -676,8 +729,10 @@ export default function AdminCRM({ events }) {
         console.error('Klaviyo profiles fetch failed:', r.status, r.statusText)
         return
       }
+      const cacheUpdated = r.headers.get('X-Cache-Updated')
+      if (cacheUpdated) setLastSynced(new Date(cacheUpdated))
+      else if (force) setLastSynced(new Date())
       const data = await r.json()
-      // Endpoint returns a bare array; tolerate { profiles: [...] } too
       const list = Array.isArray(data) ? data : (Array.isArray(data?.profiles) ? data.profiles : [])
       setKlaviyoContacts(list.map(klaviyoProfileToContact))
     } catch (err) {
@@ -822,7 +877,8 @@ export default function AdminCRM({ events }) {
               <h1 style={{ fontFamily:'Barlow Condensed,system-ui', fontSize:28, fontWeight:800, color:ADM.text, margin:0, textTransform:'uppercase', letterSpacing:.5 }}>Contacts &amp; Profiles</h1>
               <p style={{ fontFamily:'Nunito,system-ui', fontSize:14, color:ADM.muted, margin:'4px 0 0' }}>Every person who has booked, signed up, or attended an LPLA event.</p>
             </div>
-            <div style={{ display:'flex', gap:10 }}>
+            <div style={{ display:'flex', gap:10, alignItems:'center' }}>
+              {lastSynced && <span style={{ fontFamily:'Nunito,system-ui', fontSize:11.5, color:ADM.light, marginRight:4 }}>Last synced {admTimeAgo(lastSynced.getTime())}</span>}
               <button onClick={() => loadKlaviyo(true)} disabled={klaviyoLoading} style={{ display:'inline-flex', alignItems:'center', gap:7, padding:'10px 18px', borderRadius:ADM.radius, border:`1px solid ${ADM.border}`, background:ADM.card, color:ADM.text, cursor:klaviyoLoading?'default':'pointer', opacity:klaviyoLoading?.6:1, fontFamily:'Barlow Condensed,system-ui', fontSize:15, fontWeight:800, letterSpacing:.4 }}>
                 <AdmIcon name="mail" size={16} color={ADM.muted} /> {klaviyoLoading ? 'Syncing…' : 'Refresh from Klaviyo'}
               </button>

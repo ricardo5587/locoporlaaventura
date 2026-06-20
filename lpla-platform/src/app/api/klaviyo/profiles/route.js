@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { requireRole } from '@/lib/auth';
+import { supabase } from '@/lib/supabase';
 import { getAllProfiles, getLists, getListMembers } from '@/lib/klaviyo';
 
 const CORS = {
@@ -7,11 +8,6 @@ const CORS = {
   'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type, Authorization',
 };
-
-// Simple in-memory cache (resets on server restart)
-let profilesCache = null;
-let cacheTime = 0;
-const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
 export async function OPTIONS() {
   return new NextResponse(null, { status: 204, headers: CORS });
@@ -21,20 +17,25 @@ export async function GET(request) {
   const auth = requireRole(request, ['owner', 'editor']);
   if (auth.error) return auth.error;
 
-  try {
-    const now = Date.now();
-    const forceRefresh = new URL(request.url).searchParams.get('refresh') === '1';
+  const forceRefresh = new URL(request.url).searchParams.get('refresh') === '1';
 
-    // Return cached data if still fresh
-    if (profilesCache && !forceRefresh && (now - cacheTime) < CACHE_DURATION) {
-      return NextResponse.json(profilesCache, { headers: CORS });
+  try {
+    if (!forceRefresh) {
+      const { data: cached } = await supabase
+        .from('klaviyo_cache')
+        .select('data, updated_at')
+        .eq('id', 'profiles')
+        .single();
+
+      if (cached?.data && Array.isArray(cached.data) && cached.data.length > 0) {
+        return NextResponse.json(cached.data, {
+          headers: { ...CORS, 'X-Cache': 'hit', 'X-Cache-Updated': cached.updated_at },
+        });
+      }
     }
 
-    // Fetch fresh profiles and all lists in parallel
     const [profiles, lists] = await Promise.all([getAllProfiles(), getLists()]);
 
-    // Build a profileId -> [{id, name}] map by fetching each list's members.
-    // This is O(#lists) API calls instead of O(#profiles), so it won't time out.
     const profileListMap = {};
     await Promise.all(
       lists.map(async (list) => {
@@ -51,30 +52,20 @@ export async function GET(request) {
       })
     );
 
-    // Enrich each profile from the map (no per-profile API call)
     const enriched = profiles.map((p) => ({
       ...p,
       lists: profileListMap[p.id] || [],
     }));
 
-    // Cache it
-    profilesCache = enriched;
-    cacheTime = now;
+    await supabase
+      .from('klaviyo_cache')
+      .upsert({ id: 'profiles', data: enriched, updated_at: new Date().toISOString() });
 
-    return NextResponse.json(enriched, { headers: CORS });
+    return NextResponse.json(enriched, {
+      headers: { ...CORS, 'X-Cache': 'miss' },
+    });
   } catch (err) {
     console.error('Error fetching profiles:', err);
     return NextResponse.json({ error: err.message }, { status: 500, headers: CORS });
   }
-}
-
-export async function POST(request) {
-  const auth = requireRole(request, ['owner']);
-  if (auth.error) return auth.error;
-
-  // Force refresh cache
-  profilesCache = null;
-  cacheTime = 0;
-
-  return NextResponse.json({ success: true, message: 'Cache cleared' }, { headers: CORS });
 }
