@@ -73,7 +73,17 @@ export default function AdminPage() {
   const [events, setEvents] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  const [activePage, setActivePage] = useState('overview')
+  const [activePage, setActivePageRaw] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const hash = window.location.hash.replace('#', '')
+      if (hash) return hash
+    }
+    return 'overview'
+  })
+  function setActivePage(page) {
+    setActivePageRaw(page)
+    window.location.hash = page
+  }
   const [currentEvent, setCurrentEvent] = useState(null)
   const [openEditEvent, setOpenEditEvent] = useState(null)
 
