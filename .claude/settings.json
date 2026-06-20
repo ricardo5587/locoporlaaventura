@@ -1,0 +1,15 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "if echo \"$TOOL_INPUT\" | grep -q 'git push'; then curl -s -X POST 'https://api.vercel.com/v1/integrations/deploy/prj_bB50a0gZqTMrEEMK8iwpJn5AvtnJ/mRhV0JiXNn' > /dev/null 2>&1 && echo 'Vercel deploy triggered'; fi"
+          }
+        ]
+      }
+    ]
+  }
+}
