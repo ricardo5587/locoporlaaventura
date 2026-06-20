@@ -1,6 +1,7 @@
 'use client'
 import { useState } from 'react'
 import AdmIcon from '@/components/admin/AdmIcon'
+import { ADM } from '@/lib/tokens'
 
 const WIDGET_URL = 'https://locoporlaaventura-k1oz3.vercel.app'
 const ORG_ID = 'lpla-001'
@@ -175,7 +176,7 @@ function PreviewMock({ style, ADM }) {
   )
 }
 
-export default function AdminLaunch({ ADM }) {
+export default function AdminLaunch({ onPreview, events }) {
   const [style, setStyle] = useState('inline')
   const [copied, setCopied] = useState(false)
 
@@ -189,7 +190,8 @@ export default function AdminLaunch({ ADM }) {
   }
 
   function openPreview() {
-    window.open(WIDGET_URL, '_blank', 'noreferrer')
+    if (onPreview) onPreview()
+    else window.open(WIDGET_URL, '_blank', 'noreferrer')
   }
 
   return (
@@ -292,6 +294,23 @@ export default function AdminLaunch({ ADM }) {
             <AdmIcon name="launch" size={15} />
             Open Full Preview
           </button>
+        </div>
+      </div>
+
+      {/* Live test */}
+      <div style={{ marginTop: 30 }}>
+        <div style={{ fontFamily: 'Barlow Condensed,system-ui', fontSize: 14, fontWeight: 800, color: ADM.muted, textTransform: 'uppercase', letterSpacing: 1.5, marginBottom: 14 }}>3 · Test it live</div>
+        <div style={{ background: ADM.card, borderRadius: ADM.radiusMd, border: `1px solid ${ADM.border}`, overflow: 'hidden' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 16px', borderBottom: `1px solid ${ADM.border}`, background: '#F8FAFC' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span style={{ width: 8, height: 8, borderRadius: '50%', background: ADM.success }} />
+              <span style={{ fontFamily: 'Nunito,system-ui', fontSize: 12.5, fontWeight: 700, color: ADM.text }}>Live Widget Preview</span>
+            </div>
+            <button onClick={openPreview} style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '4px 12px', borderRadius: 6, border: `1px solid ${ADM.border}`, background: '#fff', color: ADM.muted, fontFamily: 'Nunito,system-ui', fontSize: 11.5, fontWeight: 600, cursor: 'pointer' }}>
+              <AdmIcon name="launch" size={12} /> Open in new tab
+            </button>
+          </div>
+          <iframe src={WIDGET_URL} style={{ width: '100%', height: 520, border: 'none', display: 'block' }} title="LPLA Widget Preview" />
         </div>
       </div>
     </div>
