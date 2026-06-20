@@ -134,3 +134,43 @@ export async function createCampaign(name, subject, listId, content) {
     },
   });
 }
+
+export async function getTemplates() {
+  const data = await klaviyoRequest('/templates');
+  return data.data || [];
+}
+
+export async function createTemplate(name, html) {
+  return klaviyoRequest('/templates', 'POST', {
+    data: {
+      type: 'template',
+      attributes: {
+        name,
+        editor_type: 'CODE',
+        html,
+      },
+    },
+  });
+}
+
+export async function updateTemplate(templateId, html, name) {
+  const attributes = { html };
+  if (name) attributes.name = name;
+  return klaviyoRequest(`/templates/${templateId}`, 'PATCH', {
+    data: {
+      type: 'template',
+      id: templateId,
+      attributes,
+    },
+  });
+}
+
+export async function getTemplate(templateId) {
+  const data = await klaviyoRequest(`/templates/${templateId}`);
+  return data.data;
+}
+
+export async function getFlows() {
+  const data = await klaviyoRequest('/flows');
+  return data.data || [];
+}

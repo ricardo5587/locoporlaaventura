@@ -98,6 +98,7 @@ export async function POST(request) {
     // Track "Booking Confirmed" event in Klaviyo to trigger confirmation email flow
     try {
       const confNum = `LPLA-${order.id.toString().slice(-6).toUpperCase()}`;
+      const CAT_COLORS = { Escalada:'#155070', Senderismo:'#3A5E14', Taller:'#5E3B1E', Keynote:'#5E8BBD', Social:'#1B5E7F', 'Expedición':'#2D4D0E', Voluntario:'#00897A' };
       await trackEvent('Booking Confirmed', email, {
         confirmation_number: confNum,
         event_name_en: event?.title_en || '',
@@ -107,6 +108,9 @@ export async function POST(request) {
         event_duration: event?.duration || '',
         event_location: event?.location || '',
         event_category: event?.category || '',
+        event_category_color: CAT_COLORS[event?.category] || '#1B5E7F',
+        event_note_en: event?.desc_en || '',
+        event_note_es: event?.desc_es || '',
         ticket_type: ticketLabel || '',
         quantity: qty,
         unit_price: amount / (qty || 1),

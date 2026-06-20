@@ -30,7 +30,28 @@ export default function AdminKlaviyo() {
   const [campaignForm, setCampaignForm] = useState({ name: '', subject: '', listId: '', content: '' })
   const [creatingCampaign, setCreatingCampaign] = useState(false)
   const [builderData, setBuilderData] = useState(null)
+  const [previewEvent, setPreviewEvent] = useState('climbing')
+  const [pushing, setPushing] = useState(false)
   const token = typeof window !== 'undefined' ? localStorage.getItem('lpla_admin_token') : ''
+
+  async function pushTemplateToKlaviyo() {
+    setPushing(true)
+    try {
+      const r = await fetch(`${API}/api/klaviyo/templates/push`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      const data = await r.json()
+      if (!r.ok) {
+        setToast(data.error || 'Failed to push template')
+      } else {
+        setToast(`Template ${data.action} in Klaviyo!`)
+      }
+    } catch (err) {
+      setToast(err.message)
+    }
+    setPushing(false)
+  }
 
   useEffect(() => {
     loadData()
@@ -151,6 +172,34 @@ export default function AdminKlaviyo() {
                 ))}
               </div>
             )}
+          </div>
+
+          {/* Booking Confirmation Email */}
+          <div style={{ background: ADM.card, borderRadius: 14, border: `1px solid ${ADM.border}`, padding: 20, marginBottom: 20 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
+              <AdmIcon name="mail" size={17} color="#7EBF2E" />
+              <h2 style={{ fontFamily: 'Barlow Condensed,system-ui', fontSize: 18, fontWeight: 800, color: ADM.text, margin: 0, textTransform: 'uppercase', flex: 1 }}>Booking Confirmation Email</h2>
+              <select value={previewEvent} onChange={e => setPreviewEvent(e.target.value)} style={{ borderRadius: 8, border: `1px solid ${ADM.border}`, padding: '6px 10px', fontFamily: 'Nunito,system-ui', fontSize: 12, color: ADM.text, background: '#fff' }}>
+                <option value="climbing">Climbing</option>
+                <option value="hiking">Hiking</option>
+                <option value="free">Free Event</option>
+              </select>
+              <button onClick={pushTemplateToKlaviyo} disabled={pushing} style={{ padding: '8px 16px', borderRadius: 8, border: 'none', background: pushing ? ADM.muted : '#1B5E7F', color: '#fff', fontFamily: 'Barlow Condensed,system-ui', fontSize: 13, fontWeight: 800, letterSpacing: .4, cursor: pushing ? 'default' : 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
+                <AdmIcon name="send" size={13} color="#fff" />
+                {pushing ? 'Pushing…' : 'Push to Klaviyo'}
+              </button>
+            </div>
+            <p style={{ fontFamily: 'Nunito,system-ui', fontSize: 13, color: ADM.muted, margin: '0 0 14px', lineHeight: 1.6 }}>
+              This email is sent automatically when someone books an event. Push the template to Klaviyo, then create a Flow triggered by the "Booking Confirmed" event to use it.
+            </p>
+            <div style={{ borderRadius: 12, overflow: 'hidden', border: `1px solid ${ADM.border}`, background: '#E8E0D4' }}>
+              <iframe
+                key={previewEvent}
+                src={`${API}/api/klaviyo/templates/preview?event=${previewEvent}`}
+                style={{ width: '100%', height: 700, border: 'none', display: 'block' }}
+                title="Booking Email Preview"
+              />
+            </div>
           </div>
 
           {/* Create Campaign */}
