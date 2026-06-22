@@ -148,15 +148,13 @@ export async function createCampaign({ name, listId, subject, previewText, fromE
           data: [{
             type: 'campaign-message',
             attributes: {
-              definition: {
-                channel: 'email',
-                label: name,
-                content: {
-                  subject,
-                  preview_text: previewText || '',
-                  from_email: fromEmail,
-                  from_label: fromLabel,
-                },
+              channel: 'email',
+              label: name,
+              content: {
+                subject,
+                preview_text: previewText || '',
+                from_email: fromEmail,
+                from_label: fromLabel,
               },
             },
           }],
