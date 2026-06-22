@@ -128,21 +128,66 @@ export async function trackEvent(eventName, email, properties = {}, profile = {}
   });
 }
 
-export async function createCampaign(name, subject, listId, content) {
-  return klaviyoRequest('/campaigns', 'POST', {
+// Returns the account's default sender info (verified sender email + name).
+export async function getAccount() {
+  const data = await klaviyoRequest('/accounts');
+  return data?.data?.[0] || null;
+}
+
+// Create an immediate email campaign targeting a single list. Returns the
+// created campaign object (data.id is the campaign id).
+export async function createCampaign({ name, listId, subject, previewText, fromEmail, fromLabel }) {
+  const data = await klaviyoRequest('/campaigns', 'POST', {
     data: {
       type: 'campaign',
       attributes: {
         name,
-        subject,
-        content,
-      },
-      relationships: {
-        lists: {
-          data: [{ type: 'list', id: listId }],
+        audiences: { included: [listId] },
+        send_strategy: { method: 'immediate' },
+        'campaign-messages': {
+          data: [{
+            type: 'campaign-message',
+            attributes: {
+              definition: {
+                channel: 'email',
+                label: name,
+                content: {
+                  subject,
+                  preview_text: previewText || '',
+                  from_email: fromEmail,
+                  from_label: fromLabel,
+                },
+              },
+            },
+          }],
         },
       },
     },
+  });
+  return data.data;
+}
+
+// Fetch the campaign-message id for a campaign (needed to attach a template).
+export async function getCampaignMessageId(campaignId) {
+  const data = await klaviyoRequest(`/campaigns/${campaignId}/campaign-messages`);
+  return data?.data?.[0]?.id || null;
+}
+
+// Attach an existing template to a campaign message.
+export async function assignTemplateToCampaignMessage(messageId, templateId) {
+  return klaviyoRequest('/campaign-message-assign-template', 'POST', {
+    data: {
+      type: 'campaign-message',
+      id: messageId,
+      relationships: { template: { data: { type: 'template', id: templateId } } },
+    },
+  });
+}
+
+// Trigger an immediate send of a created campaign.
+export async function sendCampaign(campaignId) {
+  return klaviyoRequest('/campaign-send-jobs', 'POST', {
+    data: { type: 'campaign-send-job', id: campaignId },
   });
 }
 
