@@ -30,26 +30,6 @@ const C = {
 
 const IMG = 'https://locoporlaaventura.vercel.app/email';
 const LOGO_URL = 'https://locoporlaaventura.vercel.app/logo.png';
-// Heading-image endpoint: renders text as a PNG in real Barlow Condensed so
-// Gmail (which strips web fonts) still shows the brand typeface on the two
-// most prominent headings — the hero and the event title.
-const OG = 'https://locoporlaaventura.vercel.app/api/og/heading';
-
-// Build a Barlow-Condensed heading image + its responsive <img>. Falls back to
-// live text via alt so the meaning survives if images are blocked.
-function headingImg({ text, size, color, weight = 900, w, align = 'center', maxChars = 30 }) {
-  const safe = String(text || '');
-  // Jinja/dynamic strings can't be baked into a static image URL, so fall back
-  // to live styled text (used by the Klaviyo export path).
-  if (/\{\{.*\}\}/.test(safe) || /\{%.*%\}/.test(safe)) {
-    return `<div style="font-family:${FH};font-size:${size}px;font-weight:${weight};color:${color};text-transform:uppercase;letter-spacing:${align==='center'?'1.5px':'.5px'};line-height:1.1;text-align:${align};">${safe}</div>`;
-  }
-  const lines = safe.length > maxChars ? 2 : 1;
-  const h = Math.round(size * 1.18) * lines;
-  const url = `${OG}?text=${encodeURIComponent(safe)}&size=${size}&color=${String(color).replace('#','')}&weight=${weight}&w=${w}&h=${h}&lines=${lines}&align=${align}`;
-  const disp = align === 'left' ? 'block' : 'inline-block';
-  return `<img src="${url}" width="${w}" height="${h}" alt="${esc(safe)}" style="display:${disp};width:100%;max-width:${w}px;height:auto;border:0;${align==='center'?'margin:0 auto;':''}">`;
-}
 // Heading falls back to Arial Narrow (condensed, system-available) so Gmail —
 // which won't load web fonts — stays close to Barlow Condensed. Apple Mail/iOS
 // load the real web fonts via the <link>/@font-face in <head>.
@@ -222,7 +202,7 @@ export function renderBookingConfirmation(data) {
             </td>
           </tr></table>
           <div style="height:10px;line-height:10px;">&nbsp;</div>
-          ${headingImg({ text: t.confirmed, size: 30, color: C.white, weight: 900, w: 520, align: 'center', maxChars: 26 })}
+          <div style="font-family:${FH};font-size:30px;font-weight:900;color:${C.white};text-transform:uppercase;letter-spacing:1.5px;line-height:1.05;">${t.confirmed}</div>
           <div style="font-family:${FB};font-size:13px;color:rgba(255,255,255,.65);margin-top:6px;">${t.confLabel} <strong style="color:${C.white};font-weight:800;">#${esc(confirmationNumber)}</strong></div>
         </td></tr>
 
@@ -243,7 +223,7 @@ export function renderBookingConfirmation(data) {
               </tr></table>
             </td></tr>
             <tr><td style="padding:20px 20px 0;">
-              <div style="margin-bottom:18px;">${headingImg({ text: eventTitle, size: 26, color: C.text, weight: 900, w: 512, align: 'left', maxChars: 30 })}</div>
+              <div style="font-family:${FH};font-size:26px;font-weight:900;color:${C.text};text-transform:uppercase;letter-spacing:.5px;line-height:1.15;margin-bottom:18px;">${esc(eventTitle)}</div>
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-bottom:1px solid rgba(0,0,0,.06);padding-bottom:4px;">
                 ${detailRow('icon-cal.png', dateLine)}
                 ${detailRow('icon-clock.png', durationLine)}
