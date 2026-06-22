@@ -22,7 +22,7 @@ async function klaviyoRequest(endpoint, method = 'GET', body = null) {
 }
 
 export async function getLists() {
-  const data = await klaviyoRequest('/lists');
+  const data = await klaviyoRequest('/lists?additional-fields[list]=profile_count');
   return data.data || [];
 }
 

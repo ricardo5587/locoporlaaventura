@@ -1,21 +1,7 @@
 import { NextResponse } from 'next/server';
-import { requireRole } from '@/lib/auth';
 import { renderBookingConfirmation } from '@/lib/email-templates/booking-confirmation';
 
-const CORS = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'GET, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-};
-
-export async function OPTIONS() {
-  return new NextResponse(null, { status: 204, headers: CORS });
-}
-
 export async function GET(request) {
-  const auth = requireRole(request, ['owner', 'editor']);
-  if (auth.error) return auth.error;
-
   const url = new URL(request.url);
   const event = url.searchParams.get('event') || 'climbing';
 
@@ -80,6 +66,6 @@ export async function GET(request) {
   const html = renderBookingConfirmation(data);
 
   return new NextResponse(html, {
-    headers: { ...CORS, 'Content-Type': 'text/html; charset=utf-8' },
+    headers: { 'Content-Type': 'text/html; charset=utf-8' },
   });
 }

@@ -25,6 +25,7 @@ export default function AdminKlaviyo() {
   const [lists, setLists] = useState([])
   const [segments, setSegments] = useState([])
   const [loading, setLoading] = useState(true)
+  const [connected, setConnected] = useState(true)
   const [toast, setToast] = useState(null)
   const [activeTab, setActiveTab] = useState('overview')
   const [campaignForm, setCampaignForm] = useState({ name: '', subject: '', listId: '', content: '' })
@@ -64,10 +65,15 @@ export default function AdminKlaviyo() {
         fetch(`${API}/api/klaviyo/lists`, { headers: { Authorization: `Bearer ${token}` } }),
         fetch(`${API}/api/klaviyo/segments`, { headers: { Authorization: `Bearer ${token}` } }),
       ])
-      if (listsRes.ok) setLists(await listsRes.json())
+      if (listsRes.ok) {
+        setLists(await listsRes.json())
+        setConnected(true)
+      } else {
+        setConnected(false)
+      }
       if (segsRes.ok) setSegments(await segsRes.json())
     } catch (err) {
-      setToast('Failed to load Klaviyo data')
+      setConnected(false)
     }
     setLoading(false)
   }
@@ -129,6 +135,16 @@ export default function AdminKlaviyo() {
         <p style={{ fontFamily: 'Nunito,system-ui', fontSize: 14, color: ADM.muted, margin: '4px 0 0' }}>Manage Klaviyo lists, segments, and campaigns.</p>
       </div>
 
+      {!loading && !connected && (
+        <div style={{ background: '#FEF3CD', border: '1px solid #F0D462', borderRadius: 12, padding: '16px 20px', marginBottom: 20, display: 'flex', alignItems: 'center', gap: 10 }}>
+          <AdmIcon name="bolt" size={18} color="#92700C" />
+          <div>
+            <div style={{ fontFamily: 'Nunito,system-ui', fontSize: 14, fontWeight: 700, color: '#92700C' }}>Klaviyo not connected</div>
+            <div style={{ fontFamily: 'Nunito,system-ui', fontSize: 12.5, color: '#92700C', opacity: .8 }}>Check that the KLAVIYO_API_KEY environment variable is set in Vercel, then reload. Lists and subscriber counts will appear once connected.</div>
+          </div>
+        </div>
+      )}
+
       {loading ? (
         <div style={{ textAlign: 'center', padding: 60, color: ADM.muted }}>
           <span style={{ width: 24, height: 24, border: `3px solid ${ADM.border}`, borderTopColor: ADM.primary, borderRadius: '50%', display: 'inline-block', animation: 'spin 1s linear infinite' }} />
@@ -148,7 +164,7 @@ export default function AdminKlaviyo() {
                 {lists.map(list => (
                   <div key={list.id} style={{ background: '#FAFAF7', borderRadius: 10, border: `1px solid ${ADM.border}`, padding: 12 }}>
                     <div style={{ fontFamily: 'Barlow Condensed,system-ui', fontSize: 14, fontWeight: 700, color: ADM.text, marginBottom: 4 }}>{list.attributes?.name}</div>
-                    <div style={{ fontFamily: 'Nunito,system-ui', fontSize: 12, color: ADM.muted }}>{list.attributes?.person_count || 0} subscribers</div>
+                    <div style={{ fontFamily: 'Nunito,system-ui', fontSize: 12, color: ADM.muted }}>{list.attributes?.profile_count ?? list.attributes?.person_count ?? 0} subscribers</div>
                   </div>
                 ))}
               </div>
