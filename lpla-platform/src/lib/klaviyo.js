@@ -263,7 +263,11 @@ export async function createList(name) {
 }
 
 let _bookerListId = null;
+// Returns the single "Event Bookers" list id. Prefers the pinned
+// KLAVIYO_BOOKERS_LIST_ID env var (set once in Vercel) so we never create a
+// duplicate. Falls back to find-or-create by name only if the env var is unset.
 export async function getBookersListId() {
+  if (process.env.KLAVIYO_BOOKERS_LIST_ID) return process.env.KLAVIYO_BOOKERS_LIST_ID;
   if (_bookerListId) return _bookerListId;
   const lists = await getLists();
   const existing = lists.find(l => l.attributes?.name === 'Event Bookers');
