@@ -70,8 +70,8 @@ function detailRow(iconFile, text, color) {
 }
 
 function calButton(url, iconFile, label) {
-  return `<a href="${url}" style="display:block;background:${C.teal};border-radius:999px;padding:11px 20px;text-decoration:none;text-align:center;">
-    <img src="${IMG}/${iconFile}" width="22" height="22" alt="" style="vertical-align:middle;border:0;margin-right:9px;border-radius:5px;">
+  return `<a href="${url}" style="display:block;background:${C.teal};border-radius:999px;padding:13px 20px;text-decoration:none;text-align:center;">
+    <img src="${IMG}/${iconFile}" width="20" height="20" alt="" style="vertical-align:middle;border:0;margin-right:9px;border-radius:5px;">
     <span style="font-family:${FH};font-size:14px;font-weight:800;letter-spacing:.7px;text-transform:uppercase;color:${C.white};vertical-align:middle;">${label}</span>
   </a>`;
 }
@@ -145,7 +145,7 @@ export function renderBookingConfirmation(data) {
   ];
 
   const bringHtml = (whatToBring && whatToBring.length) ? `
-  <tr><td style="padding:0 20px 14px;">
+  <tr><td style="padding:14px 20px 0;">
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:${C.creamLight};border:1px solid ${C.cream};border-radius:16px;">
       <tr><td style="padding:16px 20px;">
         <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
@@ -207,7 +207,7 @@ export function renderBookingConfirmation(data) {
         </td></tr>
 
         <!-- BODY -->
-        <tr><td style="padding:28px 20px 8px;">
+        <tr><td style="padding:28px 20px 36px;">
           <div style="font-family:${FH};font-size:24px;font-weight:800;color:${C.text};text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;">${t.greeting}</div>
           <p style="margin:0;font-family:${FB};font-size:15px;color:${C.textMuted};line-height:1.75;">${t.intro}</p>
         </td></tr>
@@ -217,8 +217,9 @@ export function renderBookingConfirmation(data) {
           <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:${C.white};border-radius:16px;overflow:hidden;box-shadow:0 2px 18px rgba(0,0,0,.09);">
             <tr><td style="background-color:${categoryColor};padding:12px 20px;">
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
-                <td style="font-family:${FH};font-size:11.5px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.92);">${esc(eventCategory)}</td>
-                <td align="right">${starsRow('star-white.png', 2, 6)}</td>
+                <td style="font-family:${FH};font-size:11.5px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.9);">${esc(eventCategory)}</td>
+                <td style="height:1px;background:rgba(255,255,255,.2);font-size:0;line-height:0;">&nbsp;</td>
+                <td width="40" align="right">${starsRow('star-white.png', 2, 6)}</td>
               </tr></table>
             </td></tr>
             <tr><td style="padding:20px 20px 0;">
@@ -227,7 +228,7 @@ export function renderBookingConfirmation(data) {
                 ${detailRow('icon-cal.png', dateLine)}
                 ${detailRow('icon-clock.png', durationLine)}
                 ${detailRow('icon-pin.png', location)}
-                <tr><td style="padding-bottom:6px;">
+                <tr><td style="padding-top:6px;padding-bottom:6px;">
                   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
                     <tr><td style="padding-bottom:10px;">${calButton(gCal, 'gcal.png', t.addGoogle)}</td></tr>
                     <tr><td>${calButton('#', 'acal.png', t.addApple)}</td></tr>
@@ -235,7 +236,7 @@ export function renderBookingConfirmation(data) {
                 </td></tr>
               </table>
               ${note ? `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
-                <td width="26" valign="top" style="padding:14px 0;"><img src="${IMG}/icon-info.png" width="15" height="15" alt="" style="display:block;border:0;"></td>
+                <td width="26" valign="top" style="padding:14px 0;padding-top:15px;"><img src="${IMG}/icon-info.png" width="15" height="15" alt="" style="display:block;border:0;"></td>
                 <td style="padding:14px 0;font-family:${FB};font-size:13.5px;color:${C.textMuted};line-height:1.7;">${esc(note)}</td>
               </tr></table>` : '<div style="height:6px;"></div>'}
             </td></tr>
@@ -267,7 +268,7 @@ export function renderBookingConfirmation(data) {
                 </tr>
                 <tr>
                   <td style="padding:15px 0;font-family:${FH};font-size:14px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:${C.text};">${t.total}</td>
-                  <td align="right" style="padding:15px 0;font-family:${FH};font-size:28px;font-weight:900;color:${isFree ? C.green : C.text};">${totalDisplay}</td>
+                  <td align="right" style="padding:15px 0;font-family:${FH};font-size:28px;font-weight:900;color:${isFree ? C.green : C.text};letter-spacing:-.5px;">${totalDisplay}</td>
                 </tr>
               </table>
             </td></tr>
@@ -279,7 +280,7 @@ export function renderBookingConfirmation(data) {
 
         <!-- CTA -->
         <tr><td style="padding:14px 20px 0;">
-          <a href="${esc(eventDetailUrl)}" style="display:block;background-color:${C.teal};color:${C.white};text-align:center;padding:17px;border-radius:14px;font-family:${FH};font-size:19px;font-weight:800;text-transform:uppercase;letter-spacing:1px;text-decoration:none;">${t.viewEvent}</a>
+          <a href="${esc(eventDetailUrl)}" style="display:block;background-color:${C.teal};color:${C.white};text-align:center;padding:17px;border-radius:14px;font-family:${FH};font-size:19px;font-weight:800;text-transform:uppercase;letter-spacing:1px;text-decoration:none;margin-bottom:28px;">${t.viewEvent}</a>
         </td></tr>
 
         <!-- DIVIDER -->
