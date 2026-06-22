@@ -11,10 +11,10 @@ function _admMulberry(a) {
 
 export function admSold(ev) { return Math.max(0, (ev.totalSpots || 0) - (ev.spotsLeft || 0)); }
 export function admGross(ev) { return ev.isFree ? 0 : admSold(ev) * (ev.price || 0); }
-export function admMoney(n) { return '$' + Math.round(n).toLocaleString(); }
+export function admMoney(n) { return '$' + n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
 export function admMoneyK(n) {
   if (n >= 10000) return '$' + (n / 1000).toFixed(1).replace(/\.0$/, '') + 'k';
-  return '$' + Math.round(n).toLocaleString();
+  return admMoney(n);
 }
 
 const ADM_FIRST = ['María', 'Diego', 'Sofía', 'Carlos', 'Lucía', 'Mateo', 'Valentina', 'Santiago', 'Camila', 'Andrés', 'Gabriela', 'Javier', 'Isabela', 'Luis', 'Daniela', 'Miguel', 'Fernanda', 'Ricardo', 'Paola', 'Alejandro', 'Carolina', 'Eduardo', 'Natalia', 'Felipe', 'Adriana', 'Tomás', 'Mariana', 'Sebastián'];

@@ -12,7 +12,7 @@ function OvKpi({ label, value, sub, icon, accent, delta }) {
         <span style={{ fontFamily: 'Barlow Condensed,system-ui', fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: 1.4, color: ADM.muted }}>{label}</span>
       </div>
       <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap' }}>
-        <span style={{ fontFamily: 'Barlow Condensed,system-ui', fontSize: 38, fontWeight: 800, color: ADM.text, lineHeight: .9, letterSpacing: .5 }}>{value}</span>
+        <span style={{ fontFamily: 'Barlow Condensed,system-ui', fontSize: 38, fontWeight: 800, color: ADM.text, lineHeight: 1.1, letterSpacing: .5 }}>{value}</span>
         {delta != null &&
         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, fontFamily: 'Nunito,system-ui', fontSize: 12.5, fontWeight: 800, color: delta >= 0 ? ADM.success : ADM.danger }}>
             <AdmIcon name="trend" size={13} color={delta >= 0 ? ADM.success : ADM.danger} style={{ transform: delta >= 0 ? 'none' : 'scaleY(-1)' }} />

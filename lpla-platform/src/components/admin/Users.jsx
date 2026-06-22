@@ -82,9 +82,9 @@ function InviteModal({ ADM, token, onClose, onSaved }) {
     setSaving(false)
   }
 
-  const inputStyle = (field) => ({ width: '100%', borderRadius: 10, border: `1px solid ${errors[field] ? '#EF4444' : ADM.border}`, padding: '0 12px', height: 40, fontFamily: 'Nunito,system-ui', fontSize: 14, color: ADM.text, background: '#fff', outline: 'none', boxSizing: 'border-box' })
+  const inputStyle = (field) => ({ width: '100%', borderRadius: 10, border: `1px solid ${errors[field] ? ADM.danger : ADM.border}`, padding: '0 12px', height: 40, fontFamily: 'Nunito,system-ui', fontSize: 14, color: ADM.text, background: '#fff', outline: 'none', boxSizing: 'border-box' })
   const labelStyle = { display: 'block', fontFamily: 'Nunito,system-ui', fontSize: 12, fontWeight: 700, color: ADM.muted, marginBottom: 5, textTransform: 'uppercase', letterSpacing: .6 }
-  const errStyle = { fontFamily: 'Nunito,system-ui', fontSize: 11, color: '#EF4444', marginTop: 4 }
+  const errStyle = { fontFamily: 'Nunito,system-ui', fontSize: 11, color: ADM.danger, marginTop: 4 }
 
   return (
     <>
@@ -334,7 +334,8 @@ export default function AdminUsers({ currentUser }) {
         </div>
       ) : (
         <div style={{ background: ADM.card, borderRadius: 14, border: `1px solid ${ADM.border}`, overflow: 'hidden' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+          <div style={{ overflowX: 'auto' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 640 }}>
             <thead>
               <tr style={{ background: '#F8FAFC', borderBottom: `1px solid ${ADM.border}` }}>
                 {['User', 'Role', 'Status', 'Added', 'Actions'].map(h => (
@@ -402,6 +403,7 @@ export default function AdminUsers({ currentUser }) {
               })}
             </tbody>
           </table>
+          </div>
         </div>
       )}
 

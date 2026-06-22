@@ -2,6 +2,7 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
 import AdmIcon from '@/components/admin/AdmIcon'
 import { ADM, CAT_COLORS, CATS_ALL } from '@/lib/tokens'
+import { admMoney } from '@/lib/admin-data'
 
 const API = 'https://locoporlaaventura.vercel.app'
 const TODAY_STR = new Date().toISOString().slice(0, 10)
@@ -454,7 +455,7 @@ function ListView({ events, onEdit, onDelete, onSelect, loading }) {
                   </td>
                   <td style={{ padding: '14px 16px' }} onClick={() => onSelect(ev)}>
                     <div style={{ fontFamily: 'Barlow Condensed,system-ui', fontSize: 17, fontWeight: 800, color: ev.isFree ? ADM.light : ADM.primary }}>
-                      {ev.isFree ? '—' : `$${gross(ev).toLocaleString()}`}
+                      {ev.isFree ? 'Free' : admMoney(gross(ev))}
                     </div>
                   </td>
                   <td style={{ padding: '14px 16px' }} onClick={() => onSelect(ev)}>

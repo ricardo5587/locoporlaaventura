@@ -165,7 +165,7 @@ function CrmDrawer({ contact: base, allTags, onClose }) {
           <div style={{ display:'flex', alignItems:'flex-start', gap:14 }}>
             <div style={{ width:52, height:52, borderRadius:'50%', flexShrink:0, background:`${catColor}1a`, color:catColor, display:'flex', alignItems:'center', justifyContent:'center', fontFamily:'Barlow Condensed,system-ui', fontSize:20, fontWeight:800 }}>{c.initials}</div>
             <div style={{ flex:1, minWidth:0 }}>
-              <div style={{ fontFamily:'Barlow Condensed,system-ui', fontSize:22, fontWeight:800, color:ADM.text, textTransform:'uppercase', letterSpacing:.3 }}>{c.name}</div>
+              <div style={{ fontFamily:'Barlow Condensed,system-ui', fontSize:22, fontWeight:800, color:ADM.text, textTransform:'uppercase', letterSpacing:.3, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{c.name}</div>
               <div style={{ fontFamily:'Nunito,system-ui', fontSize:13, color:ADM.muted, marginTop:2 }}>{c.email}</div>
               <div style={{ fontFamily:'Nunito,system-ui', fontSize:13, color:ADM.muted }}>{c.phone}</div>
             </div>
