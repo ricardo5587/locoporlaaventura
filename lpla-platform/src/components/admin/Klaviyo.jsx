@@ -37,6 +37,24 @@ export default function AdminKlaviyo({ currentUser }) {
   const token = typeof window !== 'undefined' ? localStorage.getItem('lpla_admin_token') : ''
   const TEST_EMAILS = [currentUser?.email, 'broderve@icloud.com'].filter(Boolean)
   const [testEmail, setTestEmail] = useState(TEST_EMAILS[0] || '')
+  // TEMP: one-time helper to fetch the Event Bookers list id for pinning in Vercel.
+  const [bookersListId, setBookersListId] = useState('')
+  const [provisioning, setProvisioning] = useState(false)
+
+  async function provisionBookersList() {
+    setProvisioning(true)
+    try {
+      const r = await fetch(`${API}/api/klaviyo/provision-bookers`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      const data = await r.json()
+      if (!r.ok) setToast(data.error || 'Failed to provision list')
+      else { setBookersListId(data.listId); setToast(`Event Bookers list id: ${data.listId}`) }
+    } catch (err) {
+      setToast(err.message)
+    }
+    setProvisioning(false)
+  }
 
   async function sendTestEmail() {
     if (!testEmail) { setToast('Select a recipient'); return }
@@ -239,6 +257,17 @@ export default function AdminKlaviyo({ currentUser }) {
                 {sendingTest ? 'Sending…' : 'Send Test'}
               </button>
               <span style={{ fontFamily: 'Nunito,system-ui', fontSize: 11.5, color: ADM.muted }}>Test emails use sample event data.</span>
+            </div>
+            {/* TEMP: one-time helper to get the Event Bookers list id for pinning in Vercel. Remove after use. */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 14px', background: '#FFF8E8', border: '1px solid #E8D5B5', borderRadius: 10, marginBottom: 14, flexWrap: 'wrap' }}>
+              <span style={{ fontFamily: 'Nunito,system-ui', fontSize: 13, fontWeight: 700, color: ADM.text }}>Event Bookers list:</span>
+              <button onClick={provisionBookersList} disabled={provisioning} style={{ padding: '8px 16px', borderRadius: 8, border: 'none', background: provisioning ? ADM.muted : ADM.primary, color: '#fff', fontFamily: 'Barlow Condensed,system-ui', fontSize: 13, fontWeight: 800, letterSpacing: .4, cursor: provisioning ? 'default' : 'pointer' }}>
+                {provisioning ? 'Loading…' : 'Get List ID'}
+              </button>
+              {bookersListId && (
+                <code style={{ fontFamily: 'monospace', fontSize: 13, fontWeight: 700, color: ADM.primary, background: '#fff', border: `1px solid ${ADM.border}`, borderRadius: 8, padding: '7px 12px' }}>{bookersListId}</code>
+              )}
+              <span style={{ fontFamily: 'Nunito,system-ui', fontSize: 11.5, color: ADM.muted }}>Paste this into Vercel as KLAVIYO_BOOKERS_LIST_ID, then this row can be removed.</span>
             </div>
             <div style={{ borderRadius: 12, overflow: 'hidden', border: `1px solid ${ADM.border}`, background: '#E8E0D4' }}>
               <iframe
