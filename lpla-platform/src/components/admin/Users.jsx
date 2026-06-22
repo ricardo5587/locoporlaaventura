@@ -151,42 +151,61 @@ function InviteModal({ ADM, token, onClose, onSaved }) {
 }
 
 function ResetPwModal({ ADM, token, user, onClose, onDone }) {
-  const [pw, setPw] = useState('')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+  const [tempPw, setTempPw] = useState(null)
 
   async function handleReset() {
-    if (pw.length < 8) { setError('Password must be at least 8 characters'); return }
     setSaving(true); setError('')
     try {
+      const newPw = generatePassword()
       const r = await fetch(`${API}/api/users/${user.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ password: pw }),
+        body: JSON.stringify({ password: newPw }),
       })
       if (!r.ok) { const d = await r.json(); throw new Error(d.error || 'Failed') }
+      setTempPw(newPw)
       onDone()
-      onClose()
     } catch (e) { setError(e.message) }
     setSaving(false)
   }
 
-  const inputStyle = { width: '100%', borderRadius: 10, border: `1px solid ${ADM.border}`, padding: '0 12px', height: 40, fontFamily: 'Nunito,system-ui', fontSize: 14, color: ADM.text, background: '#fff', outline: 'none', boxSizing: 'border-box' }
+  function copyPw() {
+    if (tempPw) navigator.clipboard?.writeText(tempPw)
+  }
 
   return (
     <>
-      <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.5)', zIndex: 500 }} />
-      <div style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', zIndex: 501, background: '#fff', borderRadius: 14, boxShadow: '0 20px 60px rgba(0,0,0,.2)', width: 'min(400px,90vw)', padding: 28 }}>
+      <div onClick={tempPw ? undefined : onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.5)', zIndex: 500 }} />
+      <div style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', zIndex: 501, background: '#fff', borderRadius: 14, boxShadow: '0 20px 60px rgba(0,0,0,.2)', width: 'min(440px,90vw)', padding: 28 }}>
         <div style={{ fontFamily: 'Barlow Condensed,system-ui', fontSize: 20, fontWeight: 800, color: ADM.text, textTransform: 'uppercase', marginBottom: 6 }}>Reset Password</div>
-        <div style={{ fontFamily: 'Nunito,system-ui', fontSize: 13, color: ADM.muted, marginBottom: 18 }}>Set a new password for <strong>{user.name}</strong></div>
         {error && <div style={{ background: '#FEE2E2', borderRadius: 8, padding: '8px 12px', color: '#B32317', fontSize: 13, marginBottom: 12 }}>{error}</div>}
-        <input type="password" value={pw} onChange={e => setPw(e.target.value)} placeholder="New password (min 8 chars)" style={{ ...inputStyle, marginBottom: 18 }} />
-        <div style={{ display: 'flex', gap: 10 }}>
-          <button onClick={onClose} style={{ flex: 1, height: 42, borderRadius: 10, border: `1px solid ${ADM.border}`, background: 'transparent', cursor: 'pointer', fontFamily: 'Nunito,system-ui', fontSize: 14, fontWeight: 600, color: ADM.muted }}>Cancel</button>
-          <button onClick={handleReset} disabled={saving} style={{ flex: 1, height: 42, borderRadius: 10, border: 'none', background: ADM.primary, color: '#fff', cursor: 'pointer', fontFamily: 'Nunito,system-ui', fontSize: 14, fontWeight: 700, opacity: saving ? .7 : 1 }}>
-            {saving ? 'Saving...' : 'Reset Password'}
-          </button>
-        </div>
+
+        {tempPw ? (
+          <>
+            <div style={{ fontFamily: 'Nunito,system-ui', fontSize: 13, color: ADM.muted, marginBottom: 14 }}>
+              A new temporary password was generated for <strong>{user.name}</strong>. Copy it now — it won't be shown again.
+            </div>
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center', background: '#F1F5F9', borderRadius: 10, padding: '10px 14px', marginBottom: 18 }}>
+              <code style={{ flex: 1, fontFamily: 'ui-monospace,Menlo,monospace', fontSize: 14, color: ADM.text, wordBreak: 'break-all' }}>{tempPw}</code>
+              <button onClick={copyPw} style={{ padding: '5px 12px', borderRadius: 7, border: `1px solid ${ADM.border}`, background: '#fff', cursor: 'pointer', fontFamily: 'Nunito,system-ui', fontSize: 12, fontWeight: 700, color: ADM.muted, whiteSpace: 'nowrap' }}>Copy</button>
+            </div>
+            <button onClick={onClose} style={{ width: '100%', height: 42, borderRadius: 10, border: 'none', background: ADM.primary, color: '#fff', cursor: 'pointer', fontFamily: 'Barlow Condensed,system-ui', fontSize: 15, fontWeight: 800, letterSpacing: .4 }}>Done</button>
+          </>
+        ) : (
+          <>
+            <div style={{ fontFamily: 'Nunito,system-ui', fontSize: 13, color: ADM.muted, marginBottom: 18 }}>
+              This will generate a new temporary password for <strong>{user.name}</strong>. You'll need to share it with them securely.
+            </div>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button onClick={onClose} style={{ flex: 1, height: 42, borderRadius: 10, border: `1px solid ${ADM.border}`, background: 'transparent', cursor: 'pointer', fontFamily: 'Nunito,system-ui', fontSize: 14, fontWeight: 600, color: ADM.muted }}>Cancel</button>
+              <button onClick={handleReset} disabled={saving} style={{ flex: 1, height: 42, borderRadius: 10, border: 'none', background: '#B32317', color: '#fff', cursor: 'pointer', fontFamily: 'Barlow Condensed,system-ui', fontSize: 15, fontWeight: 800, letterSpacing: .4, opacity: saving ? .7 : 1 }}>
+                {saving ? 'Generating...' : 'Generate New Password'}
+              </button>
+            </div>
+          </>
+        )}
       </div>
     </>
   )
