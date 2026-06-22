@@ -233,6 +233,8 @@ export default function AdminUsers({ currentUser }) {
   }
 
   async function toggleActive(user) {
+    const action = user.active ? 'suspend' : 'reactivate'
+    if (!confirm(`${action.charAt(0).toUpperCase() + action.slice(1)} ${user.name}? ${user.active ? 'They will lose access immediately.' : ''}`)) return
     try {
       const r = await fetch(`${API}/api/users/${user.id}`, {
         method: 'PATCH',
