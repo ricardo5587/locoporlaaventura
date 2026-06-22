@@ -91,7 +91,8 @@ export default function DashboardOverview({ events, onSelectEvent, onGoEvents })
   const weeks = Math.round(range / 7)
   const buckets = admWeekly(orders, weeks)
 
-  const live = orders.filter(o => o.status !== 'cancelled' && o.status !== 'refunded')
+  const cutoff = Date.now() - range * 86400000
+  const live = orders.filter(o => o.status !== 'cancelled' && o.status !== 'refunded' && o.createdAt >= cutoff)
   const grossCollected = live.reduce((s, o) => s + o.amount, 0)
   const ticketsSold = live.reduce((s, o) => s + o.qty, 0)
   const capacity = events.reduce((s, e) => s + (e.totalSpots || 0), 0)
@@ -144,8 +145,8 @@ export default function DashboardOverview({ events, onSelectEvent, onGoEvents })
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,minmax(0,1fr))', gap: 14, marginBottom: 16 }}>
-        <OvKpi label="Gross Revenue" value={admMoney(grossCollected)} icon="dollar" accent={ADM.success} delta={pct(revLast, revPrev)} sub="Collected to date" ADM={ADM} />
-        <OvKpi label="Tickets Sold" value={ticketsSold.toLocaleString()} icon="ticket" accent={ADM.primary} delta={pct(tkLast, tkPrev)} sub={`${orders.length} orders`} ADM={ADM} />
+        <OvKpi label="Gross Revenue" value={admMoney(grossCollected)} icon="dollar" accent={ADM.success} delta={pct(revLast, revPrev)} sub={`Last ${range} days`} ADM={ADM} />
+        <OvKpi label="Tickets Sold" value={ticketsSold.toLocaleString()} icon="ticket" accent={ADM.primary} delta={pct(tkLast, tkPrev)} sub={`${live.length} orders · last ${range}d`} ADM={ADM} />
         <OvKpi label="Active Events" value={activeEvents} icon="calendar" accent={ADM.blue} sub={`${cats.length} categories`} ADM={ADM} />
         <OvKpi label="Avg. Fill Rate" value={fillRate + '%'} icon="people" accent={ADM.lime} sub={`${ticketsSold} of ${capacity.toLocaleString()} seats`} ADM={ADM} />
       </div>

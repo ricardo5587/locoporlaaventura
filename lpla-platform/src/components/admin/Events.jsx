@@ -378,7 +378,7 @@ function DeleteConfirm({ event, onConfirm, onCancel }) {
     <>
       <div onClick={onCancel} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.45)', zIndex: 600 }} />
       <div style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', zIndex: 601, background: '#fff', borderRadius: ADM.radiusMd, boxShadow: '0 20px 60px rgba(0,0,0,.2)', width: 'min(400px,90vw)', padding: '28px' }}>
-        <div style={{ fontFamily: 'Barlow Condensed,system-ui', fontSize: 20, fontWeight: 800, color: ADM.text, textAlign: 'center', marginBottom: 8 }}>Delete Event?</div>
+        <div style={{ fontFamily: 'Barlow Condensed,system-ui', fontSize: 22, fontWeight: 800, color: ADM.text, textTransform: 'uppercase', letterSpacing: .5, textAlign: 'center', marginBottom: 8 }}>Delete Event?</div>
         <div style={{ fontFamily: 'Nunito,system-ui', fontSize: 14, color: ADM.muted, textAlign: 'center', marginBottom: 24, lineHeight: 1.6 }}>
           <strong>&quot;{event.titleEn}&quot;</strong> will be permanently removed.
         </div>

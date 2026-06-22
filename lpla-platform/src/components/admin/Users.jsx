@@ -179,7 +179,7 @@ function ResetPwModal({ ADM, token, user, onClose, onDone }) {
     <>
       <div onClick={tempPw ? undefined : onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.5)', zIndex: 500 }} />
       <div style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', zIndex: 501, background: '#fff', borderRadius: 14, boxShadow: '0 20px 60px rgba(0,0,0,.2)', width: 'min(440px,90vw)', padding: 28 }}>
-        <div style={{ fontFamily: 'Barlow Condensed,system-ui', fontSize: 20, fontWeight: 800, color: ADM.text, textTransform: 'uppercase', marginBottom: 6 }}>Reset Password</div>
+        <div style={{ fontFamily: 'Barlow Condensed,system-ui', fontSize: 22, fontWeight: 800, color: ADM.text, textTransform: 'uppercase', letterSpacing: .5, marginBottom: 6 }}>Reset Password</div>
         {error && <div style={{ background: '#FEE2E2', borderRadius: 8, padding: '8px 12px', color: '#B32317', fontSize: 13, marginBottom: 12 }}>{error}</div>}
 
         {tempPw ? (
