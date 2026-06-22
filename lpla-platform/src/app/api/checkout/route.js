@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { chargeCard } from '@/lib/clover';
 import { trackEvent } from '@/lib/klaviyo';
+import { sendBookingConfirmation } from '@/lib/email/send-booking';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -63,9 +64,23 @@ export async function POST(request) {
     // decrement spots
     await supabase.rpc('decrement_spots', { event_id: eventId, qty });
 
-    // Track "Booking Confirmed" event in Klaviyo to trigger confirmation email flow
+    const confNum = `LPLA-${order.id.toString().slice(-6).toUpperCase()}`;
+
+    // Send the booking confirmation email (transactional, via Resend).
     try {
-      const confNum = `LPLA-${order.id.toString().slice(-6).toUpperCase()}`;
+      await sendBookingConfirmation({
+        event, email, firstName,
+        confirmationNumber: confNum,
+        ticketLabel, qty,
+        unitPrice: ticket.price,
+        amount,
+      });
+    } catch (err) {
+      console.error('Booking confirmation email failed:', err.message);
+    }
+
+    // Track "Booking Confirmed" event in Klaviyo for marketing/segmentation.
+    try {
       const CAT_COLORS = { Escalada:'#155070', Senderismo:'#3A5E14', Taller:'#5E3B1E', Keynote:'#5E8BBD', Social:'#1B5E7F', 'Expedición':'#2D4D0E', Voluntario:'#00897A' };
       await trackEvent('Booking Confirmed', email, {
         confirmation_number: confNum,

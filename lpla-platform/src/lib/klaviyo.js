@@ -114,6 +114,31 @@ export async function getListMembers(listId) {
   return ids;
 }
 
+// Fetch member profiles of a list with their emails (paginated).
+export async function getListProfiles(listId) {
+  const out = [];
+  let cursor = null;
+  do {
+    const params = new URLSearchParams({
+      'fields[profile]': 'email,first_name,last_name',
+      'page[size]': '100',
+    });
+    if (cursor) params.set('page[cursor]', cursor);
+    const data = await klaviyoRequest(`/lists/${listId}/profiles?${params}`);
+    if (Array.isArray(data?.data)) {
+      out.push(...data.data.map(p => ({
+        id: p.id,
+        email: p.attributes?.email,
+        firstName: p.attributes?.first_name || '',
+        lastName: p.attributes?.last_name || '',
+      })));
+    }
+    const nextLink = data?.links?.next;
+    cursor = nextLink ? new URL(nextLink).searchParams.get('page[cursor]') : null;
+  } while (cursor);
+  return out;
+}
+
 export async function trackEvent(eventName, email, properties = {}, profile = {}) {
   return klaviyoRequest('/events', 'POST', {
     data: {
