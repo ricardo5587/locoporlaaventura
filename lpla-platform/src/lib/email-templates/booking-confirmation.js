@@ -30,11 +30,12 @@ const C = {
 
 const IMG = 'https://locoporlaaventura.vercel.app/email';
 const LOGO_URL = 'https://locoporlaaventura.vercel.app/logo.png';
-// Heading falls back to Arial Narrow (condensed, system-available) so Gmail —
-// which won't load web fonts — stays close to Barlow Condensed. Apple Mail/iOS
-// load the real web fonts via the <link>/@font-face in <head>.
-const FH = "'Barlow Condensed', 'Arial Narrow', Arial, sans-serif";
-const FB = "'Nunito', 'Helvetica Neue', Helvetica, Arial, sans-serif";
+// One consistent font everywhere. Email clients (esp. Gmail) won't reliably
+// load web fonts, so using a single Arial/Helvetica stack for both headings
+// and body guarantees the whole email renders in the same typeface in every
+// client. Hierarchy comes from weight, size, letter-spacing and uppercase.
+const FH = "Arial, 'Helvetica Neue', Helvetica, sans-serif";
+const FB = "Arial, 'Helvetica Neue', Helvetica, sans-serif";
 
 /* ── Escape HTML (skips Jinja {{…}} and {%…%} blocks) ── */
 function esc(s) {
@@ -172,10 +173,6 @@ export function renderBookingConfirmation(data) {
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="x-apple-disable-message-reformatting">
   <title>${t.confirmed}</title>
-  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800;900&family=Nunito:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800;900&family=Nunito:wght@400;500;600;700;800&display=swap');
-  </style>
   <!--[if mso]><style>table,td,div,span,a,p{font-family:Arial,sans-serif!important;}</style><![endif]-->
 </head>
 <body style="margin:0;padding:0;background-color:#E8E0D4;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%;">
