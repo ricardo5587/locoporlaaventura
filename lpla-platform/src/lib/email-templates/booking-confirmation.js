@@ -131,8 +131,8 @@ export function renderBookingConfirmation(data) {
     shareBody: es ? 'Etiquétanos con #LocosPorLaAventura y conecta con la comunidad.' : 'Tag us with #LocosPorLaAventura and connect with the community.',
     address: '544 SE Oak St #206, Portland, OR 97214',
     nonprofit: es
-      ? 'Loco por la Aventura es una organización sin fines de lucro 501(c)(3) con sede en Oregón.'
-      : 'Loco por la Aventura is a 501(c)(3) nonprofit organization based in Oregon.',
+      ? 'Loco por la Aventura es una organización sin fines de lucro 501(c)(3) con sede en Oregón, dedicada a promover la equidad educativa, el acceso al aire libre y la justicia ambiental para la comunidad latina — y más allá.'
+      : 'Loco por la Aventura is a 501(c)(3) nonprofit organization based in Oregon, dedicated to advancing educational equity, outdoor access, and environmental justice for the Latino community — and beyond.',
     received: es ? 'Recibiste este email porque realizaste una reserva.' : 'You received this email because you made a booking.',
     unsubscribe: es ? 'Cancelar suscripción' : 'Unsubscribe',
     privacy: es ? 'Privacidad' : 'Privacy',

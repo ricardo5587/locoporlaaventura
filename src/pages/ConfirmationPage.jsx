@@ -267,8 +267,8 @@ export function ConfirmationPage({ booking, lang, onHome }) {
             <div style={{ height: 1, background: 'rgba(255,255,255,.07)', margin: '14px 0' }} />
             <div style={{ fontFamily: F, fontSize: 11.5, color: 'rgba(255,255,255,.35)', lineHeight: 1.8 }}>
               {L(
-                'Loco por la Aventura es una organización sin fines de lucro 501(c)(3) con sede en Oregón.',
-                'Loco por la Aventura is a 501(c)(3) nonprofit organization based in Oregon.'
+                'Loco por la Aventura es una organización sin fines de lucro 501(c)(3) con sede en Oregón, dedicada a promover la equidad educativa, el acceso al aire libre y la justicia ambiental para la comunidad latina — y más allá.',
+                'Loco por la Aventura is a 501(c)(3) nonprofit organization based in Oregon, dedicated to advancing educational equity, outdoor access, and environmental justice for the Latino community — and beyond.'
               )}
             </div>
           </div>
