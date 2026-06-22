@@ -1,5 +1,9 @@
 // ─────────────────────────────────────────────────────────────
 //  LPLA Booking-Confirmation Email Template
+//  Matches the LPLA design mockup, rebuilt as email-safe table HTML.
+//  Graphics (mountains, icons, stars) are hosted PNGs because Gmail/Outlook
+//  strip inline SVG. Assets live in /public/email and are served from the
+//  admin domain.
 //  Exports:
 //    renderBookingConfirmation(data) => HTML string
 //    KLAVIYO_TEMPLATE_HTML            => Jinja-ready HTML string
@@ -24,89 +28,58 @@ const C = {
   white:      '#FFFFFF',
 };
 
+const IMG = 'https://locoporlaaventura.vercel.app/email';
 const LOGO_URL = 'https://locoporlaaventura.vercel.app/logo.png';
-const FONT_HEADING = "'Barlow Condensed', Arial, sans-serif";
-const FONT_BODY    = "'Nunito', Arial, sans-serif";
+const FH = "'Barlow Condensed', Arial, sans-serif";
+const FB = "'Nunito', Arial, sans-serif";
 
-/* ── Icon helpers (emoji/Unicode — render in Gmail, Outlook, Apple Mail) ── */
-/* Inline SVG is stripped by Gmail/Outlook, so we use emoji glyphs instead. */
-
-const mountainSvg = () => `<div style="font-family:Arial,sans-serif;font-size:22px;line-height:28px;text-align:center;letter-spacing:6px;padding:6px 0;">🏔️ ⛰️ 🏔️ ⛰️ 🏔️</div>`;
-
-const checkCircleSvg = `
-<table cellpadding="0" cellspacing="0" border="0" align="center" style="margin:0 auto;">
-  <tr><td align="center" style="width:56px;height:56px;border-radius:50%;background-color:${C.green};text-align:center;vertical-align:middle;font-family:Arial,sans-serif;font-size:30px;line-height:56px;color:${C.white};font-weight:bold;">&#10003;</td></tr>
-</table>`;
-
-const iconCalendar = '<span style="font-size:16px;">📅</span>';
-const iconClock    = '<span style="font-size:16px;">⏱️</span>';
-const iconPin      = '<span style="font-size:16px;">📍</span>';
-const iconInfo     = '<span style="font-size:16px;">ℹ️</span>';
-const iconTicket   = '<span style="font-size:20px;">🎫</span>';
-const iconBackpack = '<span style="font-size:20px;">🎒</span>';
-const smallCheck   = '<span style="font-size:14px;">✅</span>';
-const iconStar     = '<span style="font-size:18px;">⭐</span>';
-
-const socialLink = (href, label) => `<a href="${href}" style="color:${C.white};text-decoration:none;font-family:${FONT_BODY};font-size:13px;font-weight:700;margin:0 10px;">${label}</a>`;
-const socialInstagram = socialLink('https://www.instagram.com/locoporlaaventura/', 'Instagram');
-const socialFacebook  = socialLink('https://www.facebook.com/locoporlaaventura', 'Facebook');
-const socialTiktok    = socialLink('https://www.tiktok.com/@locoporlaaventura', 'TikTok');
-
-/* ── Detail-row helper ── */
-function detailRow(icon, label, value) {
-  if (!value) return '';
-  return `
-  <tr>
-    <td style="padding:8px 0;border-bottom:1px solid #f0ebe3;">
-      <table cellpadding="0" cellspacing="0" border="0" width="100%">
-        <tr>
-          <td width="30" valign="top" style="padding-right:8px;">${icon}</td>
-          <td style="font-family:${FONT_BODY};font-size:14px;color:${C.text};">
-            <span style="font-weight:700;">${label}:</span> ${esc(value)}
-          </td>
-        </tr>
-      </table>
-    </td>
-  </tr>`;
-}
-
-/* ── Escape HTML helper (skips Jinja {{…}} and {%…%} blocks) ── */
+/* ── Escape HTML (skips Jinja {{…}} and {%…%} blocks) ── */
 function esc(s) {
   if (s == null) return '';
   const str = String(s);
   if (/\{\{.*\}\}/.test(str) || /\{%.*%\}/.test(str)) return str;
-  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
-/* ── Format currency ── */
+/* ── Format currency (returns "$NaN" for non-numeric so the Klaviyo
+   template can swap in Jinja conditionals) ── */
 function fmtPrice(amount, es) {
-  if (amount == null) return '';
   const n = Number(amount);
-  if (isNaN(n)) return '$' + amount;
+  if (isNaN(n)) return '$NaN';
   if (n === 0) return es ? 'Gratis' : 'Free';
   return '$' + n.toFixed(2);
 }
 
-/* ── Google Calendar URL builder ── */
-function googleCalUrl(data) {
-  if (data.calendarUrl) return data.calendarUrl;
-  return '#';
+/* ── Small helpers ── */
+function starsRow(file, n, size) {
+  const cell = `<td style="padding:0 2.5px;"><img src="${IMG}/${file}" width="${size}" height="${size}" alt="" style="display:block;border:0;"></td>`;
+  return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center" style="margin:0 auto;"><tr>${cell.repeat(n)}</tr></table>`;
 }
 
-/* ── Apple Calendar URL ── */
-function appleCalUrl(data) {
-  // Placeholder — real implementation would generate .ics
-  return '#';
+function detailRow(iconFile, text, color) {
+  if (!text) return '';
+  return `<tr><td style="padding-bottom:12px;">
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
+      <td width="26" valign="top" style="padding-top:1px;"><img src="${IMG}/${iconFile}" width="15" height="15" alt="" style="display:block;border:0;"></td>
+      <td style="font-family:${FB};font-size:14px;color:${color || C.text};line-height:1.5;">${esc(text)}</td>
+    </tr></table>
+  </td></tr>`;
+}
+
+function calButton(url, iconFile, label) {
+  return `<a href="${url}" style="display:block;background:${C.teal};border-radius:999px;padding:13px 20px;text-decoration:none;text-align:center;">
+    <img src="${IMG}/${iconFile}" width="18" height="18" alt="" style="vertical-align:middle;border:0;margin-right:8px;">
+    <span style="font-family:${FH};font-size:14px;font-weight:800;letter-spacing:.7px;text-transform:uppercase;color:${C.white};vertical-align:middle;">${label}</span>
+  </a>`;
 }
 
 /* ────────────────────────────────────────
    Main render function
    ──────────────────────────────────────── */
-
 export function renderBookingConfirmation(data) {
   const {
     es = false,
-    firstName = 'Adventurer',
+    firstName = '',
     confirmationNumber = '',
     eventTitle = '',
     eventCategory = '',
@@ -126,267 +99,221 @@ export function renderBookingConfirmation(data) {
     eventDetailUrl = '#',
   } = data || {};
 
+  const name = firstName || (es ? 'aventurero/a' : 'adventurer');
+  const gCal = calendarUrl || '#';
+  const dateLine = [eventDate, eventTime].filter(Boolean).join('  ·  ');
+  const durationLine = duration ? `${es ? 'Duración' : 'Duration'}: ${duration}` : '';
+  const qtyLabel = quantity == 1 ? (es ? 'entrada' : 'ticket') : (es ? 'entradas' : 'tickets');
+  const unitDisplay = isFree ? (es ? 'Gratuito' : 'Free') : fmtPrice(unitPrice, es);
+  const totalDisplay = isFree ? (es ? '¡GRATIS!' : 'FREE!') : fmtPrice(totalAmount, es);
+
   const t = {
-    confirmed:   es ? '¡Reserva Confirmada!' : 'Booking Confirmed!',
-    confLabel:   es ? 'Confirmación' : 'Confirmation',
-    greeting:    es ? `¡Hola, ${esc(firstName)}!` : `Hey there, ${esc(firstName)}!`,
-    saveEmail:   es
-      ? 'Guarda este correo. Lo necesitarás el día del evento.'
-      : 'Save this email. You\'ll need it on the day of your adventure.',
-    date:        es ? 'Fecha' : 'Date',
-    time:        es ? 'Hora'  : 'Time',
-    duration:    es ? 'Duración' : 'Duration',
-    location:    es ? 'Ubicación' : 'Location',
-    note:        es ? 'Nota' : 'Note',
-    ticketDets:  es ? 'Detalles del Boleto' : 'Ticket Details',
-    type:        es ? 'Tipo' : 'Type',
-    qty:         es ? 'Cantidad' : 'Qty',
-    price:       es ? 'Precio' : 'Unit Price',
-    total:       es ? 'Total' : 'Total',
-    free:        es ? 'Gratis' : 'Free',
-    whatToBring: es ? 'Qué llevar' : 'What to Bring',
-    viewEvent:   es ? 'Ver Detalles del Evento' : 'View Event Details',
-    shareAdv:    es ? '¡Comparte tu aventura!' : 'Share your adventure!',
-    addGoogle:   es ? 'Google Calendar' : 'Add to Google Calendar',
-    addApple:    es ? 'Apple Calendar' : 'Add to Apple Calendar',
-    address:     '544 SE Oak St #206, Portland, OR 97214',
-    nonprofit:   es
-      ? 'Loco Por La Aventura es una organización sin fines de lucro 501(c)(3).'
-      : 'Loco Por La Aventura is a registered 501(c)(3) nonprofit organization.',
-    unsubscribe: es ? 'Desuscribirse' : 'Unsubscribe',
-    privacy:     es ? 'Privacidad' : 'Privacy',
-    terms:       es ? 'Términos' : 'Terms',
+    confirmed: es ? '¡Reserva Confirmada!' : 'Booking Confirmed!',
+    confLabel: es ? 'Confirmación' : 'Confirmation',
+    greeting: es ? `¡Hola, ${esc(name)}!` : `Hey there, ${esc(name)}!`,
+    intro: es
+      ? 'Tu reserva fue procesada con éxito. Guarda este email para el día del evento. ¡Tu próxima aventura está a punto de comenzar!'
+      : 'Your booking was successfully processed. Save this email for event day. Your next adventure is just around the corner!',
+    ticketDets: es ? 'Detalle de Entrada' : 'Ticket Details',
+    type: es ? 'Tipo' : 'Type',
+    qty: es ? 'Cantidad' : 'Qty',
+    unit: es ? 'Precio unitario' : 'Unit price',
+    total: es ? 'Total pagado' : 'Total paid',
+    whatToBring: es ? '¿Qué traer?' : 'What to Bring',
+    viewEvent: es ? 'Ver Detalles del Evento' : 'View Event Details',
+    addGoogle: es ? 'Agregar a Google Calendar' : 'Add to Google Calendar',
+    addApple: es ? 'Agregar a Apple Calendar' : 'Add to Apple Calendar',
+    shareTitle: es ? '¡Comparte tu aventura!' : 'Share your adventure!',
+    shareBody: es ? 'Etiquétanos con #LocosPorLaAventura y conecta con la comunidad.' : 'Tag us with #LocosPorLaAventura and connect with the community.',
+    address: '544 SE Oak St #206, Portland, OR 97214',
+    nonprofit: es
+      ? 'Loco por la Aventura es una organización sin fines de lucro 501(c)(3) con sede en Oregón.'
+      : 'Loco por la Aventura is a 501(c)(3) nonprofit organization based in Oregon.',
+    received: es ? 'Recibiste este email porque realizaste una reserva.' : 'You received this email because you made a booking.',
+    unsubscribe: es ? 'Cancelar suscripción' : 'Unsubscribe',
+    privacy: es ? 'Privacidad' : 'Privacy',
+    terms: es ? 'Términos' : 'Terms',
   };
 
-  const dateTimeStr = [eventDate, eventTime].filter(Boolean).join(es ? ' a las ' : ' at ');
+  const socials = [
+    { href: 'https://www.instagram.com/locoporlaaventura/?hl=en', label: 'Instagram · @locoporlaaventura' },
+    { href: 'https://www.facebook.com/Locoporlaaventura/', label: 'Facebook · @Locoporlaaventura' },
+    { href: 'https://www.tiktok.com/@anibalrocheta', label: 'TikTok · @anibalrocheta' },
+  ];
 
-  const whatToBringHtml = whatToBring.length ? `
-  <!-- What to Bring -->
-  <tr><td style="padding:0 24px 24px;">
-    <table cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color:${C.creamLight};border-radius:12px;padding:20px;">
-      <tr><td style="padding:20px;">
-        <table cellpadding="0" cellspacing="0" border="0">
-          <tr>
-            <td style="padding-right:8px;vertical-align:middle;">${iconBackpack}</td>
-            <td style="font-family:${FONT_HEADING};font-size:18px;font-weight:700;color:${C.brown};text-transform:uppercase;letter-spacing:1px;">
-              ${t.whatToBring}
-            </td>
-          </tr>
-        </table>
-        <table cellpadding="0" cellspacing="0" border="0" width="100%" style="margin-top:12px;">
-          ${whatToBring.map(item => `
-          <tr>
-            <td style="padding:4px 0;">
-              <table cellpadding="0" cellspacing="0" border="0">
-                <tr>
-                  <td width="24" valign="top" style="padding-right:8px;">${smallCheck}</td>
-                  <td style="font-family:${FONT_BODY};font-size:14px;color:${C.brown};">${esc(item)}</td>
-                </tr>
-              </table>
-            </td>
-          </tr>`).join('')}
+  const bringHtml = (whatToBring && whatToBring.length) ? `
+  <tr><td style="padding:0 20px 14px;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:${C.creamLight};border:1px solid ${C.cream};border-radius:16px;">
+      <tr><td style="padding:16px 20px;">
+        <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
+          <td width="24" valign="middle"><img src="${IMG}/icon-pack.png" width="15" height="15" alt="" style="display:block;border:0;"></td>
+          <td style="font-family:${FH};font-size:12px;font-weight:800;letter-spacing:1.6px;text-transform:uppercase;color:${C.brown};">${t.whatToBring}</td>
+        </tr></table>
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:14px;">
+          ${whatToBring.map(item => `<tr><td style="padding-bottom:10px;">
+            <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
+              <td width="26" valign="middle"><img src="${IMG}/icon-check.png" width="16" height="16" alt="" style="display:block;border:0;"></td>
+              <td style="font-family:${FB};font-size:14px;color:${C.text};line-height:1.4;">${esc(item)}</td>
+            </tr></table>
+          </td></tr>`).join('')}
         </table>
       </td></tr>
     </table>
   </td></tr>` : '';
 
   return `<!DOCTYPE html>
-<html lang="${es ? 'es' : 'en'}" xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
+<html lang="${es ? 'es' : 'en'}" xmlns="http://www.w3.org/1999/xhtml">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="x-apple-disable-message-reformatting">
   <title>${t.confirmed}</title>
-  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
-  <!--[if mso]>
-  <style>table,td{font-family:Arial,sans-serif!important;}</style>
-  <![endif]-->
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800;900&family=Nunito:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <!--[if mso]><style>table,td{font-family:Arial,sans-serif!important;}</style><![endif]-->
 </head>
-<body style="margin:0;padding:0;background-color:#e0d9cf;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%;">
-  <!-- Outer wrapper -->
-  <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color:#e0d9cf;">
-    <tr><td align="center" style="padding:24px 16px;">
+<body style="margin:0;padding:0;background-color:#E8E0D4;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%;">
+  <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color:#E8E0D4;">
+    <tr><td align="center" style="padding:24px 12px 40px;">
 
-      <!-- Email container 600px -->
-      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="600" style="max-width:600px;background-color:${C.creamPale};border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.12);">
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="600" style="max-width:600px;width:100%;background-color:${C.creamPale};border-radius:16px;overflow:hidden;box-shadow:0 8px 48px rgba(0,0,0,0.18);">
 
-        <!-- ═══ HEADER ═══ -->
-        <tr><td style="background-color:${C.tealDark};padding:32px 24px 0;text-align:center;">
-          <img src="${LOGO_URL}" alt="Loco Por La Aventura" width="140" style="display:inline-block;max-width:140px;height:auto;border:0;">
+        <!-- HEADER -->
+        <tr><td style="background-color:${C.tealDark};padding:28px 24px 10px;text-align:center;">
+          <img src="${LOGO_URL}" width="97" height="100" alt="Loco Por La Aventura" style="display:inline-block;border:0;">
+          <div style="height:8px;line-height:8px;">&nbsp;</div>
+          ${starsRow('star-green.png', 3, 8)}
         </td></tr>
-        <tr><td style="background-color:${C.tealDark};padding:0;">
-          ${mountainSvg(C.teal)}
-        </td></tr>
-
-        <!-- ═══ HERO BAND ═══ -->
-        <tr><td style="background-color:${C.teal};padding:32px 24px;text-align:center;">
-          ${checkCircleSvg}
-          <h1 style="margin:16px 0 8px;font-family:${FONT_HEADING};font-size:28px;font-weight:700;color:${C.white};text-transform:uppercase;letter-spacing:1.5px;">
-            ${t.confirmed}
-          </h1>
-          <p style="margin:0;font-family:${FONT_BODY};font-size:14px;color:rgba(255,255,255,0.85);">
-            ${t.confLabel} #<strong style="color:${C.white};font-size:16px;">${esc(confirmationNumber)}</strong>
-          </p>
+        <tr><td style="background-color:${C.tealDark};padding:0;font-size:0;line-height:0;">
+          <img src="${IMG}/mtn-top.png" width="600" alt="" style="display:block;width:100%;border:0;">
         </td></tr>
 
-        <!-- ═══ BODY ═══ -->
-        <!-- Greeting -->
-        <tr><td style="padding:32px 24px 8px;">
-          <h2 style="margin:0;font-family:${FONT_HEADING};font-size:22px;font-weight:700;color:${C.text};">
-            ${t.greeting}
-          </h2>
-        </td></tr>
-        <tr><td style="padding:0 24px 24px;">
-          <p style="margin:0;font-family:${FONT_BODY};font-size:15px;color:${C.textMuted};line-height:1.6;">
-            ${t.saveEmail}
-          </p>
+        <!-- HERO BAND -->
+        <tr><td style="background-color:${C.teal};padding:18px 24px 22px;text-align:center;">
+          <table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center" style="margin:0 auto;"><tr>
+            <td style="width:48px;height:48px;background-color:${C.green};border-radius:50%;text-align:center;vertical-align:middle;">
+              <img src="${IMG}/hero-check.png" width="22" height="22" alt="✓" style="display:inline-block;border:0;vertical-align:middle;">
+            </td>
+          </tr></table>
+          <div style="height:10px;line-height:10px;">&nbsp;</div>
+          <div style="font-family:${FH};font-size:28px;font-weight:900;color:${C.white};text-transform:uppercase;letter-spacing:2px;line-height:1.05;">${t.confirmed}</div>
+          <div style="font-family:${FB};font-size:13px;color:rgba(255,255,255,.65);margin-top:6px;">${t.confLabel} <strong style="color:${C.white};font-weight:800;">#${esc(confirmationNumber)}</strong></div>
         </td></tr>
 
-        <!-- ═══ EVENT CARD ═══ -->
-        <tr><td style="padding:0 24px 24px;">
-          <table cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color:${C.white};border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.06);">
-            <!-- Category stripe -->
-            <tr><td style="height:6px;background-color:${categoryColor};font-size:1px;line-height:1px;">&nbsp;</td></tr>
-            <!-- Event title -->
-            <tr><td style="padding:20px 20px 4px;">
-              ${eventCategory ? `<p style="margin:0 0 4px;font-family:${FONT_BODY};font-size:11px;font-weight:700;color:${categoryColor};text-transform:uppercase;letter-spacing:1.2px;">${esc(eventCategory)}</p>` : ''}
-              <h3 style="margin:0;font-family:${FONT_HEADING};font-size:20px;font-weight:700;color:${C.text};">
-                ${esc(eventTitle)}
-              </h3>
+        <!-- BODY -->
+        <tr><td style="padding:28px 20px 8px;">
+          <div style="font-family:${FH};font-size:24px;font-weight:800;color:${C.text};text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;">${t.greeting}</div>
+          <p style="margin:0;font-family:${FB};font-size:15px;color:${C.textMuted};line-height:1.75;">${t.intro}</p>
+        </td></tr>
+
+        <!-- EVENT CARD -->
+        <tr><td style="padding:16px 20px 0;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:${C.white};border-radius:16px;overflow:hidden;box-shadow:0 2px 18px rgba(0,0,0,.09);">
+            <tr><td style="background-color:${categoryColor};padding:12px 20px;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
+                <td style="font-family:${FH};font-size:11.5px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.92);">${esc(eventCategory)}</td>
+                <td align="right">${starsRow('star-white.png', 2, 6)}</td>
+              </tr></table>
             </td></tr>
-            <!-- Details -->
-            <tr><td style="padding:12px 20px 4px;">
-              <table cellpadding="0" cellspacing="0" border="0" width="100%">
-                ${detailRow(iconCalendar, t.date, dateTimeStr)}
-                ${detailRow(iconClock, t.duration, duration)}
-                ${detailRow(iconPin, t.location, location)}
-                ${detailRow(iconInfo, t.note, note)}
+            <tr><td style="padding:20px 20px 0;">
+              <div style="font-family:${FH};font-size:26px;font-weight:900;color:${C.text};text-transform:uppercase;letter-spacing:.5px;line-height:1.15;margin-bottom:18px;">${esc(eventTitle)}</div>
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-bottom:1px solid rgba(0,0,0,.06);padding-bottom:4px;">
+                ${detailRow('icon-cal.png', dateLine)}
+                ${detailRow('icon-clock.png', durationLine)}
+                ${detailRow('icon-pin.png', location)}
+                <tr><td style="padding-bottom:6px;">
+                  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                    <tr><td style="padding-bottom:10px;">${calButton(gCal, 'icon-cal-white.png', t.addGoogle)}</td></tr>
+                    <tr><td>${calButton('#', 'icon-cal-white.png', t.addApple)}</td></tr>
+                  </table>
+                </td></tr>
               </table>
-            </td></tr>
-            <!-- Calendar buttons -->
-            <tr><td style="padding:16px 20px 20px;">
-              <table cellpadding="0" cellspacing="0" border="0" align="center">
-                <tr>
-                  <td style="padding-right:8px;">
-                    <a href="${googleCalUrl(data)}" style="display:inline-block;padding:8px 18px;background-color:${C.teal};color:${C.white};font-family:${FONT_BODY};font-size:12px;font-weight:700;text-decoration:none;border-radius:20px;">
-                      ${t.addGoogle}
-                    </a>
-                  </td>
-                  <td>
-                    <a href="${appleCalUrl(data)}" style="display:inline-block;padding:8px 18px;background-color:${C.tealMid};color:${C.white};font-family:${FONT_BODY};font-size:12px;font-weight:700;text-decoration:none;border-radius:20px;">
-                      ${t.addApple}
-                    </a>
-                  </td>
-                </tr>
-              </table>
+              ${note ? `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
+                <td width="26" valign="top" style="padding:14px 0;"><img src="${IMG}/icon-info.png" width="15" height="15" alt="" style="display:block;border:0;"></td>
+                <td style="padding:14px 0;font-family:${FB};font-size:13.5px;color:${C.textMuted};line-height:1.7;">${esc(note)}</td>
+              </tr></table>` : '<div style="height:6px;"></div>'}
             </td></tr>
           </table>
         </td></tr>
 
-        <!-- ═══ TICKET DETAILS CARD ═══ -->
-        <tr><td style="padding:0 24px 24px;">
-          <table cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color:${C.white};border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.06);">
-            <!-- Header -->
-            <tr><td style="padding:18px 20px 12px;">
-              <table cellpadding="0" cellspacing="0" border="0">
-                <tr>
-                  <td style="padding-right:8px;vertical-align:middle;">${iconTicket}</td>
-                  <td style="font-family:${FONT_HEADING};font-size:18px;font-weight:700;color:${C.text};text-transform:uppercase;letter-spacing:1px;">
-                    ${t.ticketDets}
-                  </td>
-                </tr>
-              </table>
+        <!-- TICKET DETAILS -->
+        <tr><td style="padding:14px 20px 0;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:${C.white};border-radius:16px;overflow:hidden;box-shadow:0 2px 18px rgba(0,0,0,.09);">
+            <tr><td style="padding:14px 20px;border-bottom:1px solid rgba(0,0,0,.06);">
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
+                <td width="24" valign="middle"><img src="${IMG}/icon-ticket.png" width="15" height="15" alt="" style="display:block;border:0;"></td>
+                <td style="font-family:${FH};font-size:12px;font-weight:800;letter-spacing:1.6px;text-transform:uppercase;color:${C.text};">${t.ticketDets}</td>
+              </tr></table>
             </td></tr>
-            <!-- Rows -->
             <tr><td style="padding:0 20px;">
-              <table cellpadding="0" cellspacing="0" border="0" width="100%">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
                 <tr>
-                  <td style="padding:8px 0;border-bottom:1px solid #f0ebe3;font-family:${FONT_BODY};font-size:14px;color:${C.textMuted};">${t.type}</td>
-                  <td style="padding:8px 0;border-bottom:1px solid #f0ebe3;font-family:${FONT_BODY};font-size:14px;color:${C.text};text-align:right;font-weight:600;">${esc(ticketType)}</td>
+                  <td style="padding:12px 0;border-bottom:1px solid rgba(0,0,0,.05);font-family:${FB};font-size:14px;color:${C.textMuted};">${t.type}</td>
+                  <td align="right" style="padding:12px 0;border-bottom:1px solid rgba(0,0,0,.05);font-family:${FB};font-size:14.5px;font-weight:700;color:${C.text};">${esc(ticketType)}</td>
                 </tr>
                 <tr>
-                  <td style="padding:8px 0;border-bottom:1px solid #f0ebe3;font-family:${FONT_BODY};font-size:14px;color:${C.textMuted};">${t.qty}</td>
-                  <td style="padding:8px 0;border-bottom:1px solid #f0ebe3;font-family:${FONT_BODY};font-size:14px;color:${C.text};text-align:right;font-weight:600;">${quantity}</td>
+                  <td style="padding:12px 0;border-bottom:1px solid rgba(0,0,0,.05);font-family:${FB};font-size:14px;color:${C.textMuted};">${t.qty}</td>
+                  <td align="right" style="padding:12px 0;border-bottom:1px solid rgba(0,0,0,.05);font-family:${FB};font-size:14.5px;font-weight:700;color:${C.text};">${quantity} ${qtyLabel}</td>
                 </tr>
                 <tr>
-                  <td style="padding:8px 0;border-bottom:1px solid #f0ebe3;font-family:${FONT_BODY};font-size:14px;color:${C.textMuted};">${t.price}</td>
-                  <td style="padding:8px 0;border-bottom:1px solid #f0ebe3;font-family:${FONT_BODY};font-size:14px;color:${C.text};text-align:right;font-weight:600;">${isFree ? t.free : fmtPrice(unitPrice, es)}</td>
+                  <td style="padding:12px 0;border-bottom:1px solid rgba(0,0,0,.05);font-family:${FB};font-size:14px;color:${C.textMuted};">${t.unit}</td>
+                  <td align="right" style="padding:12px 0;border-bottom:1px solid rgba(0,0,0,.05);font-family:${FB};font-size:14.5px;font-weight:700;color:${C.text};">${unitDisplay}</td>
                 </tr>
-              </table>
-            </td></tr>
-            <!-- Total -->
-            <tr><td style="padding:14px 20px 18px;">
-              <table cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color:${C.creamPale};border-radius:8px;">
                 <tr>
-                  <td style="padding:12px 16px;font-family:${FONT_HEADING};font-size:16px;font-weight:700;color:${C.text};text-transform:uppercase;">${t.total}</td>
-                  <td style="padding:12px 16px;font-family:${FONT_HEADING};font-size:22px;font-weight:700;color:${C.teal};text-align:right;">
-                    ${isFree ? t.free : fmtPrice(totalAmount, es)}
-                  </td>
+                  <td style="padding:15px 0;font-family:${FH};font-size:14px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:${C.text};">${t.total}</td>
+                  <td align="right" style="padding:15px 0;font-family:${FH};font-size:28px;font-weight:900;color:${isFree ? C.green : C.text};">${totalDisplay}</td>
                 </tr>
               </table>
             </td></tr>
           </table>
         </td></tr>
 
-        ${whatToBringHtml}
+        <!-- WHAT TO BRING -->
+        ${bringHtml}
 
-        <!-- ═══ CTA BUTTON ═══ -->
-        <tr><td style="padding:8px 24px 32px;">
-          <table cellpadding="0" cellspacing="0" border="0" width="100%">
-            <tr><td align="center" style="background-color:${C.teal};border-radius:12px;padding:16px;">
-              <a href="${esc(eventDetailUrl)}" style="display:block;font-family:${FONT_HEADING};font-size:16px;font-weight:700;color:${C.white};text-decoration:none;text-transform:uppercase;letter-spacing:1.5px;">
-                ${t.viewEvent}
-              </a>
-            </td></tr>
-          </table>
+        <!-- CTA -->
+        <tr><td style="padding:14px 20px 0;">
+          <a href="${esc(eventDetailUrl)}" style="display:block;background-color:${C.teal};color:${C.white};text-align:center;padding:17px;border-radius:14px;font-family:${FH};font-size:19px;font-weight:800;text-transform:uppercase;letter-spacing:1px;text-decoration:none;">${t.viewEvent}</a>
         </td></tr>
 
-        <!-- ═══ SOCIAL ═══ -->
-        <tr><td style="padding:0 24px 24px;text-align:center;">
-          <table cellpadding="0" cellspacing="0" border="0" align="center">
-            <tr>
-              <td style="padding:0 8px;">${iconStar}</td>
-              <td style="padding:0 8px;">${iconStar}</td>
-              <td style="padding:0 8px;">${iconStar}</td>
-            </tr>
-          </table>
-          <p style="margin:12px 0 16px;font-family:${FONT_BODY};font-size:14px;color:${C.textMuted};font-weight:600;">
-            ${t.shareAdv}
-          </p>
-          <table cellpadding="0" cellspacing="0" border="0" align="center">
-            <tr>
-              <td>${socialInstagram}</td>
-              <td>${socialFacebook}</td>
-              <td>${socialTiktok}</td>
-            </tr>
-          </table>
+        <!-- DIVIDER -->
+        <tr><td style="padding:24px 20px;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
+            <td style="border-bottom:1px solid rgba(0,0,0,.08);font-size:0;line-height:0;">&nbsp;</td>
+            <td width="60" align="center" style="padding:0 12px;">${starsRow('star-green.png', 3, 9)}</td>
+            <td style="border-bottom:1px solid rgba(0,0,0,.08);font-size:0;line-height:0;">&nbsp;</td>
+          </tr></table>
         </td></tr>
 
-        <!-- ═══ FOOTER ═══ -->
-        <tr><td style="background-color:${C.tealDark};padding:0;">
-          ${mountainSvg(C.mountain)}
+        <!-- COMMUNITY -->
+        <tr><td style="padding:0 20px 32px;text-align:center;">
+          <div style="font-family:${FH};font-size:17px;font-weight:800;color:${C.tealDark};text-transform:uppercase;letter-spacing:.7px;margin-bottom:8px;">${t.shareTitle}</div>
+          <p style="margin:0 0 16px;font-family:${FB};font-size:14px;color:${C.textMuted};line-height:1.75;">${t.shareBody}</p>
+          ${socials.map(s => `<div style="margin-bottom:8px;"><a href="${s.href}" style="font-family:${FH};font-size:15px;font-weight:700;color:${C.teal};text-decoration:none;letter-spacing:.3px;">${s.label}</a></div>`).join('')}
         </td></tr>
-        <tr><td style="background-color:${C.tealDark};padding:0 24px 24px;text-align:center;">
-          <img src="${LOGO_URL}" alt="LPLA" width="80" style="display:inline-block;max-width:80px;height:auto;border:0;opacity:0.7;">
-          <p style="margin:12px 0 4px;font-family:${FONT_BODY};font-size:12px;color:rgba(255,255,255,0.5);">
-            ${t.address}
-          </p>
-          <p style="margin:0 0 4px;font-family:${FONT_BODY};font-size:12px;">
-            <a href="mailto:info@locoporlaaventura.com" style="color:rgba(255,255,255,0.6);text-decoration:underline;">info@locoporlaaventura.com</a>
-          </p>
-          <p style="margin:0 0 12px;font-family:${FONT_BODY};font-size:11px;color:rgba(255,255,255,0.4);line-height:1.5;">
-            ${t.nonprofit}
-          </p>
-          <p style="margin:0;font-family:${FONT_BODY};font-size:11px;">
-            <a href="#" style="color:rgba(255,255,255,0.5);text-decoration:underline;margin:0 8px;">${t.unsubscribe}</a>
-            <a href="#" style="color:rgba(255,255,255,0.5);text-decoration:underline;margin:0 8px;">${t.privacy}</a>
-            <a href="#" style="color:rgba(255,255,255,0.5);text-decoration:underline;margin:0 8px;">${t.terms}</a>
-          </p>
+
+        <!-- FOOTER -->
+        <tr><td style="background-color:${C.tealDark};padding:0;font-size:0;line-height:0;">
+          <img src="${IMG}/mtn-bot.png" width="600" alt="" style="display:block;width:100%;border:0;">
+        </td></tr>
+        <tr><td style="background-color:${C.tealDark};padding:14px 24px 36px;text-align:center;">
+          <img src="${LOGO_URL}" width="42" height="44" alt="LPLA" style="display:inline-block;border:0;opacity:.7;">
+          <div style="font-family:${FB};font-size:12px;color:rgba(255,255,255,.45);text-align:center;line-height:1.8;margin-top:10px;">
+            ${t.address}<br>
+            <a href="mailto:info@locoporlaaventura.com" style="color:rgba(255,255,255,.55);text-decoration:none;">info@locoporlaaventura.com</a>
+          </div>
+          <div style="height:1px;background:rgba(255,255,255,.07);margin:14px 0;">&nbsp;</div>
+          <div style="font-family:${FB};font-size:11.5px;color:rgba(255,255,255,.35);text-align:center;line-height:1.8;">${t.nonprofit}</div>
+          <div style="height:1px;background:rgba(255,255,255,.07);margin:14px 0;">&nbsp;</div>
+          <div style="font-family:${FB};font-size:11px;color:rgba(255,255,255,.3);text-align:center;line-height:1.9;">
+            ${t.received}<br>
+            <a href="#" style="color:rgba(255,255,255,.45);text-decoration:underline;">${t.unsubscribe}</a> ·
+            <a href="https://locoporlaaventura.com/pages/privacy-policy" style="color:rgba(255,255,255,.45);text-decoration:underline;">${t.privacy}</a> ·
+            <a href="https://locoporlaaventura.com/pages/terms-of-service" style="color:rgba(255,255,255,.45);text-decoration:underline;">${t.terms}</a>
+          </div>
         </td></tr>
 
       </table>
-      <!-- /Email container -->
 
     </td></tr>
   </table>
@@ -397,10 +324,9 @@ export function renderBookingConfirmation(data) {
 /* ────────────────────────────────────────
    Klaviyo Template (English, Jinja vars)
    ──────────────────────────────────────── */
-
 export const KLAVIYO_TEMPLATE_HTML = renderBookingConfirmation({
   es: false,
-  firstName: '{{ person.first_name|default:"Adventurer" }}',
+  firstName: '{{ person.first_name|default:"adventurer" }}',
   confirmationNumber: '{{ event.extra.confirmation_number }}',
   eventTitle: '{{ event.extra.event_name_en }}',
   eventCategory: '{{ event.extra.event_category }}',
@@ -419,13 +345,5 @@ export const KLAVIYO_TEMPLATE_HTML = renderBookingConfirmation({
   calendarUrl: '#',
   eventDetailUrl: '#',
 })
-  // fmtPrice turns non-numeric strings into "$NaN" — replace with Jinja
-  // First $NaN = unit price row, second $NaN = total row
-  .replace(
-    '$NaN',
-    '{% if event.extra.is_free %}Free{% else %}{{ event.extra.unit_price }}{% endif %}'
-  )
-  .replace(
-    '$NaN',
-    '{% if event.extra.is_free %}Free{% else %}{{ event.extra.total_amount }}{% endif %}'
-  );
+  .replace('$NaN', '{% if event.extra.is_free %}Free{% else %}{{ event.extra.unit_price }}{% endif %}')
+  .replace('$NaN', '{% if event.extra.is_free %}FREE!{% else %}{{ event.extra.total_amount }}{% endif %}');
