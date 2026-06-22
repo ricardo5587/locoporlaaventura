@@ -261,7 +261,7 @@ export default function AdminPage() {
             {activePage === 'attendees' && <AttendeesBookings events={events} />}
             {(activePage === 'crm' || activePage === 'contacts') && <AdminCRM events={events} />}
             {activePage === 'apps' && <AdminApps />}
-            {activePage === 'klaviyo' && <AdminKlaviyo />}
+            {activePage === 'klaviyo' && <AdminKlaviyo currentUser={currentUser} />}
             {activePage === 'users' && <AdminUsers currentUser={currentUser} />}
             {activePage === 'widget' && <AdminInstall onPreview={handlePreview} events={events} />}
             {activePage === 'settings' && <AdminSettings currentUser={currentUser} />}

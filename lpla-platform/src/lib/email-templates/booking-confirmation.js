@@ -24,46 +24,33 @@ const C = {
   white:      '#FFFFFF',
 };
 
-const LOGO_URL = 'https://locoporlaaventura.com/cdn/shop/files/logolpla_200x.png';
+const LOGO_URL = 'https://locoporlaaventura.vercel.app/logo.png';
 const FONT_HEADING = "'Barlow Condensed', Arial, sans-serif";
 const FONT_BODY    = "'Nunito', Arial, sans-serif";
 
-/* ── Inline SVG helpers ── */
+/* ── Icon helpers (emoji/Unicode — render in Gmail, Outlook, Apple Mail) ── */
+/* Inline SVG is stripped by Gmail/Outlook, so we use emoji glyphs instead. */
 
-const mountainSvg = (fill) => `
-<svg width="600" height="60" viewBox="0 0 600 60" xmlns="http://www.w3.org/2000/svg" style="display:block;">
-  <polygon points="0,60 80,18 140,40 200,10 280,38 340,8 400,32 460,14 520,36 600,4 600,60" fill="${fill}" opacity="0.25"/>
-  <polygon points="0,60 60,30 130,48 190,22 260,44 330,16 410,42 480,20 550,44 600,18 600,60" fill="${fill}" opacity="0.45"/>
-</svg>`;
+const mountainSvg = () => `<div style="font-family:Arial,sans-serif;font-size:22px;line-height:28px;text-align:center;letter-spacing:6px;padding:6px 0;">🏔️ ⛰️ 🏔️ ⛰️ 🏔️</div>`;
 
 const checkCircleSvg = `
 <table cellpadding="0" cellspacing="0" border="0" align="center" style="margin:0 auto;">
-  <tr><td align="center" style="width:56px;height:56px;border-radius:50%;background-color:${C.green};text-align:center;vertical-align:middle;">
-    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <polyline points="6 12 10 16 18 8" stroke="${C.white}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-    </svg>
-  </td></tr>
+  <tr><td align="center" style="width:56px;height:56px;border-radius:50%;background-color:${C.green};text-align:center;vertical-align:middle;font-family:Arial,sans-serif;font-size:30px;line-height:56px;color:${C.white};font-weight:bold;">&#10003;</td></tr>
 </table>`;
 
-const iconCalendar = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="vertical-align:middle;"><rect x="3" y="4" width="18" height="18" rx="2" stroke="${C.teal}" stroke-width="2" fill="none"/><line x1="3" y1="10" x2="21" y2="10" stroke="${C.teal}" stroke-width="2"/><line x1="8" y1="2" x2="8" y2="6" stroke="${C.teal}" stroke-width="2" stroke-linecap="round"/><line x1="16" y1="2" x2="16" y2="6" stroke="${C.teal}" stroke-width="2" stroke-linecap="round"/></svg>`;
+const iconCalendar = '<span style="font-size:16px;">📅</span>';
+const iconClock    = '<span style="font-size:16px;">⏱️</span>';
+const iconPin      = '<span style="font-size:16px;">📍</span>';
+const iconInfo     = '<span style="font-size:16px;">ℹ️</span>';
+const iconTicket   = '<span style="font-size:20px;">🎫</span>';
+const iconBackpack = '<span style="font-size:20px;">🎒</span>';
+const smallCheck   = '<span style="font-size:14px;">✅</span>';
+const iconStar     = '<span style="font-size:18px;">⭐</span>';
 
-const iconClock = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="vertical-align:middle;"><circle cx="12" cy="12" r="9" stroke="${C.teal}" stroke-width="2" fill="none"/><polyline points="12 7 12 12 16 14" stroke="${C.teal}" stroke-width="2" stroke-linecap="round" fill="none"/></svg>`;
-
-const iconPin = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="vertical-align:middle;"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" stroke="${C.teal}" stroke-width="2" fill="none"/><circle cx="12" cy="9" r="2.5" stroke="${C.teal}" stroke-width="2" fill="none"/></svg>`;
-
-const iconInfo = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="vertical-align:middle;"><circle cx="12" cy="12" r="9" stroke="${C.teal}" stroke-width="2" fill="none"/><line x1="12" y1="16" x2="12" y2="12" stroke="${C.teal}" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="8" r="1" fill="${C.teal}"/></svg>`;
-
-const iconTicket = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="vertical-align:middle;"><path d="M2 9V6a2 2 0 012-2h16a2 2 0 012 2v3a2 2 0 000 4v3a2 2 0 01-2 2H4a2 2 0 01-2-2v-3a2 2 0 000-4z" stroke="${C.teal}" stroke-width="2" fill="none"/><line x1="9" y1="4" x2="9" y2="20" stroke="${C.teal}" stroke-width="1.5" stroke-dasharray="3 3"/></svg>`;
-
-const iconBackpack = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="vertical-align:middle;"><rect x="5" y="8" width="14" height="14" rx="3" stroke="${C.brownMid}" stroke-width="2" fill="none"/><path d="M8 8V6a4 4 0 018 0v2" stroke="${C.brownMid}" stroke-width="2" fill="none"/><rect x="9" y="12" width="6" height="4" rx="1" stroke="${C.brownMid}" stroke-width="1.5" fill="none"/></svg>`;
-
-const smallCheck = `<svg width="14" height="14" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="vertical-align:middle;"><circle cx="12" cy="12" r="10" fill="${C.green}"/><polyline points="7 12 10 15 17 9" stroke="${C.white}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>`;
-
-const iconStar = `<svg width="18" height="18" viewBox="0 0 24 24" fill="${C.cream}" xmlns="http://www.w3.org/2000/svg" style="vertical-align:middle;"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26"/></svg>`;
-
-const socialInstagram = `<a href="https://www.instagram.com/locoporlaaventura/" style="text-decoration:none;margin:0 6px;"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="2" y="2" width="20" height="20" rx="5" stroke="${C.white}" stroke-width="1.5" fill="none"/><circle cx="12" cy="12" r="5" stroke="${C.white}" stroke-width="1.5" fill="none"/><circle cx="17.5" cy="6.5" r="1.2" fill="${C.white}"/></svg></a>`;
-const socialFacebook = `<a href="https://www.facebook.com/locoporlaaventura" style="text-decoration:none;margin:0 6px;"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="2" y="2" width="20" height="20" rx="5" stroke="${C.white}" stroke-width="1.5" fill="none"/><path d="M16 8h-2a3 3 0 00-3 3v2h-2v3h2v5h3v-5h2l1-3h-3v-2a1 1 0 011-1h2V8z" fill="${C.white}"/></svg></a>`;
-const socialTiktok = `<a href="https://www.tiktok.com/@locoporlaaventura" style="text-decoration:none;margin:0 6px;"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="2" y="2" width="20" height="20" rx="5" stroke="${C.white}" stroke-width="1.5" fill="none"/><path d="M15 4v8a5 5 0 11-3-4.58" stroke="${C.white}" stroke-width="1.5" stroke-linecap="round" fill="none"/><path d="M15 4c1.5.5 3 2 3.5 4" stroke="${C.white}" stroke-width="1.5" stroke-linecap="round" fill="none"/></svg></a>`;
+const socialLink = (href, label) => `<a href="${href}" style="color:${C.white};text-decoration:none;font-family:${FONT_BODY};font-size:13px;font-weight:700;margin:0 10px;">${label}</a>`;
+const socialInstagram = socialLink('https://www.instagram.com/locoporlaaventura/', 'Instagram');
+const socialFacebook  = socialLink('https://www.facebook.com/locoporlaaventura', 'Facebook');
+const socialTiktok    = socialLink('https://www.tiktok.com/@locoporlaaventura', 'TikTok');
 
 /* ── Detail-row helper ── */
 function detailRow(icon, label, value) {
@@ -228,7 +215,7 @@ export function renderBookingConfirmation(data) {
         <tr><td style="background-color:${C.tealDark};padding:32px 24px 0;text-align:center;">
           <img src="${LOGO_URL}" alt="Loco Por La Aventura" width="140" style="display:inline-block;max-width:140px;height:auto;border:0;">
         </td></tr>
-        <tr><td style="background-color:${C.tealDark};padding:0;font-size:0;line-height:0;">
+        <tr><td style="background-color:${C.tealDark};padding:0;">
           ${mountainSvg(C.teal)}
         </td></tr>
 
@@ -377,7 +364,7 @@ export function renderBookingConfirmation(data) {
         </td></tr>
 
         <!-- ═══ FOOTER ═══ -->
-        <tr><td style="background-color:${C.tealDark};padding:0;font-size:0;line-height:0;">
+        <tr><td style="background-color:${C.tealDark};padding:0;">
           ${mountainSvg(C.mountain)}
         </td></tr>
         <tr><td style="background-color:${C.tealDark};padding:0 24px 24px;text-align:center;">

@@ -21,7 +21,7 @@ function Toast({ message, onDone }) {
   )
 }
 
-export default function AdminKlaviyo() {
+export default function AdminKlaviyo({ currentUser }) {
   const [lists, setLists] = useState([])
   const [segments, setSegments] = useState([])
   const [loading, setLoading] = useState(true)
@@ -33,22 +33,22 @@ export default function AdminKlaviyo() {
   const [builderData, setBuilderData] = useState(null)
   const [previewEvent, setPreviewEvent] = useState('climbing')
   const [pushing, setPushing] = useState(false)
-  const [testListId, setTestListId] = useState('')
   const [sendingTest, setSendingTest] = useState(false)
   const token = typeof window !== 'undefined' ? localStorage.getItem('lpla_admin_token') : ''
+  const myEmail = currentUser?.email || ''
 
   async function sendTestEmail() {
-    if (!testListId) { setToast('Pick a list to send the test to'); return }
+    if (!myEmail) { setToast('Could not determine your email'); return }
     setSendingTest(true)
     try {
       const r = await fetch(`${API}/api/klaviyo/test-send`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ listId: testListId }),
+        body: JSON.stringify({ email: myEmail, firstName: currentUser?.name?.split(' ')[0] || '' }),
       })
       const data = await r.json()
       if (!r.ok) setToast(data.error || 'Failed to send test')
-      else setToast(`Test sent to "${lists.find(l => l.id === testListId)?.attributes?.name || 'list'}" — check your inbox!`)
+      else setToast(`Test sent to ${myEmail} — check your inbox!`)
     } catch (err) {
       setToast(err.message)
     }
@@ -229,18 +229,13 @@ export default function AdminKlaviyo() {
               This email is sent automatically when someone books an event. Push the template to Klaviyo, then create a Flow triggered by the "Booking Confirmed" event to use it.
             </p>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 14px', background: '#FAFAF7', border: `1px solid ${ADM.border}`, borderRadius: 10, marginBottom: 14, flexWrap: 'wrap' }}>
-              <span style={{ fontFamily: 'Nunito,system-ui', fontSize: 13, fontWeight: 700, color: ADM.text }}>Send a test to:</span>
-              <select value={testListId} onChange={e => setTestListId(e.target.value)} style={{ borderRadius: 8, border: `1px solid ${ADM.border}`, padding: '7px 10px', fontFamily: 'Nunito,system-ui', fontSize: 13, color: ADM.text, background: '#fff', minWidth: 180 }}>
-                <option value="">Select a list…</option>
-                {lists.map(list => (
-                  <option key={list.id} value={list.id}>{list.attributes?.name} ({list.attributes?.profile_count ?? 0})</option>
-                ))}
-              </select>
-              <button onClick={sendTestEmail} disabled={sendingTest || !testListId} style={{ padding: '8px 16px', borderRadius: 8, border: 'none', background: (sendingTest || !testListId) ? ADM.muted : '#7EBF2E', color: '#fff', fontFamily: 'Barlow Condensed,system-ui', fontSize: 13, fontWeight: 800, letterSpacing: .4, cursor: (sendingTest || !testListId) ? 'default' : 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
+              <span style={{ fontFamily: 'Nunito,system-ui', fontSize: 13, fontWeight: 700, color: ADM.text }}>Send a test to your inbox:</span>
+              <span style={{ fontFamily: 'Nunito,system-ui', fontSize: 13, fontWeight: 700, color: ADM.primary, background: '#fff', border: `1px solid ${ADM.border}`, borderRadius: 8, padding: '7px 12px' }}>{myEmail || '—'}</span>
+              <button onClick={sendTestEmail} disabled={sendingTest || !myEmail} style={{ padding: '8px 16px', borderRadius: 8, border: 'none', background: (sendingTest || !myEmail) ? ADM.muted : '#7EBF2E', color: '#fff', fontFamily: 'Barlow Condensed,system-ui', fontSize: 13, fontWeight: 800, letterSpacing: .4, cursor: (sendingTest || !myEmail) ? 'default' : 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
                 <AdmIcon name="send" size={13} color="#fff" />
                 {sendingTest ? 'Sending…' : 'Send Test'}
               </button>
-              <span style={{ fontFamily: 'Nunito,system-ui', fontSize: 11.5, color: ADM.muted }}>Sends the design above (with sample data) to everyone on the chosen list.</span>
+              <span style={{ fontFamily: 'Nunito,system-ui', fontSize: 11.5, color: ADM.muted }}>For testing, the confirmation (with sample data) is sent only to your own email.</span>
             </div>
             <div style={{ borderRadius: 12, overflow: 'hidden', border: `1px solid ${ADM.border}`, background: '#E8E0D4' }}>
               <iframe
