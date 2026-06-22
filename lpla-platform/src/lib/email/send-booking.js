@@ -1,5 +1,6 @@
 import { renderBookingConfirmation } from '@/lib/email-templates/booking-confirmation';
 import { sendEmail } from '@/lib/email/resend';
+import { googleCalendarUrl, appleCalendarUrl } from '@/lib/email/calendar';
 
 export const CAT_COLORS = {
   Escalada: '#155070', Senderismo: '#3A5E14', Taller: '#5E3B1E',
@@ -8,11 +9,12 @@ export const CAT_COLORS = {
 
 // Build the renderBookingConfirmation data object from an event row + order facts.
 export function buildBookingData({ event, firstName, confirmationNumber, ticketLabel, qty, unitPrice, amount, es = false }) {
+  const title = (es ? event?.title_es : event?.title_en) || event?.title_en || event?.title_es || '';
   return {
     es,
     firstName: firstName || 'Adventurer',
     confirmationNumber,
-    eventTitle: (es ? event?.title_es : event?.title_en) || event?.title_en || event?.title_es || '',
+    eventTitle: title,
     eventCategory: event?.category || '',
     categoryColor: CAT_COLORS[event?.category] || '#1B5E7F',
     eventDate: event?.date || '',
@@ -26,6 +28,8 @@ export function buildBookingData({ event, firstName, confirmationNumber, ticketL
     totalAmount: amount ?? 0,
     isFree: (amount ?? 0) === 0,
     whatToBring: Array.isArray(event?.what_to_bring) ? event.what_to_bring : [],
+    calendarUrl: googleCalendarUrl(event, title),
+    appleCalendarUrl: appleCalendarUrl(event, title),
     eventDetailUrl: event?.id ? `https://locoporlaaventura.com/events/${event.id}` : '#',
   };
 }

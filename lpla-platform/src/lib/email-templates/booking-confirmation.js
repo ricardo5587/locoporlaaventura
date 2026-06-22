@@ -28,8 +28,8 @@ const C = {
   white:      '#FFFFFF',
 };
 
-const IMG = 'https://locoporlaaventura.vercel.app/email';
-const LOGO_URL = 'https://locoporlaaventura.vercel.app/logo.png';
+const IMG = 'https://booking.locoporlaaventura.com/email';
+const LOGO_URL = 'https://booking.locoporlaaventura.com/logo.png';
 // One consistent font everywhere. Email clients (esp. Gmail) won't reliably
 // load web fonts, so using a single Arial/Helvetica stack for both headings
 // and body guarantees the whole email renders in the same typeface in every
@@ -100,11 +100,14 @@ export function renderBookingConfirmation(data) {
     isFree = false,
     whatToBring = [],
     calendarUrl = '',
+    appleCalendarUrl = '',
     eventDetailUrl = '#',
   } = data || {};
 
   const name = firstName || (es ? 'aventurero/a' : 'adventurer');
-  const gCal = calendarUrl || '#';
+  const detailFallback = eventDetailUrl && eventDetailUrl !== '#' ? eventDetailUrl : 'https://locoporlaaventura.com';
+  const gCal = calendarUrl || detailFallback;
+  const aCal = appleCalendarUrl || detailFallback;
   const dateLine = [eventDate, eventTime].filter(Boolean).join('  ·  ');
   const durationLine = duration ? `${es ? 'Duración' : 'Duration'}: ${duration}` : '';
   const qtyLabel = quantity == 1 ? (es ? 'entrada' : 'ticket') : (es ? 'entradas' : 'tickets');
@@ -228,7 +231,7 @@ export function renderBookingConfirmation(data) {
                 <tr><td style="padding-top:6px;padding-bottom:6px;">
                   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
                     <tr><td style="padding-bottom:10px;">${calButton(gCal, 'gcal.png', t.addGoogle)}</td></tr>
-                    <tr><td>${calButton('#', 'acal.png', t.addApple)}</td></tr>
+                    <tr><td>${calButton(aCal, 'acal.png', t.addApple)}</td></tr>
                   </table>
                 </td></tr>
               </table>
@@ -277,7 +280,7 @@ export function renderBookingConfirmation(data) {
 
         <!-- CTA -->
         <tr><td style="padding:14px 20px 0;">
-          <a href="${esc(eventDetailUrl)}" style="display:block;background-color:${C.teal};color:${C.white};text-align:center;padding:17px;border-radius:14px;font-family:${FH};font-size:19px;font-weight:800;text-transform:uppercase;letter-spacing:1px;text-decoration:none;margin-bottom:28px;">${t.viewEvent}</a>
+          <a href="${esc(detailFallback)}" style="display:block;background-color:${C.teal};color:${C.white};text-align:center;padding:17px;border-radius:14px;font-family:${FH};font-size:19px;font-weight:800;text-transform:uppercase;letter-spacing:1px;text-decoration:none;margin-bottom:28px;">${t.viewEvent}</a>
         </td></tr>
 
         <!-- DIVIDER -->
@@ -311,7 +314,7 @@ export function renderBookingConfirmation(data) {
           <div style="height:1px;background:rgba(255,255,255,.07);margin:14px 0;">&nbsp;</div>
           <div style="font-family:${FB};font-size:11px;color:rgba(255,255,255,.3);text-align:center;line-height:1.9;">
             ${t.received}<br>
-            <a href="#" style="color:rgba(255,255,255,.45);text-decoration:underline;">${t.unsubscribe}</a> ·
+            <a href="mailto:info@locoporlaaventura.com?subject=Unsubscribe" style="color:rgba(255,255,255,.45);text-decoration:underline;">${t.unsubscribe}</a> ·
             <a href="https://locoporlaaventura.com/pages/privacy-policy" style="color:rgba(255,255,255,.45);text-decoration:underline;">${t.privacy}</a> ·
             <a href="https://locoporlaaventura.com/pages/terms-of-service" style="color:rgba(255,255,255,.45);text-decoration:underline;">${t.terms}</a>
           </div>
