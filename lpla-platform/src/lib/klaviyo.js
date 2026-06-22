@@ -43,16 +43,11 @@ export async function getSegments() {
 }
 
 export async function subscribeToList(listId, email, firstName = '', lastName = '') {
-  return klaviyoRequest(`/lists/${listId}/relationships/members`, 'POST', {
-    data: [{
-      type: 'profile',
-      attributes: {
-        email,
-        first_name: firstName,
-        last_name: lastName,
-      },
-    }],
+  const profileId = await upsertProfile(email, {
+    first_name: firstName,
+    last_name: lastName,
   });
+  await addProfilesToList(listId, [profileId]);
 }
 
 export async function getProfiles(cursor = null) {

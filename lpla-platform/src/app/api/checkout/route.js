@@ -66,14 +66,12 @@ export async function POST(request) {
 
     const confNum = `LPLA-${order.id.toString().slice(-6).toUpperCase()}`;
 
-    // Add to "Event Bookers" list (all bookers with email consent)
-    if (emailConsent) {
-      try {
-        const bookersListId = await getBookersListId();
-        await subscribeToList(bookersListId, email, firstName, lastName);
-      } catch (err) {
-        console.error('Klaviyo Event Bookers list failed:', err.message);
-      }
+    // Add to "Event Bookers" list (all bookers, regardless of marketing consent)
+    try {
+      const bookersListId = await getBookersListId();
+      await subscribeToList(bookersListId, email, firstName, lastName);
+    } catch (err) {
+      console.error('Klaviyo Event Bookers list failed:', err.message);
     }
 
     // Send the booking confirmation email (transactional, via Resend).
