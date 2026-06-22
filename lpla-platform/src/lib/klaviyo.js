@@ -18,7 +18,11 @@ async function klaviyoRequest(endpoint, method = 'GET', body = null) {
     const err = await res.text();
     throw new Error(`Klaviyo error: ${res.status} ${err}`);
   }
-  return res.json();
+  // Some endpoints (e.g. relationship writes) return 204 No Content with an
+  // empty body, which would throw if we tried to parse it as JSON.
+  if (res.status === 204) return null;
+  const text = await res.text();
+  return text ? JSON.parse(text) : null;
 }
 
 export async function getLists() {
