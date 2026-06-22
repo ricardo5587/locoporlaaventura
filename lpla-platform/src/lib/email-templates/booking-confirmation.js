@@ -30,8 +30,11 @@ const C = {
 
 const IMG = 'https://locoporlaaventura.vercel.app/email';
 const LOGO_URL = 'https://locoporlaaventura.vercel.app/logo.png';
-const FH = "'Barlow Condensed', Arial, sans-serif";
-const FB = "'Nunito', Arial, sans-serif";
+// Heading falls back to Arial Narrow (condensed, system-available) so Gmail —
+// which won't load web fonts — stays close to Barlow Condensed. Apple Mail/iOS
+// load the real web fonts via the <link>/@font-face in <head>.
+const FH = "'Barlow Condensed', 'Arial Narrow', Arial, sans-serif";
+const FB = "'Nunito', 'Helvetica Neue', Helvetica, Arial, sans-serif";
 
 /* ── Escape HTML (skips Jinja {{…}} and {%…%} blocks) ── */
 function esc(s) {
@@ -67,8 +70,8 @@ function detailRow(iconFile, text, color) {
 }
 
 function calButton(url, iconFile, label) {
-  return `<a href="${url}" style="display:block;background:${C.teal};border-radius:999px;padding:13px 20px;text-decoration:none;text-align:center;">
-    <img src="${IMG}/${iconFile}" width="18" height="18" alt="" style="vertical-align:middle;border:0;margin-right:8px;">
+  return `<a href="${url}" style="display:block;background:${C.teal};border-radius:999px;padding:11px 20px;text-decoration:none;text-align:center;">
+    <img src="${IMG}/${iconFile}" width="22" height="22" alt="" style="vertical-align:middle;border:0;margin-right:9px;border-radius:5px;">
     <span style="font-family:${FH};font-size:14px;font-weight:800;letter-spacing:.7px;text-transform:uppercase;color:${C.white};vertical-align:middle;">${label}</span>
   </a>`;
 }
@@ -170,7 +173,10 @@ export function renderBookingConfirmation(data) {
   <meta name="x-apple-disable-message-reformatting">
   <title>${t.confirmed}</title>
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800;900&family=Nunito:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <!--[if mso]><style>table,td{font-family:Arial,sans-serif!important;}</style><![endif]-->
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800;900&family=Nunito:wght@400;500;600;700;800&display=swap');
+  </style>
+  <!--[if mso]><style>table,td,div,span,a,p{font-family:Arial,sans-serif!important;}</style><![endif]-->
 </head>
 <body style="margin:0;padding:0;background-color:#E8E0D4;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%;">
   <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color:#E8E0D4;">
@@ -223,8 +229,8 @@ export function renderBookingConfirmation(data) {
                 ${detailRow('icon-pin.png', location)}
                 <tr><td style="padding-bottom:6px;">
                   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
-                    <tr><td style="padding-bottom:10px;">${calButton(gCal, 'icon-cal-white.png', t.addGoogle)}</td></tr>
-                    <tr><td>${calButton('#', 'icon-cal-white.png', t.addApple)}</td></tr>
+                    <tr><td style="padding-bottom:10px;">${calButton(gCal, 'gcal.png', t.addGoogle)}</td></tr>
+                    <tr><td>${calButton('#', 'acal.png', t.addApple)}</td></tr>
                   </table>
                 </td></tr>
               </table>
