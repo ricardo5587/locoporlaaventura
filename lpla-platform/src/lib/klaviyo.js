@@ -174,3 +174,33 @@ export async function getFlows() {
   const data = await klaviyoRequest('/flows');
   return data.data || [];
 }
+
+// Create a new list and return it.
+export async function createList(name) {
+  const data = await klaviyoRequest('/lists', 'POST', {
+    data: { type: 'list', attributes: { name } },
+  });
+  return data.data;
+}
+
+// Create a profile, or return the existing one's id if it already exists.
+export async function upsertProfile(email, attrs = {}) {
+  try {
+    const data = await klaviyoRequest('/profiles', 'POST', {
+      data: { type: 'profile', attributes: { email, ...attrs } },
+    });
+    return data.data.id;
+  } catch (err) {
+    // Klaviyo returns 409 with the existing profile id when the email already exists.
+    const match = /duplicate_profile_id["\s:]+([0-9A-Za-z]+)/.exec(err.message);
+    if (match) return match[1];
+    throw err;
+  }
+}
+
+// Add one or more profile ids to a list.
+export async function addProfilesToList(listId, profileIds) {
+  return klaviyoRequest(`/lists/${listId}/relationships/profiles`, 'POST', {
+    data: profileIds.map(id => ({ type: 'profile', id })),
+  });
+}
