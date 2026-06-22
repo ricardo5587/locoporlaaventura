@@ -26,8 +26,15 @@ async function klaviyoRequest(endpoint, method = 'GET', body = null) {
 }
 
 export async function getLists() {
-  const data = await klaviyoRequest('/lists?additional-fields[list]=profile_count');
-  return data.data || [];
+  try {
+    // URL-encode the bracketed param; some Klaviyo gateways reject raw brackets.
+    const data = await klaviyoRequest('/lists?additional-fields%5Blist%5D=profile_count');
+    return data?.data || [];
+  } catch {
+    // Fall back to a plain list fetch (no profile_count) so callers still work.
+    const data = await klaviyoRequest('/lists');
+    return data?.data || [];
+  }
 }
 
 export async function getSegments() {

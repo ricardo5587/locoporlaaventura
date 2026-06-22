@@ -57,9 +57,15 @@ export async function GET(request) {
       lists: profileListMap[p.id] || [],
     }));
 
-    await supabase
-      .from('klaviyo_cache')
-      .upsert({ id: 'profiles', data: enriched, updated_at: new Date().toISOString() });
+    try {
+      await supabase
+        .from('klaviyo_cache')
+        .upsert({ id: 'profiles', data: enriched, updated_at: new Date().toISOString() });
+    } catch (cacheErr) {
+      // A cache-write failure (e.g. payload too large) must not fail the request;
+      // we still return the freshly fetched data.
+      console.error('Klaviyo cache write failed:', cacheErr.message);
+    }
 
     return NextResponse.json(enriched, {
       headers: { ...CORS, 'X-Cache': 'miss' },
