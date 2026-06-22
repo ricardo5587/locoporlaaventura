@@ -354,21 +354,25 @@ function AppChip({ appId }) {
   )
 }
 
-function AutomationRow({ flow, enabled, onToggle, ADM }) {
+function AutomationRow({ flow, enabled, effective, connectedApps = {}, onToggle, ADM }) {
   const [open, setOpen] = useState(false)
   const uniqueApps = [...new Set(flow.actions.map(a => a.app))]
+  const missingApps = uniqueApps.filter(a => !connectedApps[a])
   return (
     <div style={{ borderBottom: `1px solid ${ADM.border}` }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 20px', cursor: 'pointer' }}
         onClick={() => setOpen(o => !o)}>
-        <div style={{ width: 36, height: 36, borderRadius: 9, background: enabled ? `${ADM.primary}14` : '#F1EFE8', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <AdmIcon name={flow.triggerIcon} size={18} color={enabled ? ADM.primary : ADM.light} />
+        <div style={{ width: 36, height: 36, borderRadius: 9, background: effective ? `${ADM.primary}14` : '#F1EFE8', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <AdmIcon name={flow.triggerIcon} size={18} color={effective ? ADM.primary : ADM.light} />
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontFamily: 'Barlow Condensed,system-ui', fontSize: 15, fontWeight: 800, color: ADM.text, textTransform: 'uppercase', letterSpacing: .3, marginBottom: 3 }}>{flow.trigger}</div>
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
             {uniqueApps.map(a => <AppChip key={a} appId={a} />)}
             <span style={{ fontFamily: 'Nunito,system-ui', fontSize: 12, color: ADM.light, alignSelf: 'center' }}>· {flow.actions.length} action{flow.actions.length > 1 ? 's' : ''}</span>
+            {enabled && missingApps.length > 0 && (
+              <span style={{ fontFamily: 'Nunito,system-ui', fontSize: 11, color: '#D9831F', alignSelf: 'center' }}>· Paused — connect {missingApps.join(', ')}</span>
+            )}
           </div>
         </div>
         <div onClick={e => { e.stopPropagation(); onToggle(flow.id) }}
@@ -428,7 +432,12 @@ export default function AdminApps() {
   }
 
   const connCount = Object.values(connected).filter(Boolean).length
-  const autoCount = Object.values(autoEnabled).filter(Boolean).length
+  function isAutoEffective(flow) {
+    if (!autoEnabled[flow.id]) return false
+    const requiredApps = [...new Set(flow.actions.map(a => a.app))]
+    return requiredApps.every(app => connected[app])
+  }
+  const autoCount = AUTOMATIONS.filter(isAutoEffective).length
 
   return (
     <div style={{ padding: '28px 32px', flex: 1, overflow: 'auto', background: ADM.bg }}>
@@ -472,7 +481,7 @@ export default function AdminApps() {
       </div>
       <div style={{ background: ADM.card, borderRadius: ADM.radiusMd, border: `1px solid ${ADM.border}`, overflow: 'hidden' }}>
         {AUTOMATIONS.map(flow =>
-          <AutomationRow key={flow.id} flow={flow} enabled={autoEnabled[flow.id]} onToggle={onToggle} ADM={ADM} />
+          <AutomationRow key={flow.id} flow={flow} enabled={autoEnabled[flow.id]} effective={isAutoEffective(flow)} connectedApps={connected} onToggle={onToggle} ADM={ADM} />
         )}
       </div>
     </div>
