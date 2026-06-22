@@ -664,6 +664,15 @@ function importedToContact(raw) {
 
 const API = 'https://locoporlaaventura.vercel.app'
 
+function computeKlaviyoEngagement(lists, created, updated) {
+  const DAY = 86400000, now = Date.now()
+  const listScore = Math.min(30, lists.length * 15)
+  const recency = Math.max(0, 30 - (now - updated) / DAY / 3)
+  const tenure = Math.min(20, (now - created) / DAY / 15)
+  const hasProfile = updated > created ? 20 : 0
+  return Math.round(Math.min(100, listScore + recency + tenure + hasProfile))
+}
+
 function klaviyoProfileToContact(p) {
   const attr = p.attributes || {}
   const email = attr.email || ''
@@ -699,9 +708,9 @@ function klaviyoProfileToContact(p) {
     lastActivity: updated,
     categories: [],
     events: [],
-    engagementScore: 20,
+    engagementScore: computeKlaviyoEngagement(lists, created, updated),
     segment: firstListName,
-    tags: [],
+    tags: lists.length >= 3 ? ['Engaged'] : [],
     lists,
     source: 'klaviyo',
   }
@@ -746,12 +755,26 @@ export default function AdminCRM({ events }) {
 
   const allContacts = useMemo(() => {
     const map = {}
-    orderContacts.forEach(c => { map[c.id] = c })
+    orderContacts.forEach(c => { map[c.id] = { ...c } })
     imported.forEach(c => {
       if (!map[c.id]) map[c.id] = c
     })
     klaviyoContacts.forEach(c => {
-      if (!map[c.id]) map[c.id] = c
+      if (map[c.id]) {
+        const existing = map[c.id]
+        existing.lists = c.lists || []
+        existing.klaviyoId = c.klaviyoId
+        existing.source = 'merged'
+        if (c.phone && !existing.phone?.startsWith('+1 ')) existing.phone = c.phone
+        if (c.locationStr) existing.locationStr = c.locationStr
+        if (c.city) existing.city = c.city
+        if (c.region) existing.region = c.region
+        if (c.timezone) existing.timezone = c.timezone
+        existing.klaviyoCreated = c.klaviyoCreated
+        existing.klaviyoUpdated = c.klaviyoUpdated
+      } else {
+        map[c.id] = c
+      }
     })
     return Object.values(map).sort((a, b) => b.lastActivity - a.lastActivity)
   }, [orderContacts, imported, klaviyoContacts])
