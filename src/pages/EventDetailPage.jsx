@@ -42,7 +42,7 @@ export function EventDetailPage({ event, lang, onConfirm, onBack }) {
     setSubmitError('');
     setPayStep('processing');
     try {
-      await submitForm('booking', {
+      const result = await submitForm('booking', {
         event: { id: event.id, title: event.titleEn, date: event.date, location: event.location },
         ticket: selectedTicket,
         quantity: form.quantity,
@@ -56,7 +56,8 @@ export function EventDetailPage({ event, lang, onConfirm, onBack }) {
         emailConsent: form.emailConsent,
       });
       setPayStep('done');
-      setTimeout(() => onConfirm({ event, form, total, selectedTicket }), 800);
+      const confNum = result.order?.confirmationNumber || '';
+      setTimeout(() => onConfirm({ event, form, total, selectedTicket, confirmationNumber: confNum }), 800);
     } catch (err) {
       setSubmitError(L('No se pudo enviar la reserva. Int\u00e9ntalo de nuevo.', 'Could not submit your booking. Please try again.'));
       setPayStep('form');

@@ -32,5 +32,6 @@ export async function submitForm(formType, payload) {
     throw new Error(data.error || `Booking failed (${res.status})`);
   }
 
-  return { ok: true, order: await res.json() };
+  const order = await res.json();
+  return { ok: true, order };
 }

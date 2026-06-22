@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { requireAuth } from '@/lib/auth';
-import { subscribeToList, trackEvent } from '@/lib/klaviyo';
+import { subscribeToList, trackEvent, getBookersListId } from '@/lib/klaviyo';
 import { sendBookingConfirmation } from '@/lib/email/send-booking';
 
 const CORS = {
@@ -86,13 +86,23 @@ export async function POST(request) {
     const { data: event } = await supabase
       .from('events').select('*').eq('id', eventId).single();
 
-    // Subscribe to Klaviyo list if configured
+    // Subscribe to Klaviyo newsletter list if configured
     const klaviyoListId = process.env.KLAVIYO_DEFAULT_LIST_ID;
     if (klaviyoListId && emailConsent) {
       try {
         await subscribeToList(klaviyoListId, email, firstName, lastName);
       } catch (err) {
         console.error('Klaviyo subscription failed:', err.message);
+      }
+    }
+
+    // Add to "Event Bookers" list (all bookers with email consent)
+    if (emailConsent) {
+      try {
+        const bookersListId = await getBookersListId();
+        await subscribeToList(bookersListId, email, firstName, lastName);
+      } catch (err) {
+        console.error('Klaviyo Event Bookers list failed:', err.message);
       }
     }
 
@@ -141,7 +151,7 @@ export async function POST(request) {
       console.error('Klaviyo booking event tracking failed:', err.message);
     }
 
-    return NextResponse.json(mapOrder(order), { status: 201, headers: CORS });
+    return NextResponse.json({ ...mapOrder(order), confirmationNumber: confNum }, { status: 201, headers: CORS });
   } catch (err) {
     return NextResponse.json({ error: err.message }, { status: 500, headers: CORS });
   }

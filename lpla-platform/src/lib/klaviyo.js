@@ -262,6 +262,17 @@ export async function createList(name) {
   return data.data;
 }
 
+let _bookerListId = null;
+export async function getBookersListId() {
+  if (_bookerListId) return _bookerListId;
+  const lists = await getLists();
+  const existing = lists.find(l => l.attributes?.name === 'Event Bookers');
+  if (existing) { _bookerListId = existing.id; return _bookerListId; }
+  const created = await createList('Event Bookers');
+  _bookerListId = created.id;
+  return _bookerListId;
+}
+
 // Create a profile, or return the existing one's id if it already exists.
 export async function upsertProfile(email, attrs = {}) {
   try {
