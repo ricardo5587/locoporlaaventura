@@ -13,7 +13,7 @@ export async function OPTIONS() {
 }
 
 export async function GET(request) {
-  const auth = requireRole(request, ['owner']);
+  const auth = requireRole(request, ['owner', 'editor']);
   if (auth.error) return auth.error;
 
   try {

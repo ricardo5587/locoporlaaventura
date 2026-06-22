@@ -725,7 +725,29 @@ export default function AdminCRM({ events }) {
   })
   const [klaviyoContacts, setKlaviyoContacts] = useState([])
   const [klaviyoLoading, setKlaviyoLoading] = useState(true)
+  const [klaviyoLists, setKlaviyoLists] = useState([])
   const [lastSynced, setLastSynced] = useState(null)
+
+  // Fast, lightweight fetch of the list catalog (one Klaviyo call) so the
+  // Segments sidebar updates near-instantly, independent of the heavy
+  // profile sync below.
+  const loadLists = useCallback(async () => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('lpla_admin_token') : ''
+    if (!token) return
+    try {
+      const r = await fetch(`${API}/api/klaviyo/lists`, { headers: { Authorization: `Bearer ${token}` } })
+      if (!r.ok) return
+      const data = await r.json()
+      const lists = Array.isArray(data) ? data : (data?.data || [])
+      setKlaviyoLists(lists.map(l => ({
+        id: l.id,
+        name: l.attributes?.name || 'Unnamed',
+        count: l.attributes?.profile_count ?? null,
+      })))
+    } catch (err) {
+      console.error('Klaviyo lists error:', err)
+    }
+  }, [])
 
   const loadKlaviyo = useCallback(async (force = false) => {
     const token = typeof window !== 'undefined' ? localStorage.getItem('lpla_admin_token') : ''
@@ -751,7 +773,10 @@ export default function AdminCRM({ events }) {
     }
   }, [])
 
-  useEffect(() => { loadKlaviyo(false) }, [loadKlaviyo])
+  useEffect(() => { loadLists(); loadKlaviyo(false) }, [loadLists, loadKlaviyo])
+
+  // Refresh both: the list catalog updates fast, profiles sync in background.
+  const refreshAll = useCallback(() => { loadLists(); loadKlaviyo(true) }, [loadLists, loadKlaviyo])
 
   const allContacts = useMemo(() => {
     const map = {}
@@ -789,11 +814,10 @@ export default function AdminCRM({ events }) {
   const PER = 20
 
   const dynamicSegments = useMemo(() => {
-    const listNames = new Set()
+    // Prefer the fast list catalog; fall back to names embedded in profiles.
+    const listNames = new Set(klaviyoLists.map(l => l.name))
     klaviyoContacts.forEach(c => {
-      if (c.lists) {
-        c.lists.forEach(l => listNames.add(l.name))
-      }
+      if (c.lists) c.lists.forEach(l => listNames.add(l.name))
     })
     const segments = [
       { id:'all', label:'All Contacts', icon:'people' },
@@ -805,13 +829,21 @@ export default function AdminCRM({ events }) {
       })),
     ]
     return segments.length > 1 ? segments : DEFAULT_CRM_SEGMENTS
-  }, [klaviyoContacts])
+  }, [klaviyoLists, klaviyoContacts])
+
+  const listCounts = useMemo(() => {
+    const m = {}
+    klaviyoLists.forEach(l => { if (l.count != null) m[l.name] = l.count })
+    return m
+  }, [klaviyoLists])
 
   const segCount = id => {
     if (id==='all') return allContacts.length
     if (id.startsWith('list_')) {
       const listName = id.replace('list_', '')
-      return allContacts.filter(c=>c.lists && c.lists.some(l=>l.name===listName)).length
+      const loaded = allContacts.filter(c=>c.lists && c.lists.some(l=>l.name===listName)).length
+      // Before membership has synced, show Klaviyo's reported profile_count.
+      return loaded || listCounts[listName] || 0
     }
     if (id==='Volunteer') return allContacts.filter(c=>c.tags.includes('Volunteer')).length
     return allContacts.filter(c=>c.segment===id).length
@@ -867,6 +899,7 @@ export default function AdminCRM({ events }) {
 
   return (
     <div style={{ display:'flex', flex:1, overflow:'hidden', background:ADM.bg }}>
+      <style>{`@keyframes lpla-spin { to { transform: rotate(360deg) } }`}</style>
 
       <div style={{ width:200, flexShrink:0, background:ADM.card, borderRight:`1px solid ${ADM.border}`, display:'flex', flexDirection:'column', overflow:'auto' }}>
         <div style={{ padding:'20px 16px 12px' }}>
@@ -915,8 +948,11 @@ export default function AdminCRM({ events }) {
             </div>
             <div style={{ display:'flex', gap:10, alignItems:'center' }}>
               {lastSynced && <span style={{ fontFamily:'Nunito,system-ui', fontSize:11.5, color:ADM.light, marginRight:4 }}>Last synced {admTimeAgo(lastSynced.getTime())}</span>}
-              <button onClick={() => loadKlaviyo(true)} disabled={klaviyoLoading} style={{ display:'inline-flex', alignItems:'center', gap:7, padding:'10px 18px', borderRadius:ADM.radius, border:`1px solid ${ADM.border}`, background:ADM.card, color:ADM.text, cursor:klaviyoLoading?'default':'pointer', opacity:klaviyoLoading?.6:1, fontFamily:'Barlow Condensed,system-ui', fontSize:15, fontWeight:800, letterSpacing:.4 }}>
-                <AdmIcon name="mail" size={16} color={ADM.muted} /> {klaviyoLoading ? 'Syncing…' : 'Refresh from Klaviyo'}
+              <button onClick={refreshAll} disabled={klaviyoLoading} style={{ display:'inline-flex', alignItems:'center', gap:7, padding:'10px 18px', borderRadius:ADM.radius, border:`1px solid ${ADM.border}`, background:ADM.card, color:ADM.text, cursor:klaviyoLoading?'default':'pointer', opacity:klaviyoLoading?.6:1, fontFamily:'Barlow Condensed,system-ui', fontSize:15, fontWeight:800, letterSpacing:.4 }}>
+                {klaviyoLoading
+                  ? <span style={{ width:14, height:14, border:`2px solid ${ADM.border}`, borderTopColor:ADM.primary, borderRadius:'50%', display:'inline-block', animation:'lpla-spin 0.8s linear infinite' }} />
+                  : <AdmIcon name="mail" size={16} color={ADM.muted} />}
+                {klaviyoLoading ? 'Syncing contacts…' : 'Refresh from Klaviyo'}
               </button>
               <button onClick={() => setShowImport(true)} style={{ display:'inline-flex', alignItems:'center', gap:7, padding:'10px 18px', borderRadius:ADM.radius, border:`1px solid ${ADM.border}`, background:ADM.card, color:ADM.text, cursor:'pointer', fontFamily:'Barlow Condensed,system-ui', fontSize:15, fontWeight:800, letterSpacing:.4 }}>
                 <AdmIcon name="download" size={16} color={ADM.muted} style={{ transform:'rotate(180deg)' }} /> Import
