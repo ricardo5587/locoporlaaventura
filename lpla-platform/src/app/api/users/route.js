@@ -46,7 +46,7 @@ export async function POST(request) {
     const hash = await bcrypt.hash(password, 12);
     const { data, error } = await supabase
       .from('admin_users')
-      .insert({ email: email.toLowerCase(), name, phone, password_hash: hash, role })
+      .insert({ email: email.toLowerCase(), name, phone, password_hash: hash, role, active: false })
       .select('id, email, name, phone, role, active, created_at')
       .single();
 

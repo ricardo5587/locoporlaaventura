@@ -22,7 +22,6 @@ export async function POST(request) {
       .from('admin_users')
       .select('*')
       .eq('email', email.toLowerCase())
-      .eq('active', true)
       .single();
 
     if (!user) {
@@ -32,6 +31,11 @@ export async function POST(request) {
     const valid = await bcrypt.compare(password, user.password_hash);
     if (!valid) {
       return NextResponse.json({ error: 'Invalid credentials' }, { status: 401, headers: CORS });
+    }
+
+    // Activate pending (invited) users on first successful login
+    if (!user.active) {
+      await supabase.from('admin_users').update({ active: true, updated_at: new Date().toISOString() }).eq('id', user.id);
     }
 
     await sendOtp(user.phone);

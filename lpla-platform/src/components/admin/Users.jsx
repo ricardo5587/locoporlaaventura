@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import AdmIcon from '@/components/admin/AdmIcon'
 import { OvKpi } from '@/components/admin/Overview'
 import { ADM } from '@/lib/tokens'
@@ -14,9 +14,17 @@ const ROLE_COLORS = {
 }
 const STATUS_COLORS = {
   active:    { color: '#5E7A0C', bg: 'rgba(94,122,12,.13)' },
+  pending:   { color: '#D9831F', bg: 'rgba(217,131,31,.13)' },
   suspended: { color: '#8A8578', bg: 'rgba(138,133,120,.16)' },
 }
 const AVATAR_COLORS = ['#294154','#546207','#5E8BBD','#A54399','#00897A','#695136','#B32317']
+
+function generatePassword(len = 16) {
+  const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%&*'
+  const arr = new Uint8Array(len)
+  crypto.getRandomValues(arr)
+  return Array.from(arr, b => chars[b % chars.length]).join('')
+}
 
 function RoleBadge({ role }) {
   const c = ROLE_COLORS[role] || ROLE_COLORS.viewer;
@@ -43,16 +51,23 @@ function Toast({ message, onDone }) {
 }
 
 function InviteModal({ ADM, token, onClose, onSaved }) {
-  const [form, setForm] = useState({ name: '', email: '', phone: '', password: '', role: 'editor' })
+  const [form, setForm] = useState({ name: '', email: '', phone: '', password: generatePassword(), role: 'editor' })
   const [saving, setSaving] = useState(false)
-  const [error, setError] = useState('')
+  const [errors, setErrors] = useState({})
+  const [showPw, setShowPw] = useState(true)
 
-  const setF = (k, v) => setForm(f => ({ ...f, [k]: v }))
+  const setF = (k, v) => { setForm(f => ({ ...f, [k]: v })); setErrors(e => ({ ...e, [k]: '' })) }
 
   async function handleSave() {
-    if (!form.name || !form.email || !form.phone || !form.password) { setError('All fields are required'); return }
-    if (form.password.length < 8) { setError('Password must be at least 8 characters'); return }
-    setSaving(true); setError('')
+    const errs = {}
+    if (!form.name.trim()) errs.name = 'Required'
+    if (!form.email.trim()) errs.email = 'Required'
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) errs.email = 'Invalid email'
+    if (!form.phone.trim()) errs.phone = 'Required'
+    if (!form.password) errs.password = 'Required'
+    else if (form.password.length < 8) errs.password = 'Min 8 characters'
+    if (Object.keys(errs).length) { setErrors(errs); return }
+    setSaving(true); setErrors({})
     try {
       const r = await fetch(`${API}/api/users`, {
         method: 'POST',
@@ -63,12 +78,13 @@ function InviteModal({ ADM, token, onClose, onSaved }) {
       if (!r.ok) throw new Error(data.error || 'Failed to create user')
       onSaved()
       onClose()
-    } catch (e) { setError(e.message) }
+    } catch (e) { setErrors({ _form: e.message }) }
     setSaving(false)
   }
 
-  const inputStyle = { width: '100%', borderRadius: 10, border: `1px solid ${ADM.border}`, padding: '0 12px', height: 40, fontFamily: 'Nunito,system-ui', fontSize: 14, color: ADM.text, background: '#fff', outline: 'none', boxSizing: 'border-box' }
+  const inputStyle = (field) => ({ width: '100%', borderRadius: 10, border: `1px solid ${errors[field] ? '#EF4444' : ADM.border}`, padding: '0 12px', height: 40, fontFamily: 'Nunito,system-ui', fontSize: 14, color: ADM.text, background: '#fff', outline: 'none', boxSizing: 'border-box' })
   const labelStyle = { display: 'block', fontFamily: 'Nunito,system-ui', fontSize: 12, fontWeight: 700, color: ADM.muted, marginBottom: 5, textTransform: 'uppercase', letterSpacing: .6 }
+  const errStyle = { fontFamily: 'Nunito,system-ui', fontSize: 11, color: '#EF4444', marginTop: 4 }
 
   return (
     <>
@@ -81,37 +97,52 @@ function InviteModal({ ADM, token, onClose, onSaved }) {
           </div>
           <button onClick={onClose} style={{ width: 34, height: 34, borderRadius: 8, border: `1px solid ${ADM.border}`, background: 'transparent', cursor: 'pointer', fontSize: 20, color: ADM.muted, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>&times;</button>
         </div>
-        <div style={{ padding: '24px 28px', display: 'flex', flexDirection: 'column', gap: 16 }}>
-          {error && <div style={{ background: '#FEE2E2', border: '1px solid #FCA5A5', borderRadius: 8, padding: '10px 14px', color: '#B32317', fontSize: 13 }}>{error}</div>}
+        <form autoComplete="off" onSubmit={e => { e.preventDefault(); handleSave() }} style={{ padding: '24px 28px', display: 'flex', flexDirection: 'column', gap: 16 }}>
+          {errors._form && <div style={{ background: '#FEE2E2', border: '1px solid #FCA5A5', borderRadius: 8, padding: '10px 14px', color: '#B32317', fontSize: 13 }}>{errors._form}</div>}
           <div>
             <label style={labelStyle}>Full Name</label>
-            <input value={form.name} onChange={e => setF('name', e.target.value)} placeholder="Jane Doe" style={inputStyle} />
+            <input name="lpla_invite_name" value={form.name} onChange={e => setF('name', e.target.value)} placeholder="Jane Doe" autoComplete="off" style={inputStyle('name')} />
+            {errors.name && <div style={errStyle}>{errors.name}</div>}
           </div>
           <div>
             <label style={labelStyle}>Email</label>
-            <input type="email" value={form.email} onChange={e => setF('email', e.target.value)} placeholder="jane@example.com" style={inputStyle} />
+            <input type="email" name="lpla_invite_email" value={form.email} onChange={e => setF('email', e.target.value)} placeholder="jane@example.com" autoComplete="off" style={inputStyle('email')} />
+            {errors.email && <div style={errStyle}>{errors.email}</div>}
           </div>
           <div>
             <label style={labelStyle}>Phone (for 2FA)</label>
-            <input value={form.phone} onChange={e => setF('phone', e.target.value)} placeholder="+1 555 123 4567" style={inputStyle} />
+            <input name="lpla_invite_phone" value={form.phone} onChange={e => setF('phone', e.target.value)} placeholder="+1 555 123 4567" autoComplete="off" style={inputStyle('phone')} />
+            {errors.phone && <div style={errStyle}>{errors.phone}</div>}
           </div>
           <div>
             <label style={labelStyle}>Temporary Password</label>
-            <input type="password" value={form.password} onChange={e => setF('password', e.target.value)} placeholder="Min 8 characters" style={inputStyle} />
+            <div style={{ display: 'flex', gap: 6 }}>
+              <div style={{ position: 'relative', flex: 1 }}>
+                <input type={showPw ? 'text' : 'password'} name="lpla_invite_pw" value={form.password} onChange={e => setF('password', e.target.value)} autoComplete="new-password" style={inputStyle('password')} />
+                <button type="button" onClick={() => setShowPw(!showPw)} style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: ADM.muted, fontSize: 12, fontFamily: 'Nunito,system-ui', fontWeight: 600 }}>
+                  {showPw ? 'Hide' : 'Show'}
+                </button>
+              </div>
+              <button type="button" onClick={() => setF('password', generatePassword())} style={{ padding: '0 12px', borderRadius: 10, border: `1px solid ${ADM.border}`, background: '#F8FAFC', cursor: 'pointer', color: ADM.muted, fontFamily: 'Nunito,system-ui', fontSize: 12, fontWeight: 700, whiteSpace: 'nowrap' }}>
+                Generate
+              </button>
+            </div>
+            {errors.password && <div style={errStyle}>{errors.password}</div>}
+            <div style={{ fontFamily: 'Nunito,system-ui', fontSize: 11, color: ADM.light, marginTop: 4 }}>Share this password securely with the user. They can change it after signing in.</div>
           </div>
           <div>
             <label style={labelStyle}>Role</label>
-            <select value={form.role} onChange={e => setF('role', e.target.value)} style={inputStyle}>
+            <select value={form.role} onChange={e => setF('role', e.target.value)} style={inputStyle('role')}>
               <option value="editor">Editor — can manage events &amp; attendees</option>
               <option value="viewer">Viewer — read-only access</option>
               <option value="owner">Owner — full access including user management</option>
             </select>
           </div>
-        </div>
+        </form>
         <div style={{ padding: '16px 28px', borderTop: `1px solid ${ADM.border}`, display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
           <button onClick={onClose} style={{ padding: '10px 22px', borderRadius: 10, border: `1px solid ${ADM.border}`, background: 'transparent', cursor: 'pointer', color: ADM.muted, fontFamily: 'Nunito,system-ui', fontSize: 14, fontWeight: 600 }}>Cancel</button>
           <button onClick={handleSave} disabled={saving} style={{ padding: '10px 28px', borderRadius: 10, border: 'none', background: ADM.primary, color: '#fff', cursor: saving ? 'default' : 'pointer', fontFamily: 'Barlow Condensed,system-ui', fontSize: 16, fontWeight: 800, letterSpacing: .4, opacity: saving ? .7 : 1 }}>
-            {saving ? 'Creating...' : 'Create User'}
+            {saving ? 'Sending...' : 'Invite User'}
           </button>
         </div>
       </div>
@@ -239,7 +270,7 @@ export default function AdminUsers({ currentUser }) {
         <OvKpi label="Total Users" value={users.length} icon="team" accent="#294154" sub="Across the team" />
         <OvKpi label="Active" value={users.filter(u => u.active).length} icon="check" accent="#5E7A0C" sub="Currently enabled" />
         <OvKpi label="Owners" value={users.filter(u => u.role === 'owner').length} icon="key" accent="#B32317" sub="Full-access admins" />
-        <OvKpi label="Pending Invites" value={users.filter(u => !u.active && u.role).length} icon="mail" accent="#D9831F" sub="Awaiting sign-up" />
+        <OvKpi label="Pending Invites" value={users.filter(u => !u.active).length} icon="mail" accent="#D9831F" sub="Awaiting sign-up" />
       </div>
 
       {/* Roles legend */}
@@ -294,10 +325,11 @@ export default function AdminUsers({ currentUser }) {
               {filtered.length === 0 ? (
                 <tr><td colSpan={5} style={{ padding: 48, textAlign: 'center', fontFamily: 'Nunito,system-ui', fontSize: 15, color: ADM.light }}>{users.length === 0 ? 'No users found. Click "Invite User" to add the first admin.' : 'No users match your filters.'}</td></tr>
               ) : filtered.map(u => {
-                const sc = u.active ? STATUS_COLORS.active : STATUS_COLORS.suspended;
+                const statusKey = u.active ? 'active' : 'pending';
+                const sc = STATUS_COLORS[statusKey];
                 const avColor = AVATAR_COLORS[(u.id || 0) % 7];
                 return (
-                <tr key={u.id} style={{ background: '#fff', borderBottom: `1px solid ${ADM.border}`, opacity: u.active ? 1 : .6 }}
+                <tr key={u.id} style={{ background: '#fff', borderBottom: `1px solid ${ADM.border}`, opacity: u.active ? 1 : .7 }}
                   onMouseOver={e => e.currentTarget.style.background = '#FAFAF7'}
                   onMouseOut={e => e.currentTarget.style.background = '#fff'}>
                   <td style={{ padding: '14px 16px' }}>
@@ -318,7 +350,7 @@ export default function AdminUsers({ currentUser }) {
                   <td style={{ padding: '14px 16px' }}>
                     <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '3px 10px', borderRadius: 16, background: sc.bg, color: sc.color, fontFamily: 'Barlow Condensed,system-ui', fontSize: 12, fontWeight: 700, textTransform: 'uppercase' }}>
                       <span style={{ width: 6, height: 6, borderRadius: '50%', background: sc.color }} />
-                      {u.active ? 'Active' : 'Suspended'}
+                      {u.active ? 'Active' : 'Pending'}
                     </span>
                   </td>
                   <td style={{ padding: '14px 16px', fontFamily: 'Nunito,system-ui', fontSize: 13, color: ADM.muted }}>
