@@ -35,20 +35,21 @@ export default function AdminKlaviyo({ currentUser }) {
   const [pushing, setPushing] = useState(false)
   const [sendingTest, setSendingTest] = useState(false)
   const token = typeof window !== 'undefined' ? localStorage.getItem('lpla_admin_token') : ''
-  const myEmail = currentUser?.email || ''
+  const TEST_EMAILS = [currentUser?.email, 'broderve@icloud.com'].filter(Boolean)
+  const [testEmail, setTestEmail] = useState(TEST_EMAILS[0] || '')
 
   async function sendTestEmail() {
-    if (!myEmail) { setToast('Could not determine your email'); return }
+    if (!testEmail) { setToast('Select a recipient'); return }
     setSendingTest(true)
     try {
       const r = await fetch(`${API}/api/klaviyo/test-send`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ email: myEmail, firstName: currentUser?.name?.split(' ')[0] || '' }),
+        body: JSON.stringify({ email: testEmail, firstName: currentUser?.name?.split(' ')[0] || '' }),
       })
       const data = await r.json()
       if (!r.ok) setToast(data.error || 'Failed to send test')
-      else setToast(`Test sent to ${myEmail} — check your inbox!`)
+      else setToast(`Test sent to ${testEmail} — check your inbox!`)
     } catch (err) {
       setToast(err.message)
     }
@@ -229,13 +230,15 @@ export default function AdminKlaviyo({ currentUser }) {
               This email is sent automatically when someone books an event. Push the template to Klaviyo, then create a Flow triggered by the "Booking Confirmed" event to use it.
             </p>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 14px', background: '#FAFAF7', border: `1px solid ${ADM.border}`, borderRadius: 10, marginBottom: 14, flexWrap: 'wrap' }}>
-              <span style={{ fontFamily: 'Nunito,system-ui', fontSize: 13, fontWeight: 700, color: ADM.text }}>Send a test to your inbox:</span>
-              <span style={{ fontFamily: 'Nunito,system-ui', fontSize: 13, fontWeight: 700, color: ADM.primary, background: '#fff', border: `1px solid ${ADM.border}`, borderRadius: 8, padding: '7px 12px' }}>{myEmail || '—'}</span>
-              <button onClick={sendTestEmail} disabled={sendingTest || !myEmail} style={{ padding: '8px 16px', borderRadius: 8, border: 'none', background: (sendingTest || !myEmail) ? ADM.muted : '#7EBF2E', color: '#fff', fontFamily: 'Barlow Condensed,system-ui', fontSize: 13, fontWeight: 800, letterSpacing: .4, cursor: (sendingTest || !myEmail) ? 'default' : 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
+              <span style={{ fontFamily: 'Nunito,system-ui', fontSize: 13, fontWeight: 700, color: ADM.text }}>Send test to:</span>
+              <select value={testEmail} onChange={e => setTestEmail(e.target.value)} style={{ fontFamily: 'Nunito,system-ui', fontSize: 13, fontWeight: 700, color: ADM.primary, background: '#fff', border: `1px solid ${ADM.border}`, borderRadius: 8, padding: '7px 12px', cursor: 'pointer' }}>
+                {TEST_EMAILS.map(em => <option key={em} value={em}>{em}</option>)}
+              </select>
+              <button onClick={sendTestEmail} disabled={sendingTest || !testEmail} style={{ padding: '8px 16px', borderRadius: 8, border: 'none', background: (sendingTest || !testEmail) ? ADM.muted : '#7EBF2E', color: '#fff', fontFamily: 'Barlow Condensed,system-ui', fontSize: 13, fontWeight: 800, letterSpacing: .4, cursor: (sendingTest || !testEmail) ? 'default' : 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
                 <AdmIcon name="send" size={13} color="#fff" />
                 {sendingTest ? 'Sending…' : 'Send Test'}
               </button>
-              <span style={{ fontFamily: 'Nunito,system-ui', fontSize: 11.5, color: ADM.muted }}>For testing, the confirmation (with sample data) is sent only to your own email.</span>
+              <span style={{ fontFamily: 'Nunito,system-ui', fontSize: 11.5, color: ADM.muted }}>Test emails use sample event data.</span>
             </div>
             <div style={{ borderRadius: 12, overflow: 'hidden', border: `1px solid ${ADM.border}`, background: '#E8E0D4' }}>
               <iframe
