@@ -1,7 +1,5 @@
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
-// Default sender. Resend's onboarding@resend.dev works for testing to your own
-// account email without domain verification. Override with RESEND_FROM once a
-// domain is verified (e.g. "Loco Por La Aventura <hello@locoporlaaventura.com>").
+// Default sender. Override via RESEND_FROM env var in Vercel.
 const FROM_DEFAULT = process.env.RESEND_FROM || 'Loco Por La Aventura <onboarding@resend.dev>';
 
 export function resendConfigured() {
