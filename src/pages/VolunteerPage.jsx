@@ -71,7 +71,7 @@ export function VolunteerPage({ lang, onBack }) {
 
   const inp = (hasErr) => ({
     height: 50, borderRadius: 12, border: `1.5px solid ${hasErr ? '#E74C3C' : WEB.borderMd}`,
-    padding: '0 16px', fontFamily: 'Nunito,system-ui', fontSize: 15, color: WEB.text,
+    padding: '0 16px', fontFamily: 'Nunito,system-ui', fontSize: 16, color: WEB.text,
     background: '#fff', outline: 'none', width: '100%', boxSizing: 'border-box',
     transition: 'border-color .2s',
   });

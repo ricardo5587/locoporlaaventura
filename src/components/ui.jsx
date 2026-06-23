@@ -414,7 +414,7 @@ export function NewsletterSection({ lang }) {
           </div>
         ) : (
           <form onSubmit={handleSubmit} style={{ maxWidth:500, margin:'0 auto', display:'flex', flexDirection:'column', gap:12 }}>
-            <input type="email" value={email} onChange={e => { setEmail(e.target.value); if (error) setError(''); }} placeholder={L('tu@correo.com', 'your@email.com')} style={{ height:44, borderRadius:10, border:`1.5px solid ${error ? '#E74C3C' : WEB.borderMd}`, background:'#fff', color:WEB.text, padding:'0 16px', fontFamily:'Nunito,system-ui', fontSize:14, outline:'none', boxSizing:'border-box', width:'100%' }} />
+            <input type="email" value={email} onChange={e => { setEmail(e.target.value); if (error) setError(''); }} placeholder={L('tu@correo.com', 'your@email.com')} style={{ height:44, borderRadius:10, border:`1.5px solid ${error ? '#E74C3C' : WEB.borderMd}`, background:'#fff', color:WEB.text, padding:'0 16px', fontFamily:'Nunito,system-ui', fontSize:16, outline:'none', boxSizing:'border-box', width:'100%' }} />
             {error && <div style={{ fontFamily:'Nunito,system-ui', fontSize:12, color:'#E74C3C', marginTop:4 }}>{error}</div>}
             <PhoneInput value={phone} onChange={setPhone} hasError={false} />
             <label style={{ display:'flex', gap:10, alignItems:'flex-start', cursor:'pointer', textAlign:'left' }}>

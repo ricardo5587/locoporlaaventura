@@ -34,14 +34,14 @@ export function PhoneInput({ value, onChange, style = {}, hasError }) {
   return (
     <div style={{ display:'flex', gap:0, ...style }}>
       <select value={codeIdx} onChange={handleCodeChange}
-        style={{ width:80, height:44, borderRadius:'10px 0 0 10px', border:`1.5px solid ${hasError ? '#E74C3C' : WEB.borderMd}`, borderRight:'none', padding:'0 4px 0 8px', fontFamily:'Nunito,system-ui', fontSize:14, color:WEB.text, outline:'none', cursor:'pointer', background:'#fff', boxSizing:'border-box', appearance:'auto' }}>
+        style={{ width:80, height:44, borderRadius:'10px 0 0 10px', border:`1.5px solid ${hasError ? '#E74C3C' : WEB.borderMd}`, borderRight:'none', padding:'0 4px 0 8px', fontFamily:'Nunito,system-ui', fontSize:16, color:WEB.text, outline:'none', cursor:'pointer', background:'#fff', boxSizing:'border-box', appearance:'auto' }}>
         {COUNTRY_CODES.map((c, i) => (
           <option key={i} value={i}>{c.flag} {c.code}</option>
         ))}
       </select>
       <input type="tel" value={number} onChange={handleNumberChange}
         placeholder="(555) 000-0000"
-        style={{ flex:1, height:44, borderRadius:'0 10px 10px 0', border:`1.5px solid ${hasError ? '#E74C3C' : WEB.borderMd}`, padding:'0 12px', fontFamily:'Nunito,system-ui', fontSize:14, color:WEB.text, outline:'none', background:'#fff', boxSizing:'border-box' }} />
+        style={{ flex:1, height:44, borderRadius:'0 10px 10px 0', border:`1.5px solid ${hasError ? '#E74C3C' : WEB.borderMd}`, padding:'0 12px', fontFamily:'Nunito,system-ui', fontSize:16, color:WEB.text, outline:'none', background:'#fff', boxSizing:'border-box' }} />
     </div>
   );
 }
