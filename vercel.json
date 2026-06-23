@@ -9,5 +9,11 @@
       "destination": "https://book.locoporlaaventura.com/:path",
       "permanent": false
     }
+  ],
+  "rewrites": [
+    {
+      "source": "/((?!email/|logo\\.png).*)",
+      "destination": "/index.html"
+    }
   ]
 }
