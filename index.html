@@ -2,9 +2,22 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#0B1E2B">
   <title>Loco Por La Aventura — Eventos &amp; Reservas</title>
   <meta name="description" content="Eventos de aventura para la comunidad latina. Escalada, senderismo, talleres y más.">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    html { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
+    body { margin: 0; padding: 0; overflow-x: hidden; -webkit-tap-highlight-color: transparent; padding-bottom: env(safe-area-inset-bottom); }
+    input, select, textarea, button { font-size: 16px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @media (max-width: 767px) {
+      body { -webkit-overflow-scrolling: touch; }
+    }
+  </style>
 </head>
 <body>
   <div id="root"></div>

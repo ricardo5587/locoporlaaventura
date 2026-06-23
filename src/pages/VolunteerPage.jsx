@@ -86,7 +86,7 @@ export function VolunteerPage({ lang, onBack }) {
       <div style={{ background: WEB.bg, minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 20px' }}>
         <div style={{ maxWidth: 520, width: '100%', textAlign: 'center' }}>
           <div style={{ width: 88, height: 88, borderRadius: '50%', background: WEB.greenPale, border: `3px solid ${WEB.green}`, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px', fontSize: 38 }}>🤝</div>
-          <h1 style={{ fontFamily: 'Barlow Condensed,system-ui', fontSize: isMobile ? 36 : 48, fontWeight: 800, textTransform: 'uppercase', color: WEB.text, letterSpacing: .4, margin: '0 0 12px', lineHeight: 1.05 }}>
+          <h1 style={{ fontFamily: 'Barlow Condensed,system-ui', fontSize: isMobile ? 30 : 48, fontWeight: 800, textTransform: 'uppercase', color: WEB.text, letterSpacing: .4, margin: '0 0 12px', lineHeight: 1.05 }}>
             {L('¡Gracias por unirte!', "You're In!")}
           </h1>
           <p style={{ fontFamily: 'Nunito,system-ui', fontSize: 16, color: WEB.textMuted, lineHeight: 1.7, marginBottom: 32 }}>
@@ -147,14 +147,14 @@ export function VolunteerPage({ lang, onBack }) {
           {[.2, .4, .6, .8].map((t, i) => { const y = 400 * t, a = 22 + i * 6; return <path key={i} d={`M0 ${y} Q360 ${y - a} 720 ${y} Q1080 ${y + a} 1440 ${y}`} fill="none" stroke="rgba(255,255,255,.04)" strokeWidth="1.5" />; })}
         </svg>
 
-        <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 24px', position: 'relative', zIndex: 5 }}>
+        <div style={{ maxWidth: 1200, margin: '0 auto', padding: isMobile ? '0 12px' : '0 24px', position: 'relative', zIndex: 5 }}>
           <button onClick={onBack} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'rgba(255,255,255,.1)', border: '1px solid rgba(255,255,255,.2)', borderRadius: 10, cursor: 'pointer', color: 'rgba(255,255,255,.85)', padding: '8px 16px', fontFamily: 'Nunito,system-ui', fontSize: 13, fontWeight: 600, marginBottom: 28 }}>
             ← {L('Volver a Eventos', 'Back to Events')}
           </button>
 
           <div style={{ textAlign: 'center', paddingBottom: isMobile ? 48 : 64 }}>
             <WebBadge bg={WEB.green} style={{ marginBottom: 14 }}>🤝 {L('VOLUNTARIADO', 'VOLUNTEER')}</WebBadge>
-            <h1 style={{ fontFamily: 'Barlow Condensed,system-ui', fontSize: isMobile ? 44 : 66, fontWeight: 800, textTransform: 'uppercase', color: '#fff', letterSpacing: .5, lineHeight: 1.02, margin: '12px 0 16px', textShadow: '0 4px 24px rgba(0,0,0,.3)' }}>
+            <h1 style={{ fontFamily: 'Barlow Condensed,system-ui', fontSize: isMobile ? 34 : 66, fontWeight: 800, textTransform: 'uppercase', color: '#fff', letterSpacing: .5, lineHeight: 1.02, margin: '12px 0 16px', textShadow: '0 4px 24px rgba(0,0,0,.3)', whiteSpace: 'pre-line' }}>
               {L('Únete al\nEquipo LPLA', 'Join the\nLPLA Team')}
             </h1>
             <p style={{ fontFamily: 'Nunito,system-ui', fontSize: isMobile ? 15 : 17, color: 'rgba(255,255,255,.7)', maxWidth: 500, margin: '0 auto 32px', lineHeight: 1.65 }}>
@@ -242,7 +242,7 @@ export function VolunteerPage({ lang, onBack }) {
                 </div>
 
                 {/* Name */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
+                <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 12, marginBottom: 12 }}>
                   <div>
                     <label style={{ fontFamily: 'Nunito,system-ui', fontSize: 12, fontWeight: 700, color: WEB.textMuted, textTransform: 'uppercase', letterSpacing: .8, display: 'block', marginBottom: 6 }}>{L('Nombre *', 'First Name *')}</label>
                     <input value={form.firstName} onChange={e => setF('firstName', e.target.value)} style={inp(errors.firstName)} placeholder="Maria" />
@@ -274,7 +274,7 @@ export function VolunteerPage({ lang, onBack }) {
                   <label style={{ fontFamily: 'Nunito,system-ui', fontSize: 12, fontWeight: 700, color: WEB.textMuted, textTransform: 'uppercase', letterSpacing: .8, display: 'block', marginBottom: 8 }}>
                     {L('Áreas de Interés *', 'Areas of Interest *')}
                   </label>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 7 }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 7 }}>
                     {interests.map(opt => {
                       const checked = form.interests.includes(opt.id);
                       return (

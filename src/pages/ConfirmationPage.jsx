@@ -70,7 +70,7 @@ export function ConfirmationPage({ booking, lang, onHome }) {
           <div style={{ width: 48, height: 48, borderRadius: '50%', background: WEB.green, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <img src={`${IMG}/hero-check.png`} width={22} height={22} alt="✓" />
           </div>
-          <div style={{ fontFamily: F, fontSize: 28, fontWeight: 900, color: '#fff', textTransform: 'uppercase', letterSpacing: 1.5, lineHeight: 1.05 }}>
+          <div style={{ fontFamily: F, fontSize: isMobile ? 22 : 28, fontWeight: 900, color: '#fff', textTransform: 'uppercase', letterSpacing: 1.5, lineHeight: 1.05 }}>
             {L('¡Reserva Confirmada!', 'Booking Confirmed!')}
           </div>
           {confirmationNumber && (
@@ -85,7 +85,7 @@ export function ConfirmationPage({ booking, lang, onHome }) {
         <div style={{ padding: '28px 20px 36px' }}>
 
           {/* Greeting */}
-          <div style={{ fontFamily: F, fontSize: 24, fontWeight: 800, color: WEB.text, textTransform: 'uppercase', letterSpacing: .5, marginBottom: 10 }}>
+          <div style={{ fontFamily: F, fontSize: isMobile ? 20 : 24, fontWeight: 800, color: WEB.text, textTransform: 'uppercase', letterSpacing: .5, marginBottom: 10 }}>
             {L(`¡Hola, ${form.firstName}!`, `Hey there, ${form.firstName}!`)}
           </div>
           <p style={{ fontFamily: F, fontSize: 15, color: WEB.textMuted, lineHeight: 1.75, marginBottom: 24, margin: '0 0 24px' }}>
@@ -107,7 +107,7 @@ export function ConfirmationPage({ booking, lang, onHome }) {
             </div>
 
             <div style={{ padding: '20px 20px 0' }}>
-              <div style={{ fontFamily: F, fontSize: 26, fontWeight: 900, color: WEB.text, textTransform: 'uppercase', letterSpacing: .5, lineHeight: 1.15, marginBottom: 18 }}>
+              <div style={{ fontFamily: F, fontSize: isMobile ? 20 : 26, fontWeight: 900, color: WEB.text, textTransform: 'uppercase', letterSpacing: .5, lineHeight: 1.15, marginBottom: 18 }}>
                 {L(event.titleEs, event.titleEn)}
               </div>
               <div style={{ paddingBottom: 16, borderBottom: '1px solid rgba(0,0,0,.06)' }}>

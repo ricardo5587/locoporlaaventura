@@ -99,7 +99,7 @@ export function EventDetailPage({ event, lang, onConfirm, onBack }) {
 
           {/* LEFT -- Event info */}
           <div>
-            <h1 style={{ fontFamily:'Barlow Condensed,system-ui', fontSize: isMobile ? 34 : 46, fontWeight:800, textTransform:'uppercase', color:WEB.text, letterSpacing:.4, lineHeight:1.05, margin:'0 0 16px' }}>
+            <h1 style={{ fontFamily:'Barlow Condensed,system-ui', fontSize: isMobile ? 28 : 46, fontWeight:800, textTransform:'uppercase', color:WEB.text, letterSpacing:.4, lineHeight:1.05, margin:'0 0 16px' }}>
               {L(event.titleEs, event.titleEn)}
             </h1>
 
@@ -140,7 +140,7 @@ export function EventDetailPage({ event, lang, onConfirm, onBack }) {
               <div style={{ fontFamily:'Barlow Condensed,system-ui', fontSize:16, fontWeight:800, color:WEB.teal, textTransform:'uppercase', letterSpacing:1, marginBottom:12 }}>
                 {L('\u00bfQu\u00e9 incluye?', "What's Included?")}
               </div>
-              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'8px 20px' }}>
+              <div style={{ display:'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap:'8px 20px' }}>
                 {[
                   L('Gu\u00eda certificado', 'Certified guide'),
                   L('Material incluido', 'Equipment included'),
@@ -224,7 +224,7 @@ export function EventDetailPage({ event, lang, onConfirm, onBack }) {
                 </div>
 
                 {/* Personal info */}
-                <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12, marginBottom:12 }}>
+                <div style={{ display:'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap:12, marginBottom:12 }}>
                   <div>
                     <label style={{ fontFamily:'Nunito,system-ui', fontSize:12, fontWeight:700, color:WEB.textMuted, textTransform:'uppercase', letterSpacing:.8, display:'block', marginBottom:6 }}>{L('Nombre *', 'First Name *')}</label>
                     <input value={form.firstName} onChange={e => setF('firstName', e.target.value)} style={inputStyle(errors.firstName)} placeholder="Ana" />

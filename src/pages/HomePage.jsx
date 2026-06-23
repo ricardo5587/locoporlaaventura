@@ -49,7 +49,7 @@ export function HomePage({ lang, events, onBook, onVolunteer }) {
               <div style={{ fontFamily:'Barlow Condensed,system-ui', fontSize:14, fontWeight:700, letterSpacing:2.5, textTransform:'uppercase', color:WEB.green, marginBottom:4 }}>
                 {L('PR\u00d3XIMOS EVENTOS', 'UPCOMING EVENTS')}
               </div>
-              <h2 style={{ fontFamily:'Barlow Condensed,system-ui', fontSize: isMobile ? 32 : 42, fontWeight:800, textTransform:'uppercase', color:WEB.text, letterSpacing:.4, margin:0, lineHeight:1.05 }}>
+              <h2 style={{ fontFamily:'Barlow Condensed,system-ui', fontSize: isMobile ? 26 : 42, fontWeight:800, textTransform:'uppercase', color:WEB.text, letterSpacing:.4, margin:0, lineHeight:1.05 }}>
                 {L('Elige Tu Aventura', 'Choose Your Adventure')}
               </h2>
             </div>

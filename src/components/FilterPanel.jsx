@@ -61,7 +61,7 @@ export function ActiveFilterChip({ label, onRemove }) {
         onMouseOut={() => setHov(false)}
         style={{ background: hov ? 'rgba(255,255,255,.35)' : 'rgba(255,255,255,.18)',
           border: 'none', color: '#fff', cursor: 'pointer',
-          width: 18, height: 18, borderRadius: 9,
+          width: 24, height: 24, borderRadius: 12,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           fontSize: 13, fontWeight: 700, flexShrink: 0,
           transition: 'background .15s', lineHeight: 1, padding: 0 }}>
@@ -118,7 +118,7 @@ export function FilterPanel({ open, onClose, cat, setCat, dateStart, setDateStar
             </span>
           </div>
           <button onClick={onClose}
-            style={{ width:30, height:30, borderRadius:8, border:`1px solid ${WEB.border}`, background:'transparent', cursor:'pointer', fontSize:18, color:WEB.textMuted, display:'flex', alignItems:'center', justifyContent:'center', transition:'all .15s' }}
+            style={{ width:36, height:36, borderRadius:8, border:`1px solid ${WEB.border}`, background:'transparent', cursor:'pointer', fontSize:18, color:WEB.textMuted, display:'flex', alignItems:'center', justifyContent:'center', transition:'all .15s' }}
             onMouseOver={e => { e.currentTarget.style.background=WEB.bgAlt; e.currentTarget.style.color=WEB.text; }}
             onMouseOut={e => { e.currentTarget.style.background='transparent'; e.currentTarget.style.color=WEB.textMuted; }}>
             {'\u00d7'}

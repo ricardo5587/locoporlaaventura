@@ -167,7 +167,7 @@ export function WebHero({ lang, onScroll, onVolunteer }) {
 
   return (
     <div
-      style={{ position:'relative', background:`linear-gradient(160deg,${WEB.tealDark} 0%,${WEB.teal} 60%,#0D3820 100%)`, overflow:'hidden', minHeight: isMobile ? 520 : 620 }}
+      style={{ position:'relative', background:`linear-gradient(160deg,${WEB.tealDark} 0%,${WEB.teal} 60%,#0D3820 100%)`, overflow:'hidden', minHeight: isMobile ? 440 : 620 }}
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
     >
@@ -189,35 +189,35 @@ export function WebHero({ lang, onScroll, onVolunteer }) {
       <div style={{ position:'absolute', top:'20%', left:'50%', transform:'translateX(-50%)', width:600, height:400, borderRadius:'50%', background:'radial-gradient(ellipse,rgba(74,158,199,.15) 0%,transparent 70%)', pointerEvents:'none', zIndex:3 }} />
 
       {/* Centered content */}
-      <div style={{ ...MAX_W, position:'relative', zIndex:5, paddingTop: isMobile ? 40 : 70, paddingBottom:60, textAlign:'center' }}>
-        <img src={LOGO} style={{ height: isMobile ? 110 : 140, width:'auto', filter:'drop-shadow(0 8px 32px rgba(0,0,0,.5))', marginBottom:28 }} />
-        <div style={{ fontFamily:'Barlow Condensed,system-ui', fontSize: isMobile ? 14 : 16, fontWeight:600, letterSpacing:4, textTransform:'uppercase', color:'rgba(255,255,255,.55)', marginBottom:8 }}>
+      <div style={{ ...MAX_W, position:'relative', zIndex:5, paddingTop: isMobile ? 32 : 70, paddingBottom: isMobile ? 40 : 60, textAlign:'center' }}>
+        <img src={LOGO} style={{ height: isMobile ? 80 : 140, width:'auto', filter:'drop-shadow(0 8px 32px rgba(0,0,0,.5))', marginBottom: isMobile ? 16 : 28 }} />
+        <div style={{ fontFamily:'Barlow Condensed,system-ui', fontSize: isMobile ? 12 : 16, fontWeight:600, letterSpacing: isMobile ? 3 : 4, textTransform:'uppercase', color:'rgba(255,255,255,.55)', marginBottom:8 }}>
           {L('BIENVENIDOS A', 'WELCOME TO')}
         </div>
-        <h1 style={{ fontFamily:'Barlow Condensed,system-ui', fontSize: isMobile ? 44 : 68, fontWeight:800, textTransform:'uppercase', color:'#fff', letterSpacing:.5, lineHeight:1.02, margin:'0 0 16px', textShadow:'0 4px 24px rgba(0,0,0,.3)' }}>
+        <h1 style={{ fontFamily:'Barlow Condensed,system-ui', fontSize: isMobile ? 36 : 68, fontWeight:800, textTransform:'uppercase', color:'#fff', letterSpacing:.5, lineHeight:1.02, margin:'0 0 12px', textShadow:'0 4px 24px rgba(0,0,0,.3)' }}>
           LOCO POR<br />LA AVENTURA
         </h1>
-        <p style={{ fontFamily:'Nunito,system-ui', fontSize: isMobile ? 16 : 18, color:'rgba(255,255,255,.72)', margin:'0 auto 32px', maxWidth:520, lineHeight:1.6 }}>
+        <p style={{ fontFamily:'Nunito,system-ui', fontSize: isMobile ? 14 : 18, color:'rgba(255,255,255,.72)', margin:'0 auto 24px', maxWidth:520, lineHeight:1.6, padding: isMobile ? '0 8px' : 0 }}>
           {L('Eventos de aventura al aire libre para la comunidad latina · Portland, OR & el Noroeste del Pacífico', 'Outdoor adventure events for the Latino community · Portland, OR & the Pacific Northwest')}
         </p>
-        <div style={{ display:'flex', gap:12, justifyContent:'center', flexWrap:'wrap' }}>
-          <button onClick={onScroll} style={{ padding:'14px 32px', borderRadius:14, border:'none', cursor:'pointer', background:WEB.green, color:'#fff', fontFamily:'Barlow Condensed,system-ui', fontSize:20, fontWeight:800, letterSpacing:.5, boxShadow:'0 8px 28px rgba(126,191,46,.4)', transition:'transform .15s, box-shadow .15s' }}
+        <div style={{ display:'flex', gap: isMobile ? 8 : 12, justifyContent:'center', flexWrap:'wrap', padding: isMobile ? '0 8px' : 0 }}>
+          <button onClick={onScroll} style={{ padding: isMobile ? '12px 24px' : '14px 32px', borderRadius:14, border:'none', cursor:'pointer', background:WEB.green, color:'#fff', fontFamily:'Barlow Condensed,system-ui', fontSize: isMobile ? 16 : 20, fontWeight:800, letterSpacing:.5, boxShadow:'0 8px 28px rgba(126,191,46,.4)', transition:'transform .15s, box-shadow .15s' }}
             onMouseOver={e => { e.currentTarget.style.transform='translateY(-2px)'; e.currentTarget.style.boxShadow='0 12px 36px rgba(126,191,46,.5)'; }}
             onMouseOut={e => { e.currentTarget.style.transform=''; e.currentTarget.style.boxShadow='0 8px 28px rgba(126,191,46,.4)'; }}>
             {L('Próximos Eventos', 'Upcoming Events')}
           </button>
-          <button onClick={onVolunteer} style={{ padding:'14px 32px', borderRadius:14, border:'none', cursor:'pointer', background:WEB.teal, color:'#fff', fontFamily:'Barlow Condensed,system-ui', fontSize:20, fontWeight:800, letterSpacing:.5, boxShadow:'0 8px 28px rgba(27,94,127,.45)', display:'inline-flex', alignItems:'center', gap:9, transition:'transform .15s, box-shadow .15s' }}
+          <button onClick={onVolunteer} style={{ padding: isMobile ? '12px 24px' : '14px 32px', borderRadius:14, border:'none', cursor:'pointer', background:WEB.teal, color:'#fff', fontFamily:'Barlow Condensed,system-ui', fontSize: isMobile ? 16 : 20, fontWeight:800, letterSpacing:.5, boxShadow:'0 8px 28px rgba(27,94,127,.45)', display:'inline-flex', alignItems:'center', gap:9, transition:'transform .15s, box-shadow .15s' }}
             onMouseOver={e => { e.currentTarget.style.transform='translateY(-2px)'; e.currentTarget.style.boxShadow='0 12px 36px rgba(27,94,127,.55)'; }}
             onMouseOut={e => { e.currentTarget.style.transform=''; e.currentTarget.style.boxShadow='0 8px 28px rgba(27,94,127,.45)'; }}>
             {L('Ser Voluntario', 'Become a Volunteer')}
           </button>
         </div>
         {/* Stats row */}
-        <div style={{ display:'flex', gap: isMobile ? 24 : 48, justifyContent:'center', marginTop:40, flexWrap:'wrap' }}>
+        <div style={{ display:'flex', gap: isMobile ? 20 : 48, justifyContent:'center', marginTop: isMobile ? 24 : 40, flexWrap:'wrap' }}>
           {[['500+', L('Aventureros', 'Adventurers')], ['20+', L('Eventos/año', 'Events/year')], ['PNW', L('Región', 'Region')]].map(([n, l]) => (
             <div key={n} style={{ textAlign:'center' }}>
-              <div style={{ fontFamily:'Barlow Condensed,system-ui', fontSize:32, fontWeight:800, color:'#fff', lineHeight:1 }}>{n}</div>
-              <div style={{ fontFamily:'Nunito,system-ui', fontSize:13, color:'rgba(255,255,255,.55)', marginTop:3 }}>{l}</div>
+              <div style={{ fontFamily:'Barlow Condensed,system-ui', fontSize: isMobile ? 26 : 32, fontWeight:800, color:'#fff', lineHeight:1 }}>{n}</div>
+              <div style={{ fontFamily:'Nunito,system-ui', fontSize: isMobile ? 11 : 13, color:'rgba(255,255,255,.55)', marginTop:3 }}>{l}</div>
             </div>
           ))}
         </div>
@@ -267,7 +267,7 @@ export function EventCard({ event, lang, onBook }) {
 
       {/* Image */}
       <div style={{ position:'relative' }}>
-        <WebImgPlaceholder height={190} label={`${L(event.titleEs, event.titleEn)} · event photo`} index={event.index} image={event.image} />
+        <WebImgPlaceholder height={170} label={`${L(event.titleEs, event.titleEn)} · event photo`} index={event.index} image={event.image} style={{ borderRadius:'12px 12px 0 0' }} />
         <div style={{ position:'absolute', top:12, left:12 }}>
           <WebBadge bg={WEB.teal}>{CAT_ICONS[event.category]} {event.category}</WebBadge>
         </div>
@@ -354,13 +354,13 @@ export function NewsletterSection({ lang }) {
   }
 
   return (
-    <div style={{ background:`linear-gradient(135deg,${WEB.tealDark},${WEB.teal})`, padding: isMobile ? '60px 24px' : '80px 24px', position:'relative', overflow:'hidden' }}>
+    <div style={{ background:`linear-gradient(135deg,${WEB.tealDark},${WEB.teal})`, padding: isMobile ? '40px 16px' : '80px 24px', position:'relative', overflow:'hidden' }}>
       <svg style={{ position:'absolute', top:0, left:0, width:'100%', height:'100%', pointerEvents:'none' }} viewBox="0 0 1440 300" preserveAspectRatio="none">
         {[.2,.4,.6,.8].map((t,i) => { const y=300*t, a=20+i*6; return <path key={i} d={`M0 ${y} Q360 ${y-a} 720 ${y} Q1080 ${y+a} 1440 ${y}`} fill="none" stroke="rgba(255,255,255,.04)" strokeWidth="1.5" />; })}
       </svg>
       <div style={{ ...MAX_W, position:'relative', zIndex:5, textAlign:'center' }}>
         <WebStarRow count={4} color="rgba(126,191,46,.7)" size={10} />
-        <h2 style={{ fontFamily:'Barlow Condensed,system-ui', fontSize: isMobile ? 32 : 44, fontWeight:800, textTransform:'uppercase', color:'#fff', letterSpacing:.5, margin:'12px 0 8px' }}>
+        <h2 style={{ fontFamily:'Barlow Condensed,system-ui', fontSize: isMobile ? 24 : 44, fontWeight:800, textTransform:'uppercase', color:'#fff', letterSpacing:.5, margin:'12px 0 8px' }}>
           {L('NO TE PIERDAS NINGUNA AVENTURA', "DON'T MISS ANY ADVENTURE")}
         </h2>
         <p style={{ fontFamily:'Nunito,system-ui', fontSize:16, color:'rgba(255,255,255,.65)', marginBottom:32, maxWidth:480, margin:'0 auto 32px' }}>
@@ -376,7 +376,7 @@ export function NewsletterSection({ lang }) {
           </div>
         ) : (
           <form onSubmit={handleSubmit} style={{ maxWidth:500, margin:'0 auto', display:'flex', flexDirection:'column', gap:12 }}>
-            <input type="email" value={email} onChange={e => { setEmail(e.target.value); if (error) setError(''); }} placeholder={L('tu@correo.com', 'your@email.com')} style={{ height:50, borderRadius:12, border:`1.5px solid ${error ? '#E74C3C' : 'rgba(255,255,255,.2)'}`, background:'rgba(255,255,255,.1)', color:'#fff', padding:'0 16px', fontFamily:'Nunito,system-ui', fontSize:16, outline:'none', backdropFilter:'blur(8px)' }} />
+            <input type="email" value={email} onChange={e => { setEmail(e.target.value); if (error) setError(''); }} placeholder={L('tu@correo.com', 'your@email.com')} style={{ height:50, borderRadius:12, border:`1.5px solid ${error ? '#E74C3C' : 'rgba(255,255,255,.2)'}`, background:'rgba(255,255,255,.1)', color:'#fff', padding:'0 16px', fontFamily:'Nunito,system-ui', fontSize:16, outline:'none', backdropFilter:'blur(8px)', boxSizing:'border-box', width:'100%' }} />
             {error && <div style={{ fontFamily:'Nunito,system-ui', fontSize:12, color:'#E74C3C', marginTop:4 }}>{error}</div>}
             <div style={{ display:'flex', gap:0 }}>
               <select value={phone.startsWith('+') ? phone.replace(/^\+\d{1,3}\s.*$/,'') || '+1' : '+1'}
@@ -419,7 +419,7 @@ export function NewsletterSection({ lang }) {
 export function WebFooter({ lang }) {
   const L = (es, en) => lang === 'es' ? es : en;
   return (
-    <footer style={{ background:WEB.tealDark, padding:'48px 24px 28px', borderTop:`3px solid ${WEB.green}` }}>
+    <footer style={{ background:WEB.tealDark, padding:'32px 16px 20px', borderTop:`3px solid ${WEB.green}` }}>
       <div style={{ ...MAX_W }}>
         <div style={{ marginBottom:24 }}>
           <div style={{ display:'flex', alignItems:'center', gap:14, marginBottom:10 }}>

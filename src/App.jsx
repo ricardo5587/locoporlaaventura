@@ -41,7 +41,7 @@ export default function App() {
     <div>
 
       {/* Floating language toggle */}
-      <div style={{ position:'fixed', bottom:24, right:24, zIndex:500 }}>
+      <div style={{ position:'fixed', bottom:'max(16px, env(safe-area-inset-bottom, 16px))', right:16, zIndex:500 }}>
         <div style={{ background:WEB.tealDark, borderRadius:24, padding:5, boxShadow:'0 4px 20px rgba(0,0,0,.28)' }}>
           <LangToggleWeb lang={lang} setLang={setLang} />
         </div>
