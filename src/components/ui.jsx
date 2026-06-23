@@ -228,12 +228,12 @@ export function WebHero({ lang, onScroll, onVolunteer }) {
         <p style={{ fontFamily:'Nunito,system-ui', fontSize: isMobile ? 14 : 18, color:'rgba(255,255,255,.72)', margin:'0 auto 24px', maxWidth:520, lineHeight:1.6, padding: isMobile ? '0 8px' : 0 }}>
           {L('Eventos de aventura al aire libre para la comunidad latina y más allá · Portland, Oregón', 'Outdoor adventure events for the Latino community and beyond · Portland, Oregon')}
         </p>
-        <div style={{ display:'flex', gap: isMobile ? 8 : 12, justifyContent:'center', flexWrap:'wrap', padding: isMobile ? '0 8px' : 0 }}>
+        <div style={{ display:'flex', flexDirection: isMobile ? 'column' : 'row', gap: isMobile ? 6 : 12, alignItems:'center', padding: isMobile ? '0 32px' : 0 }}>
           {[
             { label: L('Próximos Eventos', 'Upcoming Events'), action: onScroll, bg: 'rgba(126,191,46,.75)', shadow: 'rgba(126,191,46,.35)', hoverBg: 'rgba(126,191,46,.9)' },
             { label: L('Ser Voluntario', 'Become a Volunteer'), action: onVolunteer, bg: 'rgba(27,94,127,.7)', shadow: 'rgba(27,94,127,.35)', hoverBg: 'rgba(27,94,127,.9)' },
           ].map(btn => (
-            <button key={btn.label} onClick={btn.action} style={{ flex:'1 1 0', maxWidth: isMobile ? 180 : 230, padding: isMobile ? '13px 16px' : '15px 28px', borderRadius:14, border:'1px solid rgba(255,255,255,.15)', cursor:'pointer', background:btn.bg, backdropFilter:'blur(12px)', color:'#fff', fontFamily:'Barlow Condensed,system-ui', fontSize: isMobile ? 16 : 19, fontWeight:800, letterSpacing:.5, textTransform:'uppercase', boxShadow:`0 8px 28px ${btn.shadow}, inset 0 1px 0 rgba(255,255,255,.15)`, transition:'transform .15s, box-shadow .15s, background .2s', textAlign:'center' }}
+            <button key={btn.label} onClick={btn.action} style={{ width: isMobile ? '100%' : 230, padding: isMobile ? '10px 16px' : '15px 28px', borderRadius: isMobile ? 10 : 14, border:'1px solid rgba(255,255,255,.15)', cursor:'pointer', background:btn.bg, backdropFilter:'blur(12px)', color:'#fff', fontFamily:'Barlow Condensed,system-ui', fontSize: isMobile ? 14 : 19, fontWeight:800, letterSpacing:.5, textTransform:'uppercase', boxShadow:`0 4px 16px ${btn.shadow}, inset 0 1px 0 rgba(255,255,255,.15)`, transition:'transform .15s, box-shadow .15s, background .2s', textAlign:'center' }}
               onMouseOver={e => { e.currentTarget.style.transform='translateY(-2px)'; e.currentTarget.style.boxShadow=`0 12px 36px ${btn.shadow}, inset 0 1px 0 rgba(255,255,255,.2)`; e.currentTarget.style.background=btn.hoverBg; }}
               onMouseOut={e => { e.currentTarget.style.transform=''; e.currentTarget.style.boxShadow=`0 8px 28px ${btn.shadow}, inset 0 1px 0 rgba(255,255,255,.15)`; e.currentTarget.style.background=btn.bg; }}>
               {btn.label}
