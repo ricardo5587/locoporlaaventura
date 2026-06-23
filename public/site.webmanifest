@@ -1,0 +1,13 @@
+{
+  "name": "Loco Por La Aventura",
+  "short_name": "LPLA",
+  "icons": [
+    { "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml" },
+    { "src": "/logo.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/logo.png", "sizes": "512x512", "type": "image/png" }
+  ],
+  "theme_color": "#0B1E2B",
+  "background_color": "#0B1E2B",
+  "display": "standalone",
+  "start_url": "/"
+}
