@@ -8,6 +8,12 @@ import { ConfirmationPage } from './pages/ConfirmationPage';
 import { VolunteerPage } from './pages/VolunteerPage';
 
 const API = 'https://locoporlaaventura.vercel.app';
+const GOOGLE_CLIENT_ID = '69227862746-1gimbgl14rc4dr157kn178j66008ttf9.apps.googleusercontent.com';
+
+function decodeJwtPayload(token) {
+  const base64 = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+  return JSON.parse(atob(base64));
+}
 
 function slugify(s) {
   return String(s || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
@@ -31,7 +37,32 @@ export default function App() {
   const [booking, setBooking] = useState(null);
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState(() => {
+    try { const s = localStorage.getItem('lpla_user'); return s ? JSON.parse(s) : null; }
+    catch { return null; }
+  });
+
+  // Initialize Google Identity Services
+  useEffect(() => {
+    function initGsi() {
+      if (!window.google?.accounts?.id) return;
+      window.google.accounts.id.initialize({
+        client_id: GOOGLE_CLIENT_ID,
+        callback: (response) => {
+          const payload = decodeJwtPayload(response.credential);
+          const u = { name: payload.name, email: payload.email, picture: payload.picture };
+          setUser(u);
+          localStorage.setItem('lpla_user', JSON.stringify(u));
+        },
+        auto_select: true,
+      });
+    }
+    if (window.google?.accounts?.id) { initGsi(); return; }
+    const interval = setInterval(() => {
+      if (window.google?.accounts?.id) { clearInterval(interval); initGsi(); }
+    }, 200);
+    return () => clearInterval(interval);
+  }, []);
 
   // Parse initial route
   useEffect(() => {
@@ -98,18 +129,18 @@ export default function App() {
     navigate('/');
   }
 
-  // Google Sign-In placeholder
   function handleSignIn() {
-    // TODO: Replace with real Google OAuth flow
-    // For now, simulate sign-in for UI testing
-    const name = window.prompt(lang === 'es' ? 'Tu nombre (demo):' : 'Your name (demo):');
-    if (name) {
-      setUser({ name, email: `${name.toLowerCase().replace(/\s/g, '.')}@gmail.com` });
+    if (window.google?.accounts?.id) {
+      window.google.accounts.id.prompt();
     }
   }
 
   function handleSignOut() {
     setUser(null);
+    localStorage.removeItem('lpla_user');
+    if (window.google?.accounts?.id) {
+      window.google.accounts.id.disableAutoSelect();
+    }
   }
 
   return (
