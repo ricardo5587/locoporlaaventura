@@ -1,5 +1,13 @@
 {
   "installCommand": "npm ci",
   "buildCommand": "npm run build",
-  "ignoreCommand": "git diff --quiet HEAD^ HEAD -- src/ public/ index.html package.json vite.config.js vercel.json"
+  "ignoreCommand": "git diff --quiet HEAD^ HEAD -- src/ public/ index.html package.json vite.config.js vercel.json",
+  "redirects": [
+    {
+      "source": "/:path((?!email/|logo\\.png).*)",
+      "has": [{ "type": "host", "value": "booking.locoporlaaventura.com" }],
+      "destination": "https://book.locoporlaaventura.com/:path",
+      "permanent": false
+    }
+  ]
 }
