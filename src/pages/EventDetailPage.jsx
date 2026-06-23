@@ -16,6 +16,7 @@ export function EventDetailPage({ event, lang, user, prefillPhone, onConfirm, on
   const [errors, setErrors] = useState({});
   const [payStep, setPayStep] = useState('form'); // 'form' | 'processing' | 'done'
   const [submitError, setSubmitError] = useState('');
+  const [showFullForm, setShowFullForm] = useState(false);
 
   const setF = (k, v) => {
     setForm(f => ({ ...f, [k]:v }));
@@ -53,10 +54,11 @@ export function EventDetailPage({ event, lang, user, prefillPhone, onConfirm, on
     return e;
   }
 
-  async function handleSubmit() {
-    const errs = validate();
-    if (Object.keys(errs).length) { setErrors(errs); return; }
-    setErrors({});
+  // Shared submit \u2014 used by both the full form and the one-tap path.
+  // NOTE: paid bookings (total > 0) still flow through the full form; when
+  // Clover checkout is wired into the UI, the card step slots in there. This
+  // one-tap path is intentionally free-events-only.
+  async function doSubmit() {
     setSubmitError('');
     setPayStep('processing');
     try {
@@ -82,6 +84,22 @@ export function EventDetailPage({ event, lang, user, prefillPhone, onConfirm, on
     }
   }
 
+  function handleSubmit() {
+    const errs = validate();
+    if (Object.keys(errs).length) { setErrors(errs); return; }
+    setErrors({});
+    doSubmit();
+  }
+
+  // One-tap confirm for signed-in users on free events. Identity (name +
+  // email) is already verified by Google; consent is captured by the confirm
+  // action + visible microcopy, so no checkboxes are needed. If identity is
+  // somehow missing, fall back to the full form rather than submitting blank.
+  function handleQuickBook() {
+    if (!form.firstName || !form.email) { setShowFullForm(true); return; }
+    doSubmit();
+  }
+
   const inputStyle = (hasErr) => ({
     height:50, borderRadius:12, border:`1.5px solid ${hasErr ? '#E74C3C' : WEB.borderMd}`, padding:'0 16px',
     fontFamily:'Nunito,system-ui', fontSize:16, color:WEB.text, background:'#fff', outline:'none',
@@ -90,6 +108,11 @@ export function EventDetailPage({ event, lang, user, prefillPhone, onConfirm, on
 
   const isFull = event.spotsLeft === 0;
   const isLow  = event.spotsLeft > 0 && event.spotsLeft <= 4;
+
+  // One-tap is offered only when the booking is genuinely free and the user
+  // is signed in (so we already have a verified name + email).
+  const canQuickBook = !!user && total === 0 && !isFull && !showFullForm;
+  const maxQty = Math.min(event.spotsLeft || 10, 10);
 
   return (
     <div style={{ background:WEB.bg, minHeight:'100vh' }}>
@@ -187,7 +210,59 @@ export function EventDetailPage({ event, lang, user, prefillPhone, onConfirm, on
               </div>
             )}
 
-            {payStep === 'form' && (
+            {payStep === 'form' && canQuickBook && (
+              <>
+                <div style={{ fontFamily:'Barlow Condensed,system-ui', fontSize:22, fontWeight:800, color:WEB.text, textTransform:'uppercase', letterSpacing:.5, marginBottom:4 }}>
+                  {L('Reserva con un Toque', 'One-Tap Booking')}
+                </div>
+                <div style={{ fontFamily:'Nunito,system-ui', fontSize:14, color:WEB.textMuted, marginBottom:18 }}>
+                  {L('Confirmación instantánea por email', 'Instant confirmation by email')}
+                </div>
+
+                {/* Identity card */}
+                <div style={{ display:'flex', alignItems:'center', gap:12, padding:'14px 16px', borderRadius:14, background:WEB.greenPale, border:`1.5px solid rgba(126,191,46,.25)`, marginBottom:18 }}>
+                  {user.picture
+                    ? <img src={user.picture} alt="" style={{ width:42, height:42, borderRadius:'50%' }} />
+                    : <div style={{ width:42, height:42, borderRadius:'50%', background:WEB.green, display:'flex', alignItems:'center', justifyContent:'center', fontFamily:'Barlow Condensed,system-ui', fontSize:20, fontWeight:800, color:'#fff' }}>{(user.name || user.email || '?')[0].toUpperCase()}</div>}
+                  <div style={{ flex:1, minWidth:0 }}>
+                    <div style={{ fontFamily:'Barlow Condensed,system-ui', fontSize:16, fontWeight:700, color:WEB.text, textTransform:'uppercase', letterSpacing:.3, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{user.name || user.email}</div>
+                    <div style={{ fontFamily:'Nunito,system-ui', fontSize:12, color:WEB.textMuted, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{user.email}</div>
+                  </div>
+                  <WebBadge bg={WEB.green}>{L('Gratis', 'Free')}</WebBadge>
+                </div>
+
+                {/* Quantity */}
+                <div style={{ marginBottom:18 }}>
+                  <label style={{ fontFamily:'Nunito,system-ui', fontSize:12, fontWeight:700, color:WEB.textMuted, textTransform:'uppercase', letterSpacing:.8, display:'block', marginBottom:8 }}>
+                    {L('Personas', 'People')}
+                  </label>
+                  <div style={{ display:'flex', alignItems:'center', gap:0, background:WEB.bgAlt, borderRadius:12, width:'fit-content', border:`1.5px solid ${WEB.border}` }}>
+                    <button onClick={() => setF('quantity', Math.max(1, form.quantity-1))} style={{ width:44, height:44, border:'none', background:'transparent', cursor: form.quantity <= 1 ? 'not-allowed' : 'pointer', fontSize:20, color: form.quantity <= 1 ? WEB.textLight : WEB.teal, fontWeight:700 }}>{'−'}</button>
+                    <span style={{ minWidth:36, textAlign:'center', fontFamily:'Barlow Condensed,system-ui', fontSize:20, fontWeight:800, color:WEB.text }}>{form.quantity}</span>
+                    <button onClick={() => { if (form.quantity < maxQty) setF('quantity', form.quantity+1); }} disabled={form.quantity >= maxQty} style={{ width:44, height:44, border:'none', background:'transparent', cursor: form.quantity >= maxQty ? 'not-allowed' : 'pointer', fontSize:20, color: form.quantity >= maxQty ? WEB.textLight : WEB.green, fontWeight:700 }}>+</button>
+                  </div>
+                </div>
+
+                {submitError && <div style={{ fontFamily:'Nunito,system-ui', fontSize:13, color:'#E74C3C', marginBottom:14, textAlign:'center' }}>{submitError}</div>}
+
+                {/* One-tap CTA */}
+                <button onClick={handleQuickBook} style={{ width:'100%', height:56, borderRadius:14, border:'none', cursor:'pointer', background:WEB.green, color:'#fff', fontFamily:'Barlow Condensed,system-ui', fontSize:20, fontWeight:800, letterSpacing:.5, boxShadow:'0 6px 20px rgba(126,191,46,.35)', display:'flex', alignItems:'center', justifyContent:'center', gap:10, transition:'transform .15s, box-shadow .15s' }}
+                  onMouseOver={e => { e.currentTarget.style.transform='translateY(-1px)'; e.currentTarget.style.boxShadow='0 8px 28px rgba(126,191,46,.45)'; }}
+                  onMouseOut={e => { e.currentTarget.style.transform=''; e.currentTarget.style.boxShadow='0 6px 20px rgba(126,191,46,.35)'; }}>
+                  {form.quantity > 1 ? L(`Confirmar ${form.quantity} Lugares`, `Confirm ${form.quantity} Spots`) : L('Confirmar mi Lugar', 'Confirm My Spot')}
+                </button>
+
+                <p style={{ fontFamily:'Nunito,system-ui', fontSize:11, color:WEB.textLight, textAlign:'center', lineHeight:1.6, marginTop:10, marginBottom:0 }}>
+                  {L('Al confirmar, aceptas la Política de Privacidad y los Términos de Uso. Confirmación por email.', 'By confirming, you accept the Privacy Policy & Terms of Use. Confirmation by email.')}
+                </p>
+
+                <button onClick={() => setShowFullForm(true)} style={{ width:'100%', background:'none', border:'none', cursor:'pointer', marginTop:14, fontFamily:'Nunito,system-ui', fontSize:13, fontWeight:600, color:WEB.teal, textDecoration:'underline' }}>
+                  {L('Editar mis datos o agregar teléfono', 'Edit my details or add phone')}
+                </button>
+              </>
+            )}
+
+            {payStep === 'form' && !canQuickBook && (
               <>
                 <div style={{ fontFamily:'Barlow Condensed,system-ui', fontSize:22, fontWeight:800, color:WEB.text, textTransform:'uppercase', letterSpacing:.5, marginBottom:4 }}>
                   {L('Reservar Entrada', 'Book Your Ticket')}
