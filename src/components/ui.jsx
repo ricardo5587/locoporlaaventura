@@ -198,6 +198,7 @@ export function WebHero({ lang, onScroll, onVolunteer }) {
       onMouseLeave={() => setPaused(false)}
       onTouchStart={onTouchStart}
       onTouchEnd={onTouchEnd}
+      onClick={e => { if (e.target.closest('button,a,select,input')) return; const r = e.currentTarget.getBoundingClientRect(); e.clientX > r.left + r.width / 2 ? goTo((active + 1) % 4) : goTo((active + 3) % 4); }}
     >
       {/* Background slides (cross-fade) */}
       {[0,1,2,3].map(i => (
