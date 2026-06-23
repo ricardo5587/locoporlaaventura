@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
-import { WEB } from './lib/tokens';
+import { WEB, fmtDate } from './lib/tokens';
+import { fetchMyBookings } from './lib/api';
 import { LangToggleWeb, WebFooter } from './components/ui';
 import { AppMenu } from './components/AppMenu';
 import { HomePage } from './pages/HomePage';
@@ -41,6 +42,12 @@ export default function App() {
     try { const s = localStorage.getItem('lpla_user'); return s ? JSON.parse(s) : null; }
     catch { return null; }
   });
+  // Raw Google ID token — kept so we can ask the backend for this user's
+  // own bookings (the server verifies it before returning anything).
+  const [credential, setCredential] = useState(() => {
+    try { return localStorage.getItem('lpla_credential') || null; } catch { return null; }
+  });
+  const [bookings, setBookings] = useState([]);
 
   // Initialize Google Identity Services
   useEffect(() => {
@@ -52,7 +59,9 @@ export default function App() {
           const payload = decodeJwtPayload(response.credential);
           const u = { name: payload.name, email: payload.email, picture: payload.picture };
           setUser(u);
+          setCredential(response.credential);
           localStorage.setItem('lpla_user', JSON.stringify(u));
+          localStorage.setItem('lpla_credential', response.credential);
         },
         auto_select: true,
       });
@@ -63,6 +72,18 @@ export default function App() {
     }, 200);
     return () => clearInterval(interval);
   }, []);
+
+  // Load the user's bookings whenever we have a (fresh) credential. If the
+  // token has expired the backend returns 401 and we simply clear the list;
+  // auto_select hands us a new credential on the next page load.
+  useEffect(() => {
+    if (!credential) { setBookings([]); return; }
+    let cancelled = false;
+    fetchMyBookings(credential)
+      .then(data => { if (!cancelled) setBookings(Array.isArray(data.bookings) ? data.bookings : []); })
+      .catch(() => { if (!cancelled) setBookings([]); });
+    return () => { cancelled = true; };
+  }, [credential]);
 
   // Parse initial route
   useEffect(() => {
@@ -137,11 +158,25 @@ export default function App() {
 
   function handleSignOut() {
     setUser(null);
+    setCredential(null);
+    setBookings([]);
     localStorage.removeItem('lpla_user');
+    localStorage.removeItem('lpla_credential');
     if (window.google?.accounts?.id) {
       window.google.accounts.id.disableAutoSelect();
     }
   }
+
+  // Bookings shaped for the drawer's "My Events" list.
+  const menuBookings = bookings.map(b => ({
+    title: lang === 'es' ? (b.eventTitleEs || b.eventTitleEn) : (b.eventTitleEn || b.eventTitleEs),
+    date: b.eventDate ? fmtDate(b.eventDate, lang) : '',
+    slug: slugify(b.eventTitleEn || b.eventTitleEs),
+    status: b.status,
+  }));
+
+  // Most recent booking's phone — used to pre-fill the booking form.
+  const lastPhone = bookings[0]?.phone || '';
 
   return (
     <div>
@@ -153,7 +188,7 @@ export default function App() {
         onSignIn={handleSignIn}
         onSignOut={handleSignOut}
         onNavigate={navigate}
-        bookings={[]}
+        bookings={menuBookings}
       />
 
       {/* Floating language toggle */}
@@ -176,6 +211,8 @@ export default function App() {
         <EventDetailPage
           event={selEvent}
           lang={lang}
+          user={user}
+          prefillPhone={lastPhone}
           onConfirm={handleConfirm}
           onBack={goHome}
         />

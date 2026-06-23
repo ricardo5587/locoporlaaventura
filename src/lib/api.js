@@ -35,3 +35,18 @@ export async function submitForm(formType, payload) {
   const order = await res.json();
   return { ok: true, order };
 }
+
+// Fetch the signed-in user's own bookings. The Google ID token (credential)
+// is verified server-side, so this only ever returns the caller's records.
+export async function fetchMyBookings(credential) {
+  const res = await fetch(`${API}/api/my-orders`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ credential }),
+  });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.error || `Could not load bookings (${res.status})`);
+  }
+  return res.json(); // { email, bookings: [...] }
+}

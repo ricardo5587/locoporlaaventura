@@ -1,9 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { WEB, useBreakpoint, fmtDate, CAT_ICONS } from '../lib/tokens';
 import { MAX_W, WebBadge, WebImgPlaceholder, PhoneInput } from '../components/shared';
 import { submitForm } from '../lib/api';
 
-export function EventDetailPage({ event, lang, onConfirm, onBack }) {
+export function EventDetailPage({ event, lang, user, prefillPhone, onConfirm, onBack }) {
   const { isMobile, isTablet } = useBreakpoint();
   const L = (es, en) => lang === 'es' ? es : en;
 
@@ -21,6 +21,24 @@ export function EventDetailPage({ event, lang, onConfirm, onBack }) {
     setForm(f => ({ ...f, [k]:v }));
     if (errors[k]) setErrors(prev => { const { [k]: _, ...rest } = prev; return rest; });
   };
+
+  // Pre-fill from the signed-in Google profile + their most recent booking.
+  // Only fills fields the user hasn't already typed into, so it never clobbers
+  // edits. Re-runs if they sign in after the page is already open.
+  useEffect(() => {
+    if (!user && !prefillPhone) return;
+    setForm(f => {
+      const next = { ...f };
+      if (user?.name) {
+        const parts = user.name.trim().split(/\s+/);
+        if (!f.firstName) next.firstName = parts[0] || '';
+        if (!f.lastName)  next.lastName  = parts.slice(1).join(' ');
+      }
+      if (!f.email && user?.email) next.email = user.email;
+      if ((!f.phone || f.phone === '+1 ') && prefillPhone) next.phone = prefillPhone;
+      return next;
+    });
+  }, [user, prefillPhone]);
 
   const selectedTicket = event.tickets.find(t => t.id === form.ticketId) || event.tickets[0];
   const total = (selectedTicket?.price || 0) * form.quantity;
