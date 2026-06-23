@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { WEB, useBreakpoint, fmtDate, CAT_ICONS } from '../lib/tokens';
-import { WebBadge, WebMountains, WebImgPlaceholder, WebStarRow, MAX_W } from './shared';
+import { WebBadge, WebMountains, WebImgPlaceholder, WebStarRow, MAX_W, PhoneInput } from './shared';
 
 const LOGO = '/logo.png';
 
@@ -229,32 +229,26 @@ export function WebHero({ lang, onScroll, onVolunteer }) {
           {L('Eventos de aventura al aire libre para la comunidad latina y más allá · Portland, Oregón', 'Outdoor adventure events for the Latino community and beyond · Portland, Oregon')}
         </p>
         <div style={{ display:'flex', gap: isMobile ? 8 : 12, justifyContent:'center', flexWrap:'wrap', padding: isMobile ? '0 8px' : 0 }}>
-          <button onClick={onScroll} style={{ padding: isMobile ? '12px 24px' : '14px 32px', borderRadius:14, border:'none', cursor:'pointer', background:WEB.green, color:'#fff', fontFamily:'Barlow Condensed,system-ui', fontSize: isMobile ? 16 : 20, fontWeight:800, letterSpacing:.5, boxShadow:'0 8px 28px rgba(126,191,46,.4)', transition:'transform .15s, box-shadow .15s' }}
-            onMouseOver={e => { e.currentTarget.style.transform='translateY(-2px)'; e.currentTarget.style.boxShadow='0 12px 36px rgba(126,191,46,.5)'; }}
-            onMouseOut={e => { e.currentTarget.style.transform=''; e.currentTarget.style.boxShadow='0 8px 28px rgba(126,191,46,.4)'; }}>
-            {L('Próximos Eventos', 'Upcoming Events')}
-          </button>
-          <button onClick={onVolunteer} style={{ padding: isMobile ? '12px 24px' : '14px 32px', borderRadius:14, border:'none', cursor:'pointer', background:WEB.teal, color:'#fff', fontFamily:'Barlow Condensed,system-ui', fontSize: isMobile ? 16 : 20, fontWeight:800, letterSpacing:.5, boxShadow:'0 8px 28px rgba(27,94,127,.45)', display:'inline-flex', alignItems:'center', gap:9, transition:'transform .15s, box-shadow .15s' }}
-            onMouseOver={e => { e.currentTarget.style.transform='translateY(-2px)'; e.currentTarget.style.boxShadow='0 12px 36px rgba(27,94,127,.55)'; }}
-            onMouseOut={e => { e.currentTarget.style.transform=''; e.currentTarget.style.boxShadow='0 8px 28px rgba(27,94,127,.45)'; }}>
-            {L('Ser Voluntario', 'Become a Volunteer')}
-          </button>
+          {[
+            { label: L('Próximos Eventos', 'Upcoming Events'), action: onScroll, bg: 'rgba(126,191,46,.75)', shadow: 'rgba(126,191,46,.35)', hoverBg: 'rgba(126,191,46,.9)' },
+            { label: L('Ser Voluntario', 'Become a Volunteer'), action: onVolunteer, bg: 'rgba(27,94,127,.7)', shadow: 'rgba(27,94,127,.35)', hoverBg: 'rgba(27,94,127,.9)' },
+          ].map(btn => (
+            <button key={btn.label} onClick={btn.action} style={{ minWidth: isMobile ? 155 : 210, padding: isMobile ? '13px 20px' : '15px 28px', borderRadius:14, border:'1px solid rgba(255,255,255,.15)', cursor:'pointer', background:btn.bg, backdropFilter:'blur(12px)', color:'#fff', fontFamily:'Barlow Condensed,system-ui', fontSize: isMobile ? 16 : 19, fontWeight:800, letterSpacing:.5, textTransform:'uppercase', boxShadow:`0 8px 28px ${btn.shadow}, inset 0 1px 0 rgba(255,255,255,.15)`, transition:'transform .15s, box-shadow .15s, background .2s', textAlign:'center' }}
+              onMouseOver={e => { e.currentTarget.style.transform='translateY(-2px)'; e.currentTarget.style.boxShadow=`0 12px 36px ${btn.shadow}, inset 0 1px 0 rgba(255,255,255,.2)`; e.currentTarget.style.background=btn.hoverBg; }}
+              onMouseOut={e => { e.currentTarget.style.transform=''; e.currentTarget.style.boxShadow=`0 8px 28px ${btn.shadow}, inset 0 1px 0 rgba(255,255,255,.15)`; e.currentTarget.style.background=btn.bg; }}>
+              {btn.label}
+            </button>
+          ))}
         </div>
         {/* Stats row */}
         <div style={{ display:'flex', gap: isMobile ? 20 : 48, justifyContent:'center', marginTop: isMobile ? 24 : 40, flexWrap:'wrap' }}>
-          {[['500+', L('Aventureros', 'Adventurers')], ['20+', L('Eventos/año', 'Events/year')], ['45.5°N', '122.7°W']].map(([n, l]) => (
+          {[['90+', L('Voluntarios', 'Volunteers')], ['64', L('Eventos/año', 'Events/year')], ['45.5°N / 122.7°W', 'Portland, Oregon']].map(([n, l]) => (
             <div key={n} style={{ textAlign:'center' }}>
               <div style={{ fontFamily:'Barlow Condensed,system-ui', fontSize: isMobile ? 26 : 32, fontWeight:800, color:'#fff', lineHeight:1 }}>{n}</div>
               <div style={{ fontFamily:'Nunito,system-ui', fontSize: isMobile ? 11 : 13, color:'rgba(255,255,255,.55)', marginTop:3 }}>{l}</div>
             </div>
           ))}
         </div>
-      </div>
-
-      {/* Slide label */}
-      <div style={{ position:'absolute', bottom:28, left:24, zIndex:6, display:'flex', alignItems:'center', gap:6, background:'rgba(0,0,0,.35)', backdropFilter:'blur(8px)', borderRadius:8, padding:'5px 12px' }}>
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.6)" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
-        <span style={{ fontFamily:'Barlow Condensed,system-ui', fontSize:12, fontWeight:700, color:'rgba(255,255,255,.7)', textTransform:'uppercase', letterSpacing:.5 }}>Slide {active + 1}</span>
       </div>
 
       {/* Prev/Next arrows */}
@@ -370,7 +364,7 @@ export function CategoryFilter({ active, setActive, lang }) {
 export function NewsletterSection({ lang }) {
   const L = (es, en) => lang === 'es' ? es : en;
   const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('');
+  const [phone, setPhone] = useState('+1 ');
   const [sms, setSms] = useState(false);
   const [mkt, setMkt] = useState(false);
   const [done, setDone] = useState(false);
@@ -412,18 +406,7 @@ export function NewsletterSection({ lang }) {
           <form onSubmit={handleSubmit} style={{ maxWidth:500, margin:'0 auto', display:'flex', flexDirection:'column', gap:12 }}>
             <input type="email" value={email} onChange={e => { setEmail(e.target.value); if (error) setError(''); }} placeholder={L('tu@correo.com', 'your@email.com')} style={{ height:50, borderRadius:12, border:`1.5px solid ${error ? '#E74C3C' : 'rgba(255,255,255,.2)'}`, background:'rgba(255,255,255,.1)', color:'#fff', padding:'0 16px', fontFamily:'Nunito,system-ui', fontSize:16, outline:'none', backdropFilter:'blur(8px)', boxSizing:'border-box', width:'100%' }} />
             {error && <div style={{ fontFamily:'Nunito,system-ui', fontSize:12, color:'#E74C3C', marginTop:4 }}>{error}</div>}
-            <div style={{ display:'flex', gap:0 }}>
-              <select value={phone.startsWith('+') ? phone.replace(/^\+\d{1,3}\s.*$/,'') || '+1' : '+1'}
-                onChange={e => { const num = phone.replace(/^\+\d{1,3}\s*/, ''); setPhone(e.target.value + ' ' + num); }}
-                style={{ width:80, height:50, borderRadius:'12px 0 0 12px', border:'1.5px solid rgba(255,255,255,.2)', borderRight:'none', padding:'0 4px 0 8px', fontFamily:'Nunito,system-ui', fontSize:14, color:'#fff', outline:'none', cursor:'pointer', background:'rgba(255,255,255,.1)', boxSizing:'border-box', backdropFilter:'blur(8px)' }}>
-                <option value="+1" style={{color:'#000'}}>🇺🇸 +1</option>
-                <option value="+52" style={{color:'#000'}}>🇲🇽 +52</option>
-                <option value="+44" style={{color:'#000'}}>🇬🇧 +44</option>
-                <option value="+34" style={{color:'#000'}}>🇪🇸 +34</option>
-                <option value="+57" style={{color:'#000'}}>🇨🇴 +57</option>
-              </select>
-              <input type="tel" value={phone.replace(/^\+\d{1,3}\s*/, '')} onChange={e => { const code = (phone.match(/^\+\d{1,3}/) || ['+1'])[0]; setPhone(code + ' ' + e.target.value); }} placeholder={L('Teléfono para SMS (opcional)', 'Phone for SMS (optional)')} style={{ flex:1, height:50, borderRadius:'0 12px 12px 0', border:'1.5px solid rgba(255,255,255,.2)', background:'rgba(255,255,255,.1)', color:'#fff', padding:'0 16px', fontFamily:'Nunito,system-ui', fontSize:15, outline:'none', backdropFilter:'blur(8px)', boxSizing:'border-box' }} />
-            </div>
+            <PhoneInput value={phone} onChange={setPhone} hasError={false} />
             <label style={{ display:'flex', gap:10, alignItems:'flex-start', cursor:'pointer', textAlign:'left' }}>
               <input type="checkbox" checked={sms} onChange={e => setSms(e.target.checked)} style={{ marginTop:3, width:18, height:18, accentColor:WEB.green, flexShrink:0 }} />
               <span style={{ fontFamily:'Nunito,system-ui', fontSize:13, color:'rgba(255,255,255,.7)', lineHeight:1.5 }}>

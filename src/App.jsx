@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { WEB } from './lib/tokens';
 import { LangToggleWeb, WebFooter } from './components/ui';
 import { HomePage } from './pages/HomePage';
@@ -8,13 +8,54 @@ import { VolunteerPage } from './pages/VolunteerPage';
 
 const API = 'https://locoporlaaventura.vercel.app';
 
+function slugify(s) {
+  return String(s || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+}
+
+function routeFromPath(pathname) {
+  const p = pathname.replace(/\/+$/, '') || '/';
+  if (p === '/') return { page: 'home' };
+  if (p === '/volunteer') return { page: 'volunteer' };
+  if (p === '/confirmation') return { page: 'confirm' };
+  const m = p.match(/^\/events\/(.+)$/);
+  if (m) return { page: 'event', slug: m[1] };
+  return { page: 'home' };
+}
+
 export default function App() {
-  const [lang,    setLang]    = useState('en');
-  const [page,    setPage]    = useState('home');
-  const [selEvent,setSelEvent]= useState(null);
+  const [lang, setLang] = useState('en');
+  const [page, setPage] = useState('home');
+  const [eventSlug, setEventSlug] = useState(null);
+  const [selEvent, setSelEvent] = useState(null);
   const [booking, setBooking] = useState(null);
-  const [events,  setEvents]  = useState([]);
+  const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  // Parse initial route
+  useEffect(() => {
+    const r = routeFromPath(window.location.pathname);
+    setPage(r.page);
+    if (r.slug) setEventSlug(r.slug);
+  }, []);
+
+  // Listen for browser back/forward
+  useEffect(() => {
+    const handler = () => {
+      const r = routeFromPath(window.location.pathname);
+      setPage(r.page);
+      if (r.slug) setEventSlug(r.slug);
+      else setSelEvent(null);
+    };
+    window.addEventListener('popstate', handler);
+    return () => window.removeEventListener('popstate', handler);
+  }, []);
+
+  const navigate = useCallback((path, state) => {
+    window.history.pushState(state || null, '', path);
+    const r = routeFromPath(path);
+    setPage(r.page);
+    if (r.slug) setEventSlug(r.slug);
+  }, []);
 
   // Scroll to top on page change
   useEffect(() => { window.scrollTo({ top: 0, behavior: 'smooth' }); }, [page]);
@@ -27,14 +68,32 @@ export default function App() {
       .catch(() => setLoading(false));
   }, []);
 
+  // Resolve event from slug once events are loaded
+  useEffect(() => {
+    if (page === 'event' && events.length && eventSlug && !selEvent) {
+      const found = events.find(e =>
+        slugify(e.titleEn) === eventSlug || slugify(e.titleEs) === eventSlug || e.id === eventSlug
+      );
+      if (found) setSelEvent(found);
+      else navigate('/');
+    }
+  }, [page, events, eventSlug, selEvent, navigate]);
+
   function handleBook(event) {
     setSelEvent(event);
-    setPage('event');
+    setEventSlug(slugify(event.titleEn));
+    navigate(`/events/${slugify(event.titleEn)}`);
   }
 
   function handleConfirm(bookingData) {
     setBooking(bookingData);
-    setPage('confirm');
+    navigate('/confirmation');
+  }
+
+  function goHome() {
+    setSelEvent(null);
+    setEventSlug(null);
+    navigate('/');
   }
 
   return (
@@ -52,7 +111,7 @@ export default function App() {
           lang={lang}
           events={events}
           onBook={handleBook}
-          onVolunteer={() => setPage('volunteer')}
+          onVolunteer={() => navigate('/volunteer')}
         />
       )}
 
@@ -61,7 +120,7 @@ export default function App() {
           event={selEvent}
           lang={lang}
           onConfirm={handleConfirm}
-          onBack={() => setPage('home')}
+          onBack={goHome}
         />
       )}
 
@@ -69,14 +128,14 @@ export default function App() {
         <ConfirmationPage
           booking={booking}
           lang={lang}
-          onHome={() => setPage('home')}
+          onHome={goHome}
         />
       )}
 
       {page === 'volunteer' && (
         <VolunteerPage
           lang={lang}
-          onBack={() => setPage('home')}
+          onBack={goHome}
         />
       )}
 
