@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { WEB } from './lib/tokens';
 import { LangToggleWeb, WebFooter } from './components/ui';
+import { AppMenu } from './components/AppMenu';
 import { HomePage } from './pages/HomePage';
 import { EventDetailPage } from './pages/EventDetailPage';
 import { ConfirmationPage } from './pages/ConfirmationPage';
@@ -30,6 +31,7 @@ export default function App() {
   const [booking, setBooking] = useState(null);
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState(null);
 
   // Parse initial route
   useEffect(() => {
@@ -96,8 +98,32 @@ export default function App() {
     navigate('/');
   }
 
+  // Google Sign-In placeholder
+  function handleSignIn() {
+    // TODO: Replace with real Google OAuth flow
+    // For now, simulate sign-in for UI testing
+    const name = window.prompt(lang === 'es' ? 'Tu nombre (demo):' : 'Your name (demo):');
+    if (name) {
+      setUser({ name, email: `${name.toLowerCase().replace(/\s/g, '.')}@gmail.com` });
+    }
+  }
+
+  function handleSignOut() {
+    setUser(null);
+  }
+
   return (
     <div>
+
+      {/* App menu (hamburger) — all pages */}
+      <AppMenu
+        lang={lang}
+        user={user}
+        onSignIn={handleSignIn}
+        onSignOut={handleSignOut}
+        onNavigate={navigate}
+        bookings={[]}
+      />
 
       {/* Floating language toggle */}
       <div style={{ position:'fixed', bottom:'max(16px, env(safe-area-inset-bottom, 16px))', right:16, zIndex:500 }}>
