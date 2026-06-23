@@ -136,8 +136,10 @@ export function WebHero({ lang, onScroll, onVolunteer }) {
   const draggingDots = useRef(false);
 
   useEffect(() => {
-    fetch(`${HERO_API}/api/hero-slides`)
-      .then(r => r.ok ? r.json() : [])
+    // Reuse the fetch kicked off in index.html (before React loaded) if present.
+    const source = window.__heroSlidesPromise
+      || fetch(`${HERO_API}/api/hero-slides`).then(r => r.ok ? r.json() : []);
+    Promise.resolve(source)
       .then(data => {
         if (Array.isArray(data) && data.length === 4) {
           setSlides(data.map(s => s.image_url));
@@ -205,7 +207,14 @@ export function WebHero({ lang, onScroll, onVolunteer }) {
         <div key={i} style={{ position:'absolute', inset:0, opacity: active === i ? 1 : 0, zIndex: active === i ? 2 : 1, transition:'opacity 1.1s ease' }}>
           {slides[i] ? (
             <>
-              <img src={slides[i]} alt={`Slide ${i+1}`} style={{ width:'100%', height:'100%', objectFit:'cover' }} />
+              <img
+                src={slides[i]}
+                alt={`Slide ${i+1}`}
+                loading={i === 0 ? 'eager' : 'lazy'}
+                fetchpriority={i === 0 ? 'high' : 'low'}
+                decoding="async"
+                style={{ width:'100%', height:'100%', objectFit:'cover' }}
+              />
               <div style={{ position:'absolute', inset:0, background:'linear-gradient(180deg, rgba(11,30,43,.5) 0%, rgba(11,30,43,.25) 40%, rgba(11,30,43,.4) 100%)' }} />
             </>
           ) : (

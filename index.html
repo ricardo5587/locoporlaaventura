@@ -8,6 +8,34 @@
   <meta name="theme-color" content="#0B1E2B">
   <title>Loco Por La Aventura — Eventos &amp; Reservas</title>
   <meta name="description" content="Eventos de aventura para la comunidad latina. Escalada, senderismo, talleres y más.">
+
+  <!-- Warm up connections to the API + image CDN in parallel with the JS bundle -->
+  <link rel="preconnect" href="https://locoporlaaventura.vercel.app" crossorigin>
+  <link rel="preconnect" href="https://aftfpycpmbuqfrwspzzj.supabase.co" crossorigin>
+  <link rel="dns-prefetch" href="https://aftfpycpmbuqfrwspzzj.supabase.co">
+
+  <!-- Kick off the hero-slides fetch before React loads, then preload the
+       first image with high priority so it downloads alongside the bundle. -->
+  <script>
+    (function () {
+      try {
+        window.__heroSlidesPromise = fetch('https://locoporlaaventura.vercel.app/api/hero-slides')
+          .then(function (r) { return r.ok ? r.json() : []; })
+          .then(function (data) {
+            if (Array.isArray(data) && data[0] && data[0].image_url) {
+              var l = document.createElement('link');
+              l.rel = 'preload';
+              l.as = 'image';
+              l.href = data[0].image_url;
+              l.setAttribute('fetchpriority', 'high');
+              document.head.appendChild(l);
+            }
+            return data;
+          })
+          .catch(function () { return []; });
+      } catch (e) {}
+    })();
+  </script>
   <style>
     *, *::before, *::after { box-sizing: border-box; }
     html { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
