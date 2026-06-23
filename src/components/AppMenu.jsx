@@ -100,7 +100,7 @@ export function AppMenu({ lang, user, onSignIn, onSignOut, onNavigate, bookings 
     return () => { document.body.style.overflow = ''; };
   }, [open]);
 
-  const menuWidth = isMobile ? '85vw' : 380;
+  const menuWidth = isMobile ? 'min(76vw, 320px)' : 380;
 
   const NavItem = ({ icon, label, subtitle, onClick, href }) => {
     const isLink = !!href;

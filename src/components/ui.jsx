@@ -238,7 +238,7 @@ export function WebHero({ lang, onScroll, onVolunteer }) {
         <p style={{ fontFamily:'Nunito,system-ui', fontSize: isMobile ? 14 : 18, color:'rgba(255,255,255,.72)', margin:'0 auto 24px', maxWidth:520, lineHeight:1.6, padding: isMobile ? '0 8px' : 0 }}>
           {L('Eventos de aventura al aire libre para la comunidad latina y más allá · Portland, Oregón', 'Outdoor adventure events for the Latino community and beyond · Portland, Oregon')}
         </p>
-        <div style={{ display:'flex', flexDirection: isMobile ? 'column' : 'row', gap: isMobile ? 6 : 12, alignItems:'center' }}>
+        <div style={{ display:'flex', flexDirection: isMobile ? 'column' : 'row', gap: isMobile ? 6 : 12, alignItems:'center', justifyContent:'center' }}>
           {[
             { label: L('Próximos Eventos', 'Upcoming Events'), action: onScroll, bg: 'rgba(126,191,46,.75)', shadow: 'rgba(126,191,46,.35)', hoverBg: 'rgba(126,191,46,.9)' },
             { label: L('Ser Voluntario', 'Become a Volunteer'), action: onVolunteer, bg: 'rgba(27,94,127,.7)', shadow: 'rgba(27,94,127,.35)', hoverBg: 'rgba(27,94,127,.9)' },
