@@ -233,7 +233,7 @@ export function WebHero({ lang, onScroll, onVolunteer }) {
             { label: L('Próximos Eventos', 'Upcoming Events'), action: onScroll, bg: 'rgba(126,191,46,.75)', shadow: 'rgba(126,191,46,.35)', hoverBg: 'rgba(126,191,46,.9)' },
             { label: L('Ser Voluntario', 'Become a Volunteer'), action: onVolunteer, bg: 'rgba(27,94,127,.7)', shadow: 'rgba(27,94,127,.35)', hoverBg: 'rgba(27,94,127,.9)' },
           ].map(btn => (
-            <button key={btn.label} onClick={btn.action} style={{ minWidth: isMobile ? 155 : 210, padding: isMobile ? '13px 20px' : '15px 28px', borderRadius:14, border:'1px solid rgba(255,255,255,.15)', cursor:'pointer', background:btn.bg, backdropFilter:'blur(12px)', color:'#fff', fontFamily:'Barlow Condensed,system-ui', fontSize: isMobile ? 16 : 19, fontWeight:800, letterSpacing:.5, textTransform:'uppercase', boxShadow:`0 8px 28px ${btn.shadow}, inset 0 1px 0 rgba(255,255,255,.15)`, transition:'transform .15s, box-shadow .15s, background .2s', textAlign:'center' }}
+            <button key={btn.label} onClick={btn.action} style={{ flex:'1 1 0', maxWidth: isMobile ? 180 : 230, padding: isMobile ? '13px 16px' : '15px 28px', borderRadius:14, border:'1px solid rgba(255,255,255,.15)', cursor:'pointer', background:btn.bg, backdropFilter:'blur(12px)', color:'#fff', fontFamily:'Barlow Condensed,system-ui', fontSize: isMobile ? 16 : 19, fontWeight:800, letterSpacing:.5, textTransform:'uppercase', boxShadow:`0 8px 28px ${btn.shadow}, inset 0 1px 0 rgba(255,255,255,.15)`, transition:'transform .15s, box-shadow .15s, background .2s', textAlign:'center' }}
               onMouseOver={e => { e.currentTarget.style.transform='translateY(-2px)'; e.currentTarget.style.boxShadow=`0 12px 36px ${btn.shadow}, inset 0 1px 0 rgba(255,255,255,.2)`; e.currentTarget.style.background=btn.hoverBg; }}
               onMouseOut={e => { e.currentTarget.style.transform=''; e.currentTarget.style.boxShadow=`0 8px 28px ${btn.shadow}, inset 0 1px 0 rgba(255,255,255,.15)`; e.currentTarget.style.background=btn.bg; }}>
               {btn.label}
@@ -242,7 +242,7 @@ export function WebHero({ lang, onScroll, onVolunteer }) {
         </div>
         {/* Stats row */}
         <div style={{ display:'flex', gap: isMobile ? 20 : 48, justifyContent:'center', marginTop: isMobile ? 24 : 40, flexWrap:'wrap' }}>
-          {[['90+', L('Voluntarios', 'Volunteers')], ['64', L('Eventos/año', 'Events/year')], ['45.5°N / 122.7°W', 'Portland, Oregon']].map(([n, l]) => (
+          {[['90+', L('Voluntarios', 'Volunteers')], ['64', L('Eventos/año', 'Events/year')]].map(([n, l]) => (
             <div key={n} style={{ textAlign:'center' }}>
               <div style={{ fontFamily:'Barlow Condensed,system-ui', fontSize: isMobile ? 26 : 32, fontWeight:800, color:'#fff', lineHeight:1 }}>{n}</div>
               <div style={{ fontFamily:'Nunito,system-ui', fontSize: isMobile ? 11 : 13, color:'rgba(255,255,255,.55)', marginTop:3 }}>{l}</div>
@@ -404,7 +404,7 @@ export function NewsletterSection({ lang }) {
           </div>
         ) : (
           <form onSubmit={handleSubmit} style={{ maxWidth:500, margin:'0 auto', display:'flex', flexDirection:'column', gap:12 }}>
-            <input type="email" value={email} onChange={e => { setEmail(e.target.value); if (error) setError(''); }} placeholder={L('tu@correo.com', 'your@email.com')} style={{ height:50, borderRadius:12, border:`1.5px solid ${error ? '#E74C3C' : 'rgba(255,255,255,.2)'}`, background:'rgba(255,255,255,.1)', color:'#fff', padding:'0 16px', fontFamily:'Nunito,system-ui', fontSize:16, outline:'none', backdropFilter:'blur(8px)', boxSizing:'border-box', width:'100%' }} />
+            <input type="email" value={email} onChange={e => { setEmail(e.target.value); if (error) setError(''); }} placeholder={L('tu@correo.com', 'your@email.com')} style={{ height:44, borderRadius:10, border:`1.5px solid ${error ? '#E74C3C' : WEB.borderMd}`, background:'#fff', color:WEB.text, padding:'0 16px', fontFamily:'Nunito,system-ui', fontSize:14, outline:'none', boxSizing:'border-box', width:'100%' }} />
             {error && <div style={{ fontFamily:'Nunito,system-ui', fontSize:12, color:'#E74C3C', marginTop:4 }}>{error}</div>}
             <PhoneInput value={phone} onChange={setPhone} hasError={false} />
             <label style={{ display:'flex', gap:10, alignItems:'flex-start', cursor:'pointer', textAlign:'left' }}>
