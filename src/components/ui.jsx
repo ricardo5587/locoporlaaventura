@@ -131,6 +131,9 @@ export function WebHero({ lang, onScroll, onVolunteer }) {
   const [paused, setPaused] = useState(false);
   const [slides, setSlides] = useState([null, null, null, null]);
   const timerRef = useRef(null);
+  const touchStartX = useRef(null);
+  const dotsRef = useRef(null);
+  const draggingDots = useRef(false);
 
   useEffect(() => {
     fetch(`${HERO_API}/api/hero-slides`)
@@ -165,11 +168,36 @@ export function WebHero({ lang, onScroll, onVolunteer }) {
     if (!paused) timerRef.current = setInterval(advance, 5000);
   };
 
+  // Swipe to change slides (touch).
+  const onTouchStart = (e) => { touchStartX.current = e.touches[0].clientX; };
+  const onTouchEnd = (e) => {
+    if (touchStartX.current == null) return;
+    const dx = e.changedTouches[0].clientX - touchStartX.current;
+    if (dx > 40) goTo((active + 3) % 4);
+    else if (dx < -40) goTo((active + 1) % 4);
+    touchStartX.current = null;
+  };
+
+  // Hold-and-slide across the dot bar to scrub between slides.
+  const dotFromX = (clientX) => {
+    const el = dotsRef.current;
+    if (!el) return;
+    const r = el.getBoundingClientRect();
+    const ratio = (clientX - r.left) / r.width;
+    const i = Math.min(3, Math.max(0, Math.floor(ratio * 4)));
+    goTo(i);
+  };
+  const onDotsDown = (e) => { draggingDots.current = true; e.currentTarget.setPointerCapture?.(e.pointerId); dotFromX(e.clientX); };
+  const onDotsMove = (e) => { if (draggingDots.current) dotFromX(e.clientX); };
+  const onDotsUp = () => { draggingDots.current = false; };
+
   return (
     <div
-      style={{ position:'relative', background:`linear-gradient(160deg,${WEB.tealDark} 0%,${WEB.teal} 60%,#0D3820 100%)`, overflow:'hidden', minHeight: isMobile ? 440 : 620 }}
+      style={{ position:'relative', background:`linear-gradient(160deg,${WEB.tealDark} 0%,${WEB.teal} 60%,#0D3820 100%)`, overflow:'hidden', minHeight: isMobile ? 440 : 620, touchAction:'pan-y' }}
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
+      onTouchStart={onTouchStart}
+      onTouchEnd={onTouchEnd}
     >
       {/* Background slides (cross-fade) */}
       {[0,1,2,3].map(i => (
@@ -198,7 +226,7 @@ export function WebHero({ lang, onScroll, onVolunteer }) {
           LOCO POR<br />LA AVENTURA
         </h1>
         <p style={{ fontFamily:'Nunito,system-ui', fontSize: isMobile ? 14 : 18, color:'rgba(255,255,255,.72)', margin:'0 auto 24px', maxWidth:520, lineHeight:1.6, padding: isMobile ? '0 8px' : 0 }}>
-          {L('Eventos de aventura al aire libre para la comunidad latina · Portland, OR & el Noroeste del Pacífico', 'Outdoor adventure events for the Latino community · Portland, OR & the Pacific Northwest')}
+          {L('Eventos de aventura al aire libre para la comunidad latina y más allá · Portland, Oregón', 'Outdoor adventure events for the Latino community and beyond · Portland, Oregon')}
         </p>
         <div style={{ display:'flex', gap: isMobile ? 8 : 12, justifyContent:'center', flexWrap:'wrap', padding: isMobile ? '0 8px' : 0 }}>
           <button onClick={onScroll} style={{ padding: isMobile ? '12px 24px' : '14px 32px', borderRadius:14, border:'none', cursor:'pointer', background:WEB.green, color:'#fff', fontFamily:'Barlow Condensed,system-ui', fontSize: isMobile ? 16 : 20, fontWeight:800, letterSpacing:.5, boxShadow:'0 8px 28px rgba(126,191,46,.4)', transition:'transform .15s, box-shadow .15s' }}
@@ -214,7 +242,7 @@ export function WebHero({ lang, onScroll, onVolunteer }) {
         </div>
         {/* Stats row */}
         <div style={{ display:'flex', gap: isMobile ? 20 : 48, justifyContent:'center', marginTop: isMobile ? 24 : 40, flexWrap:'wrap' }}>
-          {[['500+', L('Aventureros', 'Adventurers')], ['20+', L('Eventos/año', 'Events/year')], ['PNW', L('Región', 'Region')]].map(([n, l]) => (
+          {[['500+', L('Aventureros', 'Adventurers')], ['20+', L('Eventos/año', 'Events/year')], ['45.5°N', '122.7°W']].map(([n, l]) => (
             <div key={n} style={{ textAlign:'center' }}>
               <div style={{ fontFamily:'Barlow Condensed,system-ui', fontSize: isMobile ? 26 : 32, fontWeight:800, color:'#fff', lineHeight:1 }}>{n}</div>
               <div style={{ fontFamily:'Nunito,system-ui', fontSize: isMobile ? 11 : 13, color:'rgba(255,255,255,.55)', marginTop:3 }}>{l}</div>
@@ -241,10 +269,16 @@ export function WebHero({ lang, onScroll, onVolunteer }) {
         </>
       )}
 
-      {/* Dot navigation */}
-      <div style={{ position:'absolute', bottom:28, left:'50%', transform:'translateX(-50%)', zIndex:6, display:'flex', gap:6 }}>
+      {/* Dot navigation — hold & slide to scrub */}
+      <div
+        ref={dotsRef}
+        onPointerDown={onDotsDown}
+        onPointerMove={onDotsMove}
+        onPointerUp={onDotsUp}
+        onPointerCancel={onDotsUp}
+        style={{ position:'absolute', bottom:20, left:'50%', transform:'translateX(-50%)', zIndex:6, display:'flex', alignItems:'center', gap:6, padding:'12px 14px', cursor:'pointer', touchAction:'none', userSelect:'none' }}>
         {[0,1,2,3].map(i => (
-          <button key={i} onClick={() => goTo(i)} style={{ width: active === i ? 26 : 9, height:9, borderRadius:5, border:'none', cursor:'pointer', background: active === i ? '#7EBF2E' : 'rgba(255,255,255,.45)', transition:'width .3s ease, background .3s ease', padding:0 }} />
+          <span key={i} style={{ width: active === i ? 26 : 9, height:9, borderRadius:5, background: active === i ? '#7EBF2E' : 'rgba(255,255,255,.45)', transition:'width .3s ease, background .3s ease', pointerEvents:'none', display:'block' }} />
         ))}
       </div>
 
@@ -371,7 +405,7 @@ export function NewsletterSection({ lang }) {
             <div style={{ fontSize:32, marginBottom:8 }}>✅</div>
             <div style={{ fontFamily:'Barlow Condensed,system-ui', fontSize:22, fontWeight:800, color:'#fff' }}>{L('¡Gracias! Ya estás suscrito.', "Thanks! You're now subscribed.")}</div>
             <div style={{ fontFamily:'Nunito,system-ui', fontSize:14, color:'rgba(255,255,255,.65)', marginTop:4 }}>
-              {L('Te añadiremos a Klaviyo para recibir actualizaciones.', "We'll add you to Klaviyo to receive updates.")}
+              {L('Te suscribiremos para recibir actualizaciones.', "We'll subscribe you to receive updates.")}
             </div>
           </div>
         ) : (
@@ -388,7 +422,7 @@ export function NewsletterSection({ lang }) {
                 <option value="+34" style={{color:'#000'}}>🇪🇸 +34</option>
                 <option value="+57" style={{color:'#000'}}>🇨🇴 +57</option>
               </select>
-              <input type="tel" value={phone.replace(/^\+\d{1,3}\s*/, '')} onChange={e => { const code = (phone.match(/^\+\d{1,3}/) || ['+1'])[0]; setPhone(code + ' ' + e.target.value); }} placeholder={`📱 ${L('Teléfono para SMS (opcional)', 'Phone for SMS (optional)')}`} style={{ flex:1, height:50, borderRadius:'0 12px 12px 0', border:'1.5px solid rgba(255,255,255,.2)', background:'rgba(255,255,255,.1)', color:'#fff', padding:'0 16px', fontFamily:'Nunito,system-ui', fontSize:15, outline:'none', backdropFilter:'blur(8px)', boxSizing:'border-box' }} />
+              <input type="tel" value={phone.replace(/^\+\d{1,3}\s*/, '')} onChange={e => { const code = (phone.match(/^\+\d{1,3}/) || ['+1'])[0]; setPhone(code + ' ' + e.target.value); }} placeholder={L('Teléfono para SMS (opcional)', 'Phone for SMS (optional)')} style={{ flex:1, height:50, borderRadius:'0 12px 12px 0', border:'1.5px solid rgba(255,255,255,.2)', background:'rgba(255,255,255,.1)', color:'#fff', padding:'0 16px', fontFamily:'Nunito,system-ui', fontSize:15, outline:'none', backdropFilter:'blur(8px)', boxSizing:'border-box' }} />
             </div>
             <label style={{ display:'flex', gap:10, alignItems:'flex-start', cursor:'pointer', textAlign:'left' }}>
               <input type="checkbox" checked={sms} onChange={e => setSms(e.target.checked)} style={{ marginTop:3, width:18, height:18, accentColor:WEB.green, flexShrink:0 }} />
@@ -406,7 +440,7 @@ export function NewsletterSection({ lang }) {
               {L('Suscribirse', 'Subscribe')} →
             </button>
             <p style={{ fontFamily:'Nunito,system-ui', fontSize:11, color:'rgba(255,255,255,.4)', margin:0, lineHeight:1.5 }}>
-              {L('Powered by Klaviyo · Puedes cancelar en cualquier momento · Política de Privacidad', 'Powered by Klaviyo · Unsubscribe anytime · Privacy Policy')}
+              {L('Puedes cancelar en cualquier momento · Política de Privacidad', 'Unsubscribe anytime · Privacy Policy')}
             </p>
           </form>
         )}
@@ -479,7 +513,7 @@ export function WebFooter({ lang }) {
             © 2026 Loco Por La Aventura · locoporlaaventura.com
           </span>
           <span style={{ fontFamily:'Nunito,system-ui', fontSize:13, color:'rgba(255,255,255,.25)' }}>
-            {L('Pagos seguros con', 'Secure payments with')} Clover · SMS/Email {L('por', 'by')} Klaviyo
+            {L('Pagos seguros con', 'Secure payments with')} Clover
           </span>
         </div>
       </div>

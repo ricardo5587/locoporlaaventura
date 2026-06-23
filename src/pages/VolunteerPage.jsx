@@ -98,7 +98,7 @@ export function VolunteerPage({ lang, onBack }) {
 
           <div style={{ background: WEB.card, borderRadius: WEB.radius, padding: '20px 24px', boxShadow: WEB.shadow, marginBottom: 28, textAlign: 'left' }}>
             <div style={{ fontFamily: 'Barlow Condensed,system-ui', fontSize: 14, fontWeight: 800, color: WEB.teal, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 12 }}>
-              📲 {L('Tus comunicaciones', 'Your communications')}
+              {L('Tus comunicaciones', 'Your communications')}
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -264,7 +264,7 @@ export function VolunteerPage({ lang, onBack }) {
 
                 {/* Phone */}
                 <div style={{ marginBottom: 20 }}>
-                  <label style={{ fontFamily: 'Nunito,system-ui', fontSize: 12, fontWeight: 700, color: WEB.textMuted, textTransform: 'uppercase', letterSpacing: .8, display: 'block', marginBottom: 6 }}>📱 {L('Teléfono *', 'Phone Number *')}</label>
+                  <label style={{ fontFamily: 'Nunito,system-ui', fontSize: 12, fontWeight: 700, color: WEB.textMuted, textTransform: 'uppercase', letterSpacing: .8, display: 'block', marginBottom: 6 }}>{L('Teléfono *', 'Phone Number *')}</label>
                   <PhoneInput value={form.phone} onChange={v => setF('phone', v)} hasError={errors.phone} />
                   {errMsg(errors.phone)}
                 </div>
@@ -321,7 +321,7 @@ export function VolunteerPage({ lang, onBack }) {
                 {/* ── Consent block ────────────────────────────────────────── */}
                 <div style={{ background: 'rgba(27,94,127,.05)', borderRadius: 14, padding: '16px 18px', border: `1.5px solid rgba(27,94,127,.12)`, marginBottom: 14 }}>
                   <div style={{ fontFamily: 'Barlow Condensed,system-ui', fontSize: 14, fontWeight: 800, color: WEB.teal, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 12 }}>
-                    📲 {L('Comunicaciones y Consentimiento', 'Communications & Consent')}
+                    {L('Comunicaciones y Consentimiento', 'Communications & Consent')}
                   </div>
 
                   {/* SMS consent */}
@@ -379,7 +379,7 @@ export function VolunteerPage({ lang, onBack }) {
                 </button>
 
                 <p style={{ fontFamily: 'Nunito,system-ui', fontSize: 11, color: WEB.textLight, textAlign: 'center', lineHeight: 1.6, marginTop: 10, marginBottom: 0 }}>
-                  {L('Datos gestionados según nuestra Política de Privacidad · Comunicaciones vía Klaviyo', 'Data managed per our Privacy Policy · Communications via Klaviyo')}
+                  {L('Datos gestionados según nuestra Política de Privacidad', 'Data managed per our Privacy Policy')}
                 </p>
               </form>
             )}

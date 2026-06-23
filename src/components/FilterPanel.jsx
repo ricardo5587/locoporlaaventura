@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { WEB, CAT_ICONS } from '../lib/tokens';
+import { WEB, CAT_ICONS, useBreakpoint } from '../lib/tokens';
 
 // -- Helpers ----------------------------------------------------------------
 export function toDateString(d) {
@@ -74,6 +74,7 @@ export function ActiveFilterChip({ label, onRemove }) {
 // -- Main filter panel (anchored overlay) --------------------------------------
 export function FilterPanel({ open, onClose, cat, setCat, dateStart, setDateStart, dateEnd, setDateEnd, lang }) {
   const L = (es, en) => lang === 'es' ? es : en;
+  const { isMobile } = useBreakpoint();
 
   const cats = [
     { id:'all',        es:'Todos',       en:'All' },
@@ -174,16 +175,16 @@ export function FilterPanel({ open, onClose, cat, setCat, dateStart, setDateStar
               </button>
             )}
           </div>
-          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
-            <div>
+          <div style={{ display:'grid', gridTemplateColumns: isMobile ? '1fr' : 'minmax(0,1fr) minmax(0,1fr)', gap:12 }}>
+            <div style={{ minWidth:0 }}>
               <label style={{ fontFamily:'Nunito,system-ui', fontSize:11, fontWeight:700, color:WEB.textMuted, textTransform:'uppercase', letterSpacing:.8, display:'block', marginBottom:6 }}>{L('Desde', 'From')}</label>
               <input type="date" value={dateStart} onChange={e => setDateStart(e.target.value)}
-                style={{ height:44, width:'100%', borderRadius:10, border:`1.5px solid ${WEB.borderMd}`, padding:'0 12px', fontFamily:'Nunito,system-ui', fontSize:14, color:WEB.text, outline:'none', cursor:'pointer', background:'#fff', boxSizing:'border-box' }} />
+                style={{ height:44, width:'100%', minWidth:0, borderRadius:10, border:`1.5px solid ${WEB.borderMd}`, padding:'0 10px', fontFamily:'Nunito,system-ui', fontSize:14, color:WEB.text, outline:'none', cursor:'pointer', background:'#fff', boxSizing:'border-box', appearance:'none', WebkitAppearance:'none' }} />
             </div>
-            <div>
+            <div style={{ minWidth:0 }}>
               <label style={{ fontFamily:'Nunito,system-ui', fontSize:11, fontWeight:700, color:WEB.textMuted, textTransform:'uppercase', letterSpacing:.8, display:'block', marginBottom:6 }}>{L('Hasta', 'To')}</label>
               <input type="date" value={dateEnd} onChange={e => setDateEnd(e.target.value)}
-                style={{ height:44, width:'100%', borderRadius:10, border:`1.5px solid ${WEB.borderMd}`, padding:'0 12px', fontFamily:'Nunito,system-ui', fontSize:14, color:WEB.text, outline:'none', cursor:'pointer', background:'#fff', boxSizing:'border-box' }} />
+                style={{ height:44, width:'100%', minWidth:0, borderRadius:10, border:`1.5px solid ${WEB.borderMd}`, padding:'0 10px', fontFamily:'Nunito,system-ui', fontSize:14, color:WEB.text, outline:'none', cursor:'pointer', background:'#fff', boxSizing:'border-box', appearance:'none', WebkitAppearance:'none' }} />
             </div>
           </div>
         </div>

@@ -242,15 +242,15 @@ export function EventDetailPage({ event, lang, onConfirm, onBack }) {
                   {errors.email && <div style={{ fontFamily:'Nunito,system-ui', fontSize:11, color:'#E74C3C', marginTop:3 }}>{errors.email}</div>}
                 </div>
                 <div style={{ marginBottom:18 }}>
-                  <label style={{ fontFamily:'Nunito,system-ui', fontSize:12, fontWeight:700, color:WEB.textMuted, textTransform:'uppercase', letterSpacing:.8, display:'block', marginBottom:6 }}>{'\u{1F4F1}'} {L('Tel\u00e9fono *', 'Phone Number *')}</label>
+                  <label style={{ fontFamily:'Nunito,system-ui', fontSize:12, fontWeight:700, color:WEB.textMuted, textTransform:'uppercase', letterSpacing:.8, display:'block', marginBottom:6 }}>{L('Tel\u00e9fono *', 'Phone Number *')}</label>
                   <PhoneInput value={form.phone} onChange={v => setF('phone', v)} hasError={errors.phone} />
                   {errors.phone && <div style={{ fontFamily:'Nunito,system-ui', fontSize:11, color:'#E74C3C', marginTop:3 }}>{errors.phone}</div>}
                 </div>
 
-                {/* ---- CONSENT BLOCK (Klaviyo) -------------------------------------------------------------- */}
+                {/* ---- CONSENT BLOCK -------------------------------------------------------------- */}
                 <div style={{ background:'rgba(27,94,127,.05)', borderRadius:14, padding:'16px 18px', border:`1.5px solid rgba(27,94,127,.1)`, marginBottom:14 }}>
                   <div style={{ fontFamily:'Barlow Condensed,system-ui', fontSize:14, fontWeight:800, color:WEB.teal, textTransform:'uppercase', letterSpacing:1, marginBottom:12 }}>
-                    {'\u{1F4F2}'} {L('Comunicaciones (Klaviyo)', 'Communications (Klaviyo)')}
+                    {L('Comunicaciones', 'Communications')}
                   </div>
                   <label style={{ display:'flex', gap:10, alignItems:'flex-start', cursor:'pointer', marginBottom:12 }}>
                     <input type="checkbox" checked={form.smsConsent} onChange={e => setF('smsConsent', e.target.checked)} style={{ marginTop:3, width:18, height:18, accentColor:WEB.green, flexShrink:0 }} />
@@ -300,8 +300,8 @@ export function EventDetailPage({ event, lang, onConfirm, onBack }) {
 
                 <p style={{ fontFamily:'Nunito,system-ui', fontSize:11, color:WEB.textLight, textAlign:'center', lineHeight:1.6, marginTop:10, marginBottom:0 }}>
                   {event.isFree
-                    ? L('Confirmaci\u00f3n por email y SMS v\u00eda Klaviyo.', 'Confirmation by email & SMS via Klaviyo.')
-                    : 'Secure payment by Clover. Confirmation by email & sms via Klaviyo.'}
+                    ? L('Confirmaci\u00f3n por email y SMS.', 'Confirmation by email & SMS.')
+                    : L('Pago seguro con Clover. Confirmaci\u00f3n por email y SMS.', 'Secure payment by Clover. Confirmation by email & SMS.')}
                 </p>
               </>
             )}
