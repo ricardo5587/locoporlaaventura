@@ -93,3 +93,35 @@ create table if not exists klaviyo_cache (
   data         jsonb not null default '[]',
   updated_at   timestamptz default now()
 );
+
+-- Saved card-on-file payment methods (Clover vaulted cards), keyed by the
+-- customer's verified Google email. This powers future "one-tap" paid
+-- bookings: after a customer's first paid checkout we vault their card with
+-- Clover and store the reusable token here, so repeat purchases can charge
+-- without re-collecting card details.
+--
+-- IMPORTANT: never store raw PANs/CVVs. Only Clover's reusable token plus
+-- display-safe metadata (brand + last4 + expiry) lives here; the actual card
+-- data stays inside Clover, keeping PCI scope on their side.
+create table if not exists payment_methods (
+  id                 bigserial primary key,
+  email              text not null,          -- verified Google email (matches orders.email)
+  clover_customer_id text,                   -- Clover customer the card is vaulted under
+  clover_card_token  text not null,          -- reusable card-on-file token
+  brand              text,                   -- display only, e.g. 'VISA', 'MASTERCARD'
+  last4              text,                   -- display only
+  exp_month          integer,               -- display only
+  exp_year           integer,               -- display only
+  is_default         boolean default false,
+  created_at         timestamptz default now()
+);
+
+create index if not exists payment_methods_email_idx on payment_methods(email);
+-- A given vaulted card should only ever appear once per customer.
+create unique index if not exists payment_methods_email_token_idx
+  on payment_methods(email, clover_card_token);
+
+-- Link an order to the saved card it was charged with (nullable; only set for
+-- one-tap paid bookings). Safe to re-run on existing databases.
+alter table orders add column if not exists payment_method_id bigint
+  references payment_methods(id) on delete set null;
