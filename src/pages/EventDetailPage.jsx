@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { WEB, useBreakpoint, fmtDate, CAT_ICONS } from '../lib/tokens';
-import { MAX_W, WebBadge, WebImgPlaceholder } from '../components/shared';
+import { MAX_W, WebBadge, WebImgPlaceholder, PhoneInput } from '../components/shared';
 import { submitForm } from '../lib/api';
 
 export function EventDetailPage({ event, lang, onConfirm, onBack }) {
@@ -8,7 +8,7 @@ export function EventDetailPage({ event, lang, onConfirm, onBack }) {
   const L = (es, en) => lang === 'es' ? es : en;
 
   const [form, setForm] = useState({
-    firstName:'', lastName:'', email:'', phone:'',
+    firstName:'', lastName:'', email:'', phone:'+1 ',
     ticketId: event.tickets[0]?.id || '',
     quantity:1, notes:'',
     smsConsent:false, emailConsent:false, privacyAccepted:false,
@@ -30,7 +30,7 @@ export function EventDetailPage({ event, lang, onConfirm, onBack }) {
     if (!form.firstName.trim()) e.firstName = L('Requerido', 'Required');
     if (!form.lastName.trim())  e.lastName  = L('Requerido', 'Required');
     if (!form.email.trim() || !/^[^@]+@[^@]+\.[^@]+$/.test(form.email)) e.email = L('Email inv\u00e1lido', 'Invalid email');
-    if (!form.phone.trim()) e.phone = L('Requerido para confirmaciones', 'Required for confirmations');
+    if (!form.phone.replace(/^\+\d{1,3}\s*/, '').trim()) e.phone = L('Requerido para confirmaciones', 'Required for confirmations');
     if (!form.privacyAccepted) e.privacy = L('Debes aceptar la pol\u00edtica de privacidad', 'You must accept the privacy policy');
     return e;
   }
@@ -243,7 +243,7 @@ export function EventDetailPage({ event, lang, onConfirm, onBack }) {
                 </div>
                 <div style={{ marginBottom:18 }}>
                   <label style={{ fontFamily:'Nunito,system-ui', fontSize:12, fontWeight:700, color:WEB.textMuted, textTransform:'uppercase', letterSpacing:.8, display:'block', marginBottom:6 }}>{'\u{1F4F1}'} {L('Tel\u00e9fono *', 'Phone Number *')}</label>
-                  <input type="tel" value={form.phone} onChange={e => setF('phone', e.target.value)} style={inputStyle(errors.phone)} placeholder="+1 (555) 000-0000" />
+                  <PhoneInput value={form.phone} onChange={v => setF('phone', v)} hasError={errors.phone} />
                   {errors.phone && <div style={{ fontFamily:'Nunito,system-ui', fontSize:11, color:'#E74C3C', marginTop:3 }}>{errors.phone}</div>}
                 </div>
 

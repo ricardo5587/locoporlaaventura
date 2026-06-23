@@ -378,7 +378,18 @@ export function NewsletterSection({ lang }) {
           <form onSubmit={handleSubmit} style={{ maxWidth:500, margin:'0 auto', display:'flex', flexDirection:'column', gap:12 }}>
             <input type="email" value={email} onChange={e => { setEmail(e.target.value); if (error) setError(''); }} placeholder={L('tu@correo.com', 'your@email.com')} style={{ height:50, borderRadius:12, border:`1.5px solid ${error ? '#E74C3C' : 'rgba(255,255,255,.2)'}`, background:'rgba(255,255,255,.1)', color:'#fff', padding:'0 16px', fontFamily:'Nunito,system-ui', fontSize:16, outline:'none', backdropFilter:'blur(8px)' }} />
             {error && <div style={{ fontFamily:'Nunito,system-ui', fontSize:12, color:'#E74C3C', marginTop:4 }}>{error}</div>}
-            <input type="tel" value={phone} onChange={e => setPhone(e.target.value)} placeholder={`📱 ${L('Teléfono para SMS (opcional)', 'Phone for SMS (optional)')}`} style={{ height:50, borderRadius:12, border:'1.5px solid rgba(255,255,255,.2)', background:'rgba(255,255,255,.1)', color:'#fff', padding:'0 16px', fontFamily:'Nunito,system-ui', fontSize:15, outline:'none', backdropFilter:'blur(8px)' }} />
+            <div style={{ display:'flex', gap:0 }}>
+              <select value={phone.startsWith('+') ? phone.replace(/^\+\d{1,3}\s.*$/,'') || '+1' : '+1'}
+                onChange={e => { const num = phone.replace(/^\+\d{1,3}\s*/, ''); setPhone(e.target.value + ' ' + num); }}
+                style={{ width:80, height:50, borderRadius:'12px 0 0 12px', border:'1.5px solid rgba(255,255,255,.2)', borderRight:'none', padding:'0 4px 0 8px', fontFamily:'Nunito,system-ui', fontSize:14, color:'#fff', outline:'none', cursor:'pointer', background:'rgba(255,255,255,.1)', boxSizing:'border-box', backdropFilter:'blur(8px)' }}>
+                <option value="+1" style={{color:'#000'}}>🇺🇸 +1</option>
+                <option value="+52" style={{color:'#000'}}>🇲🇽 +52</option>
+                <option value="+44" style={{color:'#000'}}>🇬🇧 +44</option>
+                <option value="+34" style={{color:'#000'}}>🇪🇸 +34</option>
+                <option value="+57" style={{color:'#000'}}>🇨🇴 +57</option>
+              </select>
+              <input type="tel" value={phone.replace(/^\+\d{1,3}\s*/, '')} onChange={e => { const code = (phone.match(/^\+\d{1,3}/) || ['+1'])[0]; setPhone(code + ' ' + e.target.value); }} placeholder={`📱 ${L('Teléfono para SMS (opcional)', 'Phone for SMS (optional)')}`} style={{ flex:1, height:50, borderRadius:'0 12px 12px 0', border:'1.5px solid rgba(255,255,255,.2)', background:'rgba(255,255,255,.1)', color:'#fff', padding:'0 16px', fontFamily:'Nunito,system-ui', fontSize:15, outline:'none', backdropFilter:'blur(8px)', boxSizing:'border-box' }} />
+            </div>
             <label style={{ display:'flex', gap:10, alignItems:'flex-start', cursor:'pointer', textAlign:'left' }}>
               <input type="checkbox" checked={sms} onChange={e => setSms(e.target.checked)} style={{ marginTop:3, width:18, height:18, accentColor:WEB.green, flexShrink:0 }} />
               <span style={{ fontFamily:'Nunito,system-ui', fontSize:13, color:'rgba(255,255,255,.7)', lineHeight:1.5 }}>
@@ -410,24 +421,26 @@ export function WebFooter({ lang }) {
   return (
     <footer style={{ background:WEB.tealDark, padding:'48px 24px 28px', borderTop:`3px solid ${WEB.green}` }}>
       <div style={{ ...MAX_W }}>
-        <div style={{ display:'flex', gap:40, flexWrap:'wrap', marginBottom:40 }}>
-          <div style={{ flex:'1 1 240px' }}>
-            <img src={LOGO} style={{ height:64, marginBottom:14 }} />
-            <p style={{ fontFamily:'Nunito,system-ui', fontSize:14, color:'rgba(255,255,255,.55)', lineHeight:1.6, maxWidth:320 }}>
-              {L('Loco por la Aventura es una organización sin fines de lucro 501(c)(3) con sede en Oregon, dedicada a promover la equidad educativa, el acceso al aire libre y la justicia ambiental para la comunidad latina — y más allá.', 'Loco por la Aventura is a 501(c)(3) nonprofit organization based in Oregon, dedicated to advancing educational equity, outdoor access, and environmental justice for the Latino community — and beyond.')}
-            </p>
-            <div style={{ display:'flex', gap:10, marginTop:16 }}>
+        <div style={{ marginBottom:24 }}>
+          <div style={{ display:'flex', alignItems:'center', gap:14, marginBottom:10 }}>
+            <img src={LOGO} style={{ height:52 }} />
+            <div style={{ display:'flex', gap:8 }}>
               {[
                 { id:'instagram', icon:'📸', href:'https://www.instagram.com/locoporlaaventura/' },
                 { id:'facebook', icon:'👤', href:'https://www.facebook.com/locoporlaaventura/' },
                 { id:'whatsapp', icon:'💬', href:'https://wa.me/15035551234' },
               ].map(s => (
-                <a key={s.id} href={s.href} target="_blank" rel="noopener noreferrer" style={{ width:36, height:36, borderRadius:10, background:'rgba(255,255,255,.1)', display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', textDecoration:'none' }}>
-                  <span style={{ fontSize:16 }}>{s.icon}</span>
+                <a key={s.id} href={s.href} target="_blank" rel="noopener noreferrer" style={{ width:32, height:32, borderRadius:8, background:'rgba(255,255,255,.1)', display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', textDecoration:'none' }}>
+                  <span style={{ fontSize:14 }}>{s.icon}</span>
                 </a>
               ))}
             </div>
           </div>
+          <p style={{ fontFamily:'Nunito,system-ui', fontSize:13, color:'rgba(255,255,255,.45)', lineHeight:1.5, margin:0 }}>
+            {L('Loco por la Aventura es una organización sin fines de lucro 501(c)(3) con sede en Oregon, dedicada a promover la equidad educativa, el acceso al aire libre y la justicia ambiental para la comunidad latina — y más allá.', 'Loco por la Aventura is a 501(c)(3) nonprofit organization based in Oregon, dedicated to advancing educational equity, outdoor access, and environmental justice for the Latino community — and beyond.')}
+          </p>
+        </div>
+        <div style={{ display:'grid', gridTemplateColumns:'repeat(3, 1fr)', gap:16, marginBottom:24 }}>
           {[
             { title: L('Eventos', 'Events'), items: [
               { label: 'Escalada', href: '#' },
@@ -448,14 +461,14 @@ export function WebFooter({ lang }) {
               { label: L('Términos de Servicio', 'Terms of Service'), href: 'https://locoporlaaventura.com/pages/terms-of-service' },
             ] },
           ].map(col => (
-            <div key={col.title} style={{ flex:'1 1 140px' }}>
-              <div style={{ fontFamily:'Barlow Condensed,system-ui', fontSize:14, fontWeight:800, color:'rgba(255,255,255,.5)', letterSpacing:1.5, textTransform:'uppercase', marginBottom:12 }}>{col.title}</div>
+            <div key={col.title}>
+              <div style={{ fontFamily:'Barlow Condensed,system-ui', fontSize:12, fontWeight:800, color:'rgba(255,255,255,.5)', letterSpacing:1.5, textTransform:'uppercase', marginBottom:8 }}>{col.title}</div>
               {col.items.map(item => {
                 const label = typeof item === 'string' ? item : item.label
                 const href = typeof item === 'string' ? null : item.href
                 const isExternal = href && href !== '#';
                 return (
-                  <a key={label} href={href || '#'} {...(isExternal ? { target:'_blank', rel:'noopener noreferrer' } : {})} style={{ display:'block', fontFamily:'Nunito,system-ui', fontSize:14, color:'rgba(255,255,255,.55)', marginBottom:8, cursor:'pointer', textDecoration:'none' }}>{label}</a>
+                  <a key={label} href={href || '#'} {...(isExternal ? { target:'_blank', rel:'noopener noreferrer' } : {})} style={{ display:'block', fontFamily:'Nunito,system-ui', fontSize:13, color:'rgba(255,255,255,.55)', marginBottom:5, cursor:'pointer', textDecoration:'none' }}>{label}</a>
                 )
               })}
             </div>

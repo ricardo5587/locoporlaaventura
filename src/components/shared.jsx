@@ -1,4 +1,50 @@
+import { useState } from 'react';
 import { WEB } from '../lib/tokens';
+
+const COUNTRY_CODES = [
+  { code:'+1',  flag:'🇺🇸', label:'US +1' },
+  { code:'+1',  flag:'🇨🇦', label:'CA +1' },
+  { code:'+52', flag:'🇲🇽', label:'MX +52' },
+  { code:'+44', flag:'🇬🇧', label:'UK +44' },
+  { code:'+34', flag:'🇪🇸', label:'ES +34' },
+  { code:'+57', flag:'🇨🇴', label:'CO +57' },
+  { code:'+51', flag:'🇵🇪', label:'PE +51' },
+  { code:'+56', flag:'🇨🇱', label:'CL +56' },
+  { code:'+54', flag:'🇦🇷', label:'AR +54' },
+  { code:'+503',flag:'🇸🇻', label:'SV +503' },
+  { code:'+502',flag:'🇬🇹', label:'GT +502' },
+  { code:'+504',flag:'🇭🇳', label:'HN +504' },
+];
+
+export function PhoneInput({ value, onChange, style = {}, hasError }) {
+  const [codeIdx, setCodeIdx] = useState(0);
+  const selected = COUNTRY_CODES[codeIdx];
+  const number = value.startsWith('+') ? value.replace(/^\+\d{1,3}\s*/, '') : value;
+
+  function handleCodeChange(e) {
+    const idx = Number(e.target.value);
+    setCodeIdx(idx);
+    onChange(COUNTRY_CODES[idx].code + ' ' + number);
+  }
+
+  function handleNumberChange(e) {
+    onChange(selected.code + ' ' + e.target.value);
+  }
+
+  return (
+    <div style={{ display:'flex', gap:0, ...style }}>
+      <select value={codeIdx} onChange={handleCodeChange}
+        style={{ width:80, height:44, borderRadius:'10px 0 0 10px', border:`1.5px solid ${hasError ? '#E74C3C' : WEB.borderMd}`, borderRight:'none', padding:'0 4px 0 8px', fontFamily:'Nunito,system-ui', fontSize:14, color:WEB.text, outline:'none', cursor:'pointer', background:'#fff', boxSizing:'border-box', appearance:'auto' }}>
+        {COUNTRY_CODES.map((c, i) => (
+          <option key={i} value={i}>{c.flag} {c.code}</option>
+        ))}
+      </select>
+      <input type="tel" value={number} onChange={handleNumberChange}
+        placeholder="(555) 000-0000"
+        style={{ flex:1, height:44, borderRadius:'0 10px 10px 0', border:`1.5px solid ${hasError ? '#E74C3C' : WEB.borderMd}`, padding:'0 12px', fontFamily:'Nunito,system-ui', fontSize:14, color:WEB.text, outline:'none', background:'#fff', boxSizing:'border-box' }} />
+    </div>
+  );
+}
 
 export function WebBadge({ children, bg = WEB.green, color = '#fff', style = {} }) {
   return (

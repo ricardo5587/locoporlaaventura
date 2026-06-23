@@ -107,7 +107,7 @@ export function FilterPanel({ open, onClose, cat, setCat, dateStart, setDateStar
   return (
     <>
       <div onClick={onClose} style={{ position:'fixed', inset:0, zIndex:200, background:'rgba(11,30,43,.35)', backdropFilter:'blur(3px)' }} />
-      <div style={{ position:'absolute', top:'calc(100% + 10px)', left:0, zIndex:201, background:'#fff', borderRadius:WEB.radiusLg, boxShadow:WEB.shadowLg, padding:'24px', width:'min(500px, 92vw)', border:`1px solid ${WEB.border}` }}>
+      <div style={{ position:'fixed', top:'50%', left:'50%', transform:'translate(-50%,-50%)', zIndex:201, background:'#fff', borderRadius:WEB.radiusLg, boxShadow:WEB.shadowLg, padding:'24px', width:'min(500px, 92vw)', border:`1px solid ${WEB.border}`, maxHeight:'90vh', overflowY:'auto' }}>
 
         {/* Header */}
         <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:22 }}>

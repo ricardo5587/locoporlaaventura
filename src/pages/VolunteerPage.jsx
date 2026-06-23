@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { WEB, useBreakpoint } from '../lib/tokens';
-import { MAX_W, WebBadge, WebMountains } from '../components/shared';
+import { MAX_W, WebBadge, WebMountains, PhoneInput } from '../components/shared';
 import { submitForm } from '../lib/api';
 
 export function VolunteerPage({ lang, onBack }) {
@@ -8,7 +8,7 @@ export function VolunteerPage({ lang, onBack }) {
   const L = (es, en) => lang === 'es' ? es : en;
 
   const [form, setForm] = useState({
-    firstName: '', lastName: '', email: '', phone: '',
+    firstName: '', lastName: '', email: '', phone: '+1 ',
     interests: [], availability: [], message: '',
     smsConsent: false, emailConsent: false, privacyAccepted: false,
   });
@@ -46,7 +46,7 @@ export function VolunteerPage({ lang, onBack }) {
     if (!form.firstName.trim()) e.firstName = L('Requerido', 'Required');
     if (!form.lastName.trim())  e.lastName  = L('Requerido', 'Required');
     if (!form.email.trim() || !/^[^@]+@[^@]+\.[^@]+$/.test(form.email)) e.email = L('Email inválido', 'Invalid email');
-    if (!form.phone.trim()) e.phone = L('Requerido', 'Required');
+    if (!form.phone.replace(/^\+\d{1,3}\s*/, '').trim()) e.phone = L('Requerido', 'Required');
     if (form.interests.length === 0) e.interests = L('Selecciona al menos una área', 'Select at least one area');
     if (!form.privacyAccepted) e.privacy = L('Debes aceptar la política de privacidad', 'You must accept the Privacy Policy');
     return e;
@@ -265,7 +265,7 @@ export function VolunteerPage({ lang, onBack }) {
                 {/* Phone */}
                 <div style={{ marginBottom: 20 }}>
                   <label style={{ fontFamily: 'Nunito,system-ui', fontSize: 12, fontWeight: 700, color: WEB.textMuted, textTransform: 'uppercase', letterSpacing: .8, display: 'block', marginBottom: 6 }}>📱 {L('Teléfono *', 'Phone Number *')}</label>
-                  <input type="tel" value={form.phone} onChange={e => setF('phone', e.target.value)} style={inp(errors.phone)} placeholder="+1 (555) 000-0000" />
+                  <PhoneInput value={form.phone} onChange={v => setF('phone', v)} hasError={errors.phone} />
                   {errMsg(errors.phone)}
                 </div>
 
