@@ -453,12 +453,12 @@ export function WebFooter({ lang }) {
             <img src={LOGO} style={{ height:52 }} />
             <div style={{ display:'flex', gap:8 }}>
               {[
-                { id:'instagram', icon:'📸', href:'https://www.instagram.com/locoporlaaventura/' },
-                { id:'facebook', icon:'👤', href:'https://www.facebook.com/locoporlaaventura/' },
-                { id:'whatsapp', icon:'💬', href:'https://wa.me/15035551234' },
+                { id:'instagram', icon:'/social/instagram.svg', href:'https://www.instagram.com/locoporlaaventura/' },
+                { id:'facebook', icon:'/social/facebook.svg', href:'https://www.facebook.com/locoporlaaventura/' },
+                { id:'whatsapp', icon:'/social/whatsapp.svg', href:'https://wa.me/15035551234' },
               ].map(s => (
-                <a key={s.id} href={s.href} target="_blank" rel="noopener noreferrer" style={{ width:32, height:32, borderRadius:8, background:'rgba(255,255,255,.1)', display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', textDecoration:'none' }}>
-                  <span style={{ fontSize:14 }}>{s.icon}</span>
+                <a key={s.id} href={s.href} target="_blank" rel="noopener noreferrer" style={{ width:32, height:32, borderRadius:8, display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', textDecoration:'none' }}>
+                  <img src={s.icon} alt={s.id} style={{ width:28, height:28 }} />
                 </a>
               ))}
             </div>
