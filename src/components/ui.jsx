@@ -470,18 +470,14 @@ export function WebFooter({ lang }) {
         <div style={{ display:'grid', gridTemplateColumns:'repeat(3, 1fr)', gap:16, marginBottom:24 }}>
           {[
             { title: L('Eventos', 'Events'), items: [
-              { label: 'Escalada', href: '#' },
-              { label: 'Senderismo', href: '#' },
-              { label: L('Talleres', 'Workshops'), href: '#' },
-              { label: L('Expediciones', 'Expeditions'), href: '#' },
-              { label: L('Keynotes', 'Keynotes'), href: '#' },
+              { label: L('Todos los Eventos', 'All Events'), href: 'https://locoporlaaventura.com/pages/events' },
             ] },
             { title: L('Comunidad', 'Community'), items: [
-              { label: L('Voluntario', 'Volunteer'), href: '#' },
-              { label: L('Tienda', 'Shop'), href: '#' },
-              { label: L('Blog', 'Blog'), href: '#' },
-              { label: L('Sobre Nosotros', 'About Us'), href: '#' },
-              { label: L('Contacto', 'Contact'), href: '#' },
+              { label: L('Voluntario', 'Volunteer'), href: 'https://locoporlaaventura.com/pages/volunteers' },
+              { label: L('Tienda', 'Shop'), href: 'https://locoporlaaventura.com/collections' },
+              { label: L('Blog', 'Blog'), href: 'https://locoporlaaventura.com/pages/blog' },
+              { label: L('Sobre Nosotros', 'About Us'), href: 'https://locoporlaaventura.com/pages/our-mission' },
+              { label: L('Contacto', 'Contact'), href: 'https://locoporlaaventura.com/pages/contact' },
             ] },
             { title: L('Legal', 'Legal'), items: [
               { label: L('Política de Privacidad', 'Privacy Policy'), href: 'https://locoporlaaventura.com/pages/privacy-policy' },
