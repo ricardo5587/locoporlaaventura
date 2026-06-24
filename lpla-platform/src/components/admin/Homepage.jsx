@@ -28,81 +28,190 @@ function Toast({ message, onDone }) {
   )
 }
 
-// ─── Live Preview ─────────────────────────────────────────────────
+// ─── iPhone Frame ─────────────────────────────────────────────────
+const IPHONE_W = 393
+const IPHONE_H = 852
+const IPHONE_RADIUS = 55
+const IPHONE_BEZEL = 12
+
 function HeroPreview({ slides, content, activeSlide, isMobile }) {
-  const w = isMobile ? 375 : 1280
-  const h = isMobile ? 440 : 620
-  const scale = isMobile ? 1 : 0.48
   const slide = slides[activeSlide] || {}
 
-  return (
-    <div style={{
-      width: w * scale, height: h * scale, overflow: 'hidden', borderRadius: isMobile ? 40 : 10,
-      border: isMobile ? '8px solid #1a1a1a' : `1px solid ${ADM.border}`,
-      boxShadow: isMobile ? '0 12px 40px rgba(0,0,0,.25)' : '0 4px 16px rgba(0,0,0,.1)',
-      background: '#0B1E2B', position: 'relative', flexShrink: 0,
-    }}>
-      <div style={{ width: w, height: h, transform: `scale(${scale})`, transformOrigin: 'top left' }}>
-        {/* Background image or gradient */}
-        <div style={{ position: 'absolute', inset: 0 }}>
-          {slide.image_url ? (
-            <>
-              <img src={slide.image_url} alt="" style={{
-                width: '100%', height: '100%',
-                objectFit: slide.object_fit || 'cover',
-                objectPosition: slide.object_position || 'center center',
-              }} />
-              <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(11,30,43,.5) 0%, rgba(11,30,43,.25) 40%, rgba(11,30,43,.4) 100%)' }} />
-            </>
-          ) : (
-            <div style={{ width: '100%', height: '100%', background: 'linear-gradient(160deg,#0B1E2B 0%,#1B5E7F 60%,#0D3820 100%)' }} />
-          )}
+  const heroContent = (w, h, mobile) => (
+    <div style={{ position: 'relative', width: w, minHeight: h, background: '#0B1E2B' }}>
+      <div style={{ position: 'absolute', inset: 0, height: h }}>
+        {slide.image_url ? (
+          <>
+            <img src={slide.image_url} alt="" style={{ width: '100%', height: '100%', objectFit: slide.object_fit || 'cover', objectPosition: slide.object_position || 'center center' }} />
+            <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(11,30,43,.5) 0%, rgba(11,30,43,.25) 40%, rgba(11,30,43,.4) 100%)' }} />
+          </>
+        ) : (
+          <div style={{ width: '100%', height: '100%', background: 'linear-gradient(160deg,#0B1E2B 0%,#1B5E7F 60%,#0D3820 100%)' }} />
+        )}
+      </div>
+      <div style={{ position: 'relative', zIndex: 5, textAlign: 'center', padding: mobile ? '32px 20px' : '70px 40px' }}>
+        <img src={LOGO_URL} alt="" style={{ height: mobile ? 80 : 140, filter: 'drop-shadow(0 8px 32px rgba(0,0,0,.5))', marginBottom: mobile ? 16 : 28 }} />
+        <div style={{ fontFamily: 'Barlow Condensed,system-ui', fontSize: mobile ? 12 : 16, fontWeight: 600, letterSpacing: mobile ? 3 : 4, textTransform: 'uppercase', color: 'rgba(255,255,255,.55)', marginBottom: 8 }}>
+          {content.welcome_en || 'WELCOME TO'}
         </div>
-
-        {/* Content overlay */}
-        <div style={{ position: 'relative', zIndex: 5, textAlign: 'center', padding: isMobile ? '32px 20px' : '70px 40px' }}>
-          <img src={LOGO_URL} alt="" style={{ height: isMobile ? 80 : 140, filter: 'drop-shadow(0 8px 32px rgba(0,0,0,.5))', marginBottom: isMobile ? 16 : 28 }} />
-          <div style={{ fontFamily: 'Barlow Condensed,system-ui', fontSize: isMobile ? 12 : 16, fontWeight: 600, letterSpacing: isMobile ? 3 : 4, textTransform: 'uppercase', color: 'rgba(255,255,255,.55)', marginBottom: 8 }}>
-            {content.welcome_en || 'WELCOME TO'}
-          </div>
-          <div style={{ fontFamily: 'Barlow Condensed,system-ui', fontSize: isMobile ? 36 : 68, fontWeight: 800, textTransform: 'uppercase', color: '#fff', letterSpacing: .5, lineHeight: 1.02, margin: '0 0 12px', textShadow: '0 4px 24px rgba(0,0,0,.3)' }}>
-            {content.title_line1 || 'LOCO POR'}<br />{content.title_line2 || 'LA AVENTURA'}
-          </div>
-          <div style={{ fontFamily: 'Nunito,system-ui', fontSize: isMobile ? 14 : 18, color: 'rgba(255,255,255,.72)', maxWidth: 520, margin: '0 auto 24px', lineHeight: 1.6 }}>
-            {content.subtitle_en || 'Outdoor adventure events for the Latino community and beyond · Portland, Oregon'}
-          </div>
-          {/* Buttons (decorative, not clickable) */}
-          <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: isMobile ? 6 : 12, justifyContent: 'center', alignItems: 'center' }}>
-            {['Upcoming Events', 'Become a Volunteer'].map((label, i) => (
-              <div key={label} style={{
-                minWidth: isMobile ? 190 : 230, padding: isMobile ? '10px 24px' : '15px 28px',
-                borderRadius: isMobile ? 10 : 14, border: '1px solid rgba(255,255,255,.15)',
-                background: i === 0 ? 'rgba(126,191,46,.75)' : 'rgba(27,94,127,.7)',
-                color: '#fff', fontFamily: 'Barlow Condensed,system-ui',
-                fontSize: isMobile ? 14 : 19, fontWeight: 800, letterSpacing: .5,
-                textTransform: 'uppercase', textAlign: 'center',
-                boxShadow: `0 4px 16px ${i === 0 ? 'rgba(126,191,46,.35)' : 'rgba(27,94,127,.35)'}, inset 0 1px 0 rgba(255,255,255,.15)`,
-              }}>{label}</div>
-            ))}
-          </div>
-          {/* Stats */}
-          <div style={{ display: 'flex', gap: isMobile ? 20 : 48, justifyContent: 'center', marginTop: isMobile ? 24 : 40 }}>
-            {[['90+', 'Volunteers'], ['64', 'Events/year']].map(([n, l]) => (
-              <div key={n} style={{ textAlign: 'center' }}>
-                <div style={{ fontFamily: 'Barlow Condensed,system-ui', fontSize: isMobile ? 26 : 32, fontWeight: 800, color: '#fff', lineHeight: 1 }}>{n}</div>
-                <div style={{ fontFamily: 'Nunito,system-ui', fontSize: isMobile ? 11 : 13, color: 'rgba(255,255,255,.55)', marginTop: 3 }}>{l}</div>
-              </div>
-            ))}
-          </div>
+        <div style={{ fontFamily: 'Barlow Condensed,system-ui', fontSize: mobile ? 36 : 68, fontWeight: 800, textTransform: 'uppercase', color: '#fff', letterSpacing: .5, lineHeight: 1.02, margin: '0 0 12px', textShadow: '0 4px 24px rgba(0,0,0,.3)' }}>
+          {content.title_line1 || 'LOCO POR'}<br />{content.title_line2 || 'LA AVENTURA'}
         </div>
-
-        {/* Slide dots */}
-        <div style={{ position: 'absolute', bottom: isMobile ? 16 : 28, left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: 8, zIndex: 6 }}>
-          {[0, 1, 2, 3].map(i => (
-            <div key={i} style={{ width: i === activeSlide ? 24 : 8, height: 8, borderRadius: 4, background: i === activeSlide ? '#7EBF2E' : 'rgba(255,255,255,.35)', transition: 'all .3s' }} />
+        <div style={{ fontFamily: 'Nunito,system-ui', fontSize: mobile ? 14 : 18, color: 'rgba(255,255,255,.72)', maxWidth: 520, margin: '0 auto 24px', lineHeight: 1.6 }}>
+          {content.subtitle_en || 'Outdoor adventure events for the Latino community and beyond · Portland, Oregon'}
+        </div>
+        <div style={{ display: 'flex', flexDirection: mobile ? 'column' : 'row', gap: mobile ? 6 : 12, justifyContent: 'center', alignItems: 'center' }}>
+          {['Upcoming Events', 'Become a Volunteer'].map((label, i) => (
+            <div key={label} style={{
+              minWidth: mobile ? 190 : 230, padding: mobile ? '10px 24px' : '15px 28px',
+              borderRadius: mobile ? 10 : 14, border: '1px solid rgba(255,255,255,.15)',
+              background: i === 0 ? 'rgba(126,191,46,.75)' : 'rgba(27,94,127,.7)',
+              color: '#fff', fontFamily: 'Barlow Condensed,system-ui',
+              fontSize: mobile ? 14 : 19, fontWeight: 800, letterSpacing: .5,
+              textTransform: 'uppercase', textAlign: 'center',
+              boxShadow: `0 4px 16px ${i === 0 ? 'rgba(126,191,46,.35)' : 'rgba(27,94,127,.35)'}, inset 0 1px 0 rgba(255,255,255,.15)`,
+            }}>{label}</div>
+          ))}
+        </div>
+        <div style={{ display: 'flex', gap: mobile ? 20 : 48, justifyContent: 'center', marginTop: mobile ? 24 : 40 }}>
+          {[['90+', 'Volunteers'], ['64', 'Events/year']].map(([n, l]) => (
+            <div key={n} style={{ textAlign: 'center' }}>
+              <div style={{ fontFamily: 'Barlow Condensed,system-ui', fontSize: mobile ? 26 : 32, fontWeight: 800, color: '#fff', lineHeight: 1 }}>{n}</div>
+              <div style={{ fontFamily: 'Nunito,system-ui', fontSize: mobile ? 11 : 13, color: 'rgba(255,255,255,.55)', marginTop: 3 }}>{l}</div>
+            </div>
           ))}
         </div>
       </div>
+      <div style={{ position: 'absolute', bottom: mobile ? 16 : 28, left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: 8, zIndex: 6 }}>
+        {[0, 1, 2, 3].map(i => (
+          <div key={i} style={{ width: i === activeSlide ? 24 : 8, height: 8, borderRadius: 4, background: i === activeSlide ? '#7EBF2E' : 'rgba(255,255,255,.35)', transition: 'all .3s' }} />
+        ))}
+      </div>
+      {/* Extra scrollable content below the hero */}
+      <div style={{ position: 'relative', zIndex: 5, padding: mobile ? '28px 20px 60px' : '48px 40px 80px', background: '#FAF8F4' }}>
+        <div style={{ textAlign: 'center', marginBottom: 20 }}>
+          <div style={{ fontFamily: 'Barlow Condensed,system-ui', fontSize: mobile ? 22 : 36, fontWeight: 800, color: '#1E2A35', textTransform: 'uppercase' }}>Upcoming Events</div>
+          <div style={{ fontFamily: 'Nunito,system-ui', fontSize: mobile ? 13 : 15, color: '#999', marginTop: 4 }}>Scroll down to see how it looks</div>
+        </div>
+        {[1, 2, 3].map(i => (
+          <div key={i} style={{ background: '#fff', borderRadius: 12, padding: mobile ? 14 : 20, marginBottom: 12, border: '1px solid #E8E5DD' }}>
+            <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+              <div style={{ width: mobile ? 48 : 64, height: mobile ? 48 : 64, borderRadius: 10, background: `hsl(${120 + i * 40}, 35%, 85%)`, flexShrink: 0 }} />
+              <div>
+                <div style={{ fontFamily: 'Barlow Condensed,system-ui', fontSize: mobile ? 14 : 17, fontWeight: 700, color: '#1E2A35' }}>Sample Event {i}</div>
+                <div style={{ fontFamily: 'Nunito,system-ui', fontSize: mobile ? 11 : 13, color: '#999', marginTop: 2 }}>Portland, OR · Jun {10 + i}, 2026</div>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+
+  if (isMobile) {
+    const outerW = IPHONE_W + IPHONE_BEZEL * 2
+    const outerH = IPHONE_H + IPHONE_BEZEL * 2
+    const screenW = IPHONE_W
+    const screenH = IPHONE_H
+    return (
+      <div style={{ width: outerW, height: outerH, borderRadius: IPHONE_RADIUS, background: '#1a1a1a', padding: IPHONE_BEZEL, boxShadow: '0 20px 60px rgba(0,0,0,.3), 0 0 0 1px rgba(255,255,255,.08) inset', position: 'relative', flexShrink: 0 }}>
+        {/* Side button (power) */}
+        <div style={{ position: 'absolute', right: -2, top: 140, width: 3, height: 80, borderRadius: '0 2px 2px 0', background: '#333' }} />
+        {/* Volume buttons */}
+        <div style={{ position: 'absolute', left: -2, top: 120, width: 3, height: 32, borderRadius: '2px 0 0 2px', background: '#333' }} />
+        <div style={{ position: 'absolute', left: -2, top: 162, width: 3, height: 32, borderRadius: '2px 0 0 2px', background: '#333' }} />
+        {/* Silent switch */}
+        <div style={{ position: 'absolute', left: -2, top: 80, width: 3, height: 18, borderRadius: '2px 0 0 2px', background: '#333' }} />
+
+        {/* Screen area */}
+        <div style={{ width: screenW, height: screenH, borderRadius: IPHONE_RADIUS - IPHONE_BEZEL, overflow: 'hidden', position: 'relative', background: '#000' }}>
+          {/* Status bar */}
+          <div style={{ position: 'sticky', top: 0, zIndex: 20, height: 54, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 28px', background: 'rgba(0,0,0,.15)', backdropFilter: 'blur(12px)' }}>
+            <span style={{ fontFamily: 'system-ui', fontSize: 15, fontWeight: 600, color: '#fff' }}>9:41</span>
+            {/* Dynamic Island */}
+            <div style={{ position: 'absolute', top: 12, left: '50%', transform: 'translateX(-50%)', width: 126, height: 36, borderRadius: 20, background: '#000' }} />
+            {/* Signal + wifi + battery */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+              <svg width="17" height="12" viewBox="0 0 17 12"><path d="M1 9h2v3H1zM5 6h2v6H5zM9 3h2v9H9zM13 0h2v12h-2z" fill="#fff" fillOpacity=".9"/></svg>
+              <svg width="16" height="12" viewBox="0 0 16 12"><path d="M8 3.6a6.4 6.4 0 015.2 2.7l1.2-1.2A8.3 8.3 0 008 1.2a8.3 8.3 0 00-6.4 3.9L2.8 6.3A6.4 6.4 0 018 3.6zm0 3.2a3.2 3.2 0 012.6 1.3l1.2-1.2A5 5 0 008 5a5 5 0 00-3.8 1.9l1.2 1.2A3.2 3.2 0 018 6.8zM8 10a1.2 1.2 0 100 2.4A1.2 1.2 0 008 10z" fill="#fff" fillOpacity=".9"/></svg>
+              <svg width="27" height="13" viewBox="0 0 27 13"><rect x="0" y="1" width="22" height="11" rx="2.5" stroke="#fff" strokeOpacity=".35" fill="none"/><rect x="1.5" y="2.5" width="17" height="8" rx="1.5" fill="#fff"/><path d="M23 4.5v4a2 2 0 000-4z" fill="#fff" fillOpacity=".4"/></svg>
+            </div>
+          </div>
+          {/* Scrollable content */}
+          <div style={{ position: 'absolute', inset: 0, overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}>
+            <div style={{ height: 54 }} />
+            {heroContent(screenW, screenH - 54, true)}
+          </div>
+          {/* Home indicator */}
+          <div style={{ position: 'absolute', bottom: 8, left: '50%', transform: 'translateX(-50%)', width: 134, height: 5, borderRadius: 3, background: 'rgba(255,255,255,.3)', zIndex: 20 }} />
+        </div>
+      </div>
+    )
+  }
+
+  // Desktop preview
+  const deskW = 1280
+  const deskH = 800
+  const scale = 0.48
+  return (
+    <div style={{ width: deskW * scale + 2, flexShrink: 0 }}>
+      {/* Browser chrome */}
+      <div style={{ background: '#e8e8e8', borderRadius: '10px 10px 0 0', padding: '8px 12px', display: 'flex', alignItems: 'center', gap: 8 }}>
+        <div style={{ display: 'flex', gap: 6 }}>
+          {['#FF5F57', '#FFBD2E', '#28C840'].map(c => <div key={c} style={{ width: 10, height: 10, borderRadius: '50%', background: c }} />)}
+        </div>
+        <div style={{ flex: 1, height: 22, borderRadius: 6, background: '#fff', display: 'flex', alignItems: 'center', padding: '0 10px' }}>
+          <span style={{ fontFamily: 'system-ui', fontSize: 10, color: '#999' }}>book.locoporlaaventura.com</span>
+        </div>
+      </div>
+      <div style={{ width: deskW * scale, height: deskH * scale, overflow: 'hidden', borderRadius: '0 0 10px 10px', border: `1px solid ${ADM.border}`, borderTop: 'none', background: '#0B1E2B' }}>
+        <div style={{ width: deskW, height: deskH, transform: `scale(${scale})`, transformOrigin: 'top left', overflowY: 'auto' }}>
+          {heroContent(deskW, 620, false)}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ─── Position Arrow Controls ──────────────────────────────────────
+const POS_V = ['top', 'center', 'bottom']
+const POS_H = ['left', 'center', 'right']
+
+function PositionArrows({ position, accent, onChange }) {
+  const [v, h] = (position || 'center center').split(' ')
+  const vi = POS_V.indexOf(v), hi = POS_H.indexOf(h)
+
+  function move(dv, dh) {
+    const nv = POS_V[Math.max(0, Math.min(2, vi + dv))]
+    const nh = POS_H[Math.max(0, Math.min(2, hi + dh))]
+    onChange(`${nv} ${nh}`)
+  }
+
+  const arrowBtn = (label, dv, dh, disabled, style) => (
+    <button onClick={e => { e.stopPropagation(); move(dv, dh) }} disabled={disabled}
+      style={{ width: 28, height: 28, border: 'none', borderRadius: 6, cursor: disabled ? 'default' : 'pointer', background: disabled ? 'transparent' : ADM.bg, color: disabled ? 'transparent' : ADM.text, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, opacity: disabled ? 0 : 1, transition: 'all .1s', ...style }}>
+      {label}
+    </button>
+  )
+
+  const posLabel = `${v} ${h}` === 'center center' ? 'Centered' : `${v}, ${h}`
+
+  return (
+    <div onClick={e => e.stopPropagation()} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 28px)', gridTemplateRows: 'repeat(3, 28px)', gap: 2 }}>
+        <div />
+        {arrowBtn('↑', -1, 0, vi === 0)}
+        <div />
+        {arrowBtn('←', 0, -1, hi === 0)}
+        <div style={{ width: 28, height: 28, borderRadius: 6, background: `${accent}20`, border: `2px solid ${accent}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ width: 6, height: 6, borderRadius: '50%', background: accent }} />
+        </div>
+        {arrowBtn('→', 0, 1, hi === 2)}
+        <div />
+        {arrowBtn('↓', 1, 0, vi === 2)}
+        <div />
+      </div>
+      <span style={{ fontFamily: 'Nunito,system-ui', fontSize: 11, color: ADM.muted, fontWeight: 600, textTransform: 'capitalize' }}>{posLabel}</span>
     </div>
   )
 }
@@ -201,21 +310,9 @@ function SlideCard({ slide, accent, isActive, onSelect, onUpload, onRemove, onFi
               {FIT_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
             </select>
 
-            {/* Position (quick presets) */}
-            <label style={{ fontFamily: 'Nunito,system-ui', fontSize: 10, fontWeight: 700, color: ADM.muted, textTransform: 'uppercase', letterSpacing: .8, display: 'block', marginBottom: 4 }}>Focal point</label>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 3 }}>
-              {['top left','top center','top right','center left','center center','center right','bottom left','bottom center','bottom right'].map(pos => (
-                <button key={pos} onClick={e => { e.stopPropagation(); onPositionChange(pos) }}
-                  style={{
-                    height: 22, border: 'none', borderRadius: 4, cursor: 'pointer',
-                    background: (slide.object_position || 'center center') === pos ? accent : ADM.bg,
-                    color: (slide.object_position || 'center center') === pos ? '#fff' : ADM.muted,
-                    fontFamily: 'Nunito,system-ui', fontSize: 8, fontWeight: 700,
-                    transition: 'all .1s',
-                  }}
-                >{pos.split(' ').map(w => w[0].toUpperCase()).join('')}</button>
-              ))}
-            </div>
+            {/* Position (arrow controls) */}
+            <label style={{ fontFamily: 'Nunito,system-ui', fontSize: 10, fontWeight: 700, color: ADM.muted, textTransform: 'uppercase', letterSpacing: .8, display: 'block', marginBottom: 4 }}>Image position</label>
+            <PositionArrows position={slide.object_position || 'center center'} accent={accent} onChange={pos => { onPositionChange(pos) }} />
           </>
         )}
       </div>
@@ -426,7 +523,7 @@ export default function AdminHomepage() {
         </div>
 
         {/* Right — live preview */}
-        <div style={{ width: previewMode === 'mobile' ? 407 : 630, flexShrink: 0 }}>
+        <div style={{ width: previewMode === 'mobile' ? (IPHONE_W + IPHONE_BEZEL * 2 + 16) : 630, flexShrink: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
             <span style={{ fontFamily: 'Barlow Condensed,system-ui', fontSize: 13, fontWeight: 800, color: ADM.muted, textTransform: 'uppercase', letterSpacing: 1.5, display: 'flex', alignItems: 'center', gap: 8 }}>
               <span style={{ width: 12, height: 1.5, background: ADM.muted }} />

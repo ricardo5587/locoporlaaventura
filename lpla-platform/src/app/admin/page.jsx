@@ -142,7 +142,7 @@ export default function AdminPage() {
     { id: 'events',    icon: 'calendar', label: 'Events', badge: events.length },
     { id: 'attendees', icon: 'people',   label: 'Attendees' },
     { id: 'crm',       icon: 'user',     label: 'Contacts' },
-    { id: 'apps',      icon: 'apps',     label: 'Apps' },
+    // { id: 'apps',      icon: 'apps',     label: 'Apps' },
     { id: 'klaviyo',   icon: 'mail',     label: 'Email' },
     { id: 'users',     icon: 'team',     label: 'Users' },
     { id: 'widget',    icon: 'download',  label: 'Install', featured: true },
