@@ -13,12 +13,18 @@ export async function OPTIONS() {
 
 export async function GET() {
   const { data, error } = await supabase
-    .from('hero_slides')
-    .select('id, image_url, object_fit, object_position')
-    .order('id');
+    .from('hero_content')
+    .select('*')
+    .eq('id', 1)
+    .single();
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500, headers: CORS });
+    return NextResponse.json({
+      welcome_en: 'WELCOME TO', welcome_es: 'BIENVENIDOS A',
+      title_line1: 'LOCO POR', title_line2: 'LA AVENTURA',
+      subtitle_en: 'Outdoor adventure events for the Latino community and beyond · Portland, Oregon',
+      subtitle_es: 'Eventos de aventura al aire libre para la comunidad latina y más allá · Portland, Oregón',
+    }, { headers: CORS });
   }
 
   return NextResponse.json(data, { headers: CORS });

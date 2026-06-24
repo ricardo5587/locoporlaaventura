@@ -76,6 +76,23 @@ create table if not exists hero_slides (
 -- Seed the 4 slide rows if they don't exist
 insert into hero_slides (id) values (1),(2),(3),(4) on conflict do nothing;
 
+-- Per-slide image fitting controls (admin editor)
+alter table hero_slides add column if not exists object_fit text default 'cover';
+alter table hero_slides add column if not exists object_position text default 'center center';
+
+-- Editable hero text (singleton row keyed on id=1).
+create table if not exists hero_content (
+  id              integer primary key default 1 check (id = 1),
+  welcome_en      text default 'WELCOME TO',
+  welcome_es      text default 'BIENVENIDOS A',
+  title_line1     text default 'LOCO POR',
+  title_line2     text default 'LA AVENTURA',
+  subtitle_en     text default 'Outdoor adventure events for the Latino community and beyond · Portland, Oregon',
+  subtitle_es     text default 'Eventos de aventura al aire libre para la comunidad latina y más allá · Portland, Oregón',
+  updated_at      timestamptz default now()
+);
+insert into hero_content (id) values (1) on conflict do nothing;
+
 -- Helper RPC functions for atomic spot management
 create or replace function decrement_spots(event_id bigint, qty integer)
 returns void language sql as $$

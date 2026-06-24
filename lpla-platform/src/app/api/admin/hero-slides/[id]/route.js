@@ -23,9 +23,14 @@ export async function PUT(request, { params }) {
   }
 
   const body = await request.json();
+  const updates = { updated_at: new Date().toISOString() };
+  if (body.imageUrl !== undefined) updates.image_url = body.imageUrl;
+  if (body.object_fit !== undefined) updates.object_fit = body.object_fit;
+  if (body.object_position !== undefined) updates.object_position = body.object_position;
+
   const { data, error } = await supabase
     .from('hero_slides')
-    .update({ image_url: body.imageUrl, updated_at: new Date().toISOString() })
+    .update(updates)
     .eq('id', slideId)
     .select()
     .single();
